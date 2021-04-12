@@ -27,7 +27,7 @@ var colors = [
 	      /* 60-69  */ "#b5890e",
 	      /* 70-79  */ "#c4a41d",
 	      /* 80-89  */ "#b7a910",
-	      /* 90-99  */ "#c4011d",
+	      /* 90-99  */ "#c4b11d",
 	      /* 100    */ green
 	      ];
 
@@ -177,6 +177,10 @@ function generateRank(bp0, bp1, bp2) {
 */
 var badUrlCount = 0;
 function determineProjectAndRepoNames(urlList) {
+    /* HACK BEGIN */
+    if (urlList == "https://wiki.onap.org/display/DW/Modeling+Project")
+	urlList = "https://gerrit.onap.org/r/#/admin/projects/modeling";
+    /* END HACK */
     var urls = urlList.split(/[\s,]+/);
     var repos = ["UNKNOWN"];
     

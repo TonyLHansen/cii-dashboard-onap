@@ -101,7 +101,7 @@ function intermingleReleasesAndBadgingLevels() {
 function addReleasesAndBadgingLevelsToTable() {
     var headers = intermingleReleasesAndBadgingLevels();
     var headers = "<tr>" +
-		    "<th>Ranked&nbsp;Index</th>" +
+		    "<th>RankOrder</th>" +
 		    "<th>Project&nbsp;Prefix</th>" +
 		    "<th>Name</th>" +
 		    "<th>Badge</th>" +
@@ -139,8 +139,8 @@ function genPageList(page) {
     return pagelist;
 }
 
-function generateRank(bp0, bp1, bp2) {
-    return bp0 * 1000000 + bp1 * 1000 + bp2;
+function generateRank(element) {
+    return element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
 }
 
 // A sample of repo_urls captured during a run:
@@ -176,17 +176,23 @@ function generateRank(bp0, bp1, bp2) {
 var badUrlCount = 0;
 function determineProjectAndRepoNames(urlList) {
     var urls = urlList.split(/[\s,]+/);
+    // console.log("urls=" + urls);
     var repos = ["UNKNOWN"];
     
     for (var u in urls) {
 	var url = urls[u];
+	// console.log("looking at url=" + url);
 	var urlUpper = url.toUpperCase();
+	// console.log("urlUpper=" + urlUpper);
 	var repo = "UNKNOWN-BADURL";
 	for (var up in repoUrlPrefixes) {
 	    var urlPrefix = repoUrlPrefixes[up];
+	    // console.log("looking at urlPrefix=" + urlPrefix);
 	    var lenPrefix = urlPrefix.length;
+	    // console.log("lenPrefix=" + lenPrefix);
 	    var urlPrefixUpper = urlPrefix.toUpperCase();
 	    var urlUpperStart = urlUpper.substring(0, lenPrefix);
+	    // console.log("comparing " + urlPrefixUpper + " with " + urlUpperStart);
 	    if (urlPrefixUpper == urlUpperStart) {
 		repo = url.substring(lenPrefix).toLowerCase();
 		if (urlPrefixUpper == badRepoUrlPrefix) {
@@ -275,13 +281,10 @@ function addRankOrder(d) {
 function getProject(data, type, row) {
     if (type !== 'display') return data;
     var ret = "<a href='" + row.repo_url + "'>" + row.onap_project_short + "</a>";
-    if (row.onap_project_short == "UNKNOWN")
-	ret += (row.onap_badurl ? " <span class='badURL' title='There is no project prefix word in the repo URL that will identify which project this entry belongs to.'>PROJECT NOT IN URL</span>" : "");
-    else
-	ret += (row.onap_badurl ? " <span class='badURL' title='The given repo URL is invalid and returns a 404 NOT FOUND when visited.'>404 NOT FOUND</span>" : "");
-    ret += (row.onap_badurlsuffix ? " <span class='badURL' title='If a git URL is specified for the repo URL, it must have a suffix of .git'>MISSING .git SUFFIX</span>" : "");
+    ret += (row.onap_badurl ? " <span class='badURL'>BAD URL</span>" : "");
+    ret += (row.onap_badurlsuffix ? " <span class='badURL'>MISSING .git SUFFIX</span>" : "");
     if (row.onap_project_short != "UNKNOWN")
-	ret += (row.onap_invalid_project ? (" <span class='badProject' title='The project prefix word (" + row.onap_project_short + ") in the repo URL is not a valid project name.'>UNKNOWN PROJECT PREFIX '" + row.onap_project_short + "' FOUND IN REPO URL</span>") : "");
+	ret += (row.onap_valid_project ? " <span class='badProject'>UNKNOWN PREFIX</span>" : "");
     return ret;
 }
 
@@ -291,96 +294,46 @@ function getAllNames(data, type, row) {
     var urlPrefix = '<a href="https://bestpractices.coreinfrastructure.org/projects/';
     var urlSuffix = '">';
     var anchorEnd = '</a>';
-    var ret = "<table class='noborder'>";
-    ret += "<tr><td class='stats noborder'>" + urlPrefix + row.id + urlSuffix + row.name + anchorEnd + "</td></tr>";
+    var ret = urlPrefix + row.id + urlSuffix + row.name + anchorEnd;
     if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
 	for (var k in row.otherRepos) {
 	    var otherRepo = row.otherRepos[k];
-	    ret += "<tr><td class='stats noborder right'>" + urlPrefix + otherRepo.id + urlSuffix + otherRepo.name + anchorEnd + "</td></tr>";
+	    ret += "<br/>";
+	    ret += urlPrefix + otherRepo.id + urlSuffix + otherRepo.name + anchorEnd;
 	}
     }
-    ret += "</table>";
     return ret;
-}
-
-function getBadge(txtLeft, txtRight, colorRight) {
-    return "<svg xmlns='http://www.w3.org/2000/svg' width='204' height='20'>" +
-	"<linearGradient id='b' x2='0' y2='100%'>" +
-	"<stop offset='0' stop-color='#bbb' stop-opacity='.1'/>" +
-	"<stop offset='1' stop-opacity='.1'/>" +
-	"</linearGradient>" +
-	"<mask id='a'>" +
-	"<rect width='204' height='20' rx='3' fill='#fff'/>" +
-	"</mask>" +
-	"<g mask='url(#a)'>" +
-	"<path fill='#555' d='M0 0h103v20H0z'/>" +
-	"<path fill='" + colorRight + "' d='M103 0h101v20H103z'/>" +
-	"<path fill='url(#b)' d='M0 0h204v20H0z'/>" +
-	"</g>" +
-	"<g fill='#fff' text-anchor='middle' font-family='DejaVu Sans,Verdana,Geneva,sans-serif' font-size='11'>" +
-	"<text x='51.5' y='15' fill='#010101' fill-opacity='.3'>cii best practices</text>" +
-	"<text x='51.5' y='14'>" + txtLeft + "</text>" +
-	"<text x='152.5' y='15' fill='#010101' fill-opacity='.3'>" + txtRight + "</text>" +
-	"<text x='152.5' y='14'>" + txtRight + "</text>" +
-	"</g>" +
-	"</svg>";
 }
 
 function getAllBadges(data, type, row) {
     if (type !== 'display') return data;
+    if (row.id == -1) return '<img src="cii-not-started.png"/>';
     var urlPrefix = '<img src="https://bestpractices.coreinfrastructure.org/projects/';
     var urlSuffix = '/badge"/>';
-    var ret = "<table class='noborder'>";
-    if (row.id == 0) {
-	ret += "<tr><td class='stats noborder'>";
-	if (row.onap_rank == 0) {
-	    ret += getBadge("cii best practices", "Not started 0%", "red"); // '<img src="cii-not-started.png"/>';
-	} else {
-	    ret += getBadge("Lowest", row.badge_percentage_0 + "%", getColor(row.badge_percentage_0, row.badge_percentage_1, row.badge_percentage_2));
-	}
-	ret += "</td></tr>";
-    } else {
-	ret += "<tr><td class='stats noborder'>" + (urlPrefix + row.id + urlSuffix) + "</td></tr>";
-    }
+    var ret = urlPrefix + row.id + urlSuffix;
     if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
 	for (var k in row.otherRepos) {
 	    var otherRepo = row.otherRepos[k];
-	    ret += "<tr><td class='stats noborder right'>" + urlPrefix + otherRepo.id + urlSuffix + "</td></tr>";
+	    ret += "<br/>";
+	    ret += urlPrefix + otherRepo.id + urlSuffix;
 	}
     }
-    ret += "</table>";
     return ret;
 }
 
 function getAllPercentages(data, type, row, num) {
     if (type !== 'display') return data;
-    var ret = "<table class='noborder'>";
-    ret += "<tr><td class='stats noborder'>" + row["badge_percentage_"+num] + "</td></tr>";
+    var ret = row["badge_percentage_"+num];
     if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
 	for (var k in row.otherRepos) {
 	    var otherRepo = row.otherRepos[k];
-	    ret += "<tr><td class='stats noborder right'>" + otherRepo["badge_percentage_"+num] + "</td></tr>";
+	    ret += "<br/>";
+	    ret += otherRepo["badge_percentage_"+num];
 	}
     }
     return ret;
 }
 
-
-function genData(project, name, bp0, bp1, bp2) { 
-    return {
-	"repo_url": goodRepoUrlPrefix + project,
-	    "onap_project": project,
-	    "onap_project_short": project,
-	    "name": name, 
-	    "id": 0,
-	    "onap_badge": -1,
-	    "onap_rank": 0,
-	    "badge_percentage_0": bp0,
-	    "badge_percentage_1": bp1,
-	    "badge_percentage_2": bp2,
-	    "otherRepos": []
-	    };
-}
 
 function whenDone(datad) {
     addReleasesAndBadgingLevelsToTable();
@@ -394,7 +347,7 @@ function whenDone(datad) {
 	datad[k].onap_badurl = (n != -1);
 	datad[k].onap_badurlsuffix = (datad[k].onap_project.indexOf("-BADURLSUFFIX") != -1);
 	datad[k].onap_repos = projectAndRepos.shift();
-	datad[k].onap_invalid_project = !allOnapProjects[currentRelease].hasOwnProperty(project);
+	datad[k].onap_valid_project = !allOnapProjects[currentRelease].hasOwnProperty(project);
     }
     datad.sort(function(a, b) {
 	    var ap = a.onap_project.toUpperCase();
@@ -404,73 +357,58 @@ function whenDone(datad) {
 
     var dataTable = [ ];
 
-    function updateData(d) {
-	var leastBP0 = 101;
-	var leastBP1 = 101;
-	var leastBP2 = 101;
-	var leastRank = generateRank(leastBP0,leastBP1,leastBP2);
-	for (var o in d.otherRepos) {
-	    if (d.otherRepos[o].onap_rank < leastRank) {
-		leastRank = d.otherRepos[o].onap_rank;
-		leastBP0 = d.otherRepos[o].badge_percentage_0;
-		leastBP1 = d.otherRepos[o].badge_percentage_1;
-		leastBP2 = d.otherRepos[o].badge_percentage_2;
-	    }
-	}
-	d.onap_rank = leastRank;
-	d.badge_percentage_0 = leastBP0;
-	d.badge_percentage_1 = leastBP1;
-	d.badge_percentage_2 = leastBP2;
-    }
-
     // Move the additional repo information for a project into an element called otherRepos.
     // At the end of this, all data is in dataTable instead of datad.
     var prevProject = "";
     for (var k in datad) {
-	datad[k].onap_rank = generateRank(datad[k].badge_percentage_0, datad[k].badge_percentage_1, datad[k].badge_percentage_2);
 	if (datad[k].onap_project == prevProject) {
-	    // We have a project the same as the previous one.
-	    // Rearrange the previous one 
-	    var dl1 = dataTable.length-1;
-	    if (dataTable[dl1].otherRepos.length == 0) {
-		var sv = dataTable[dl1];
-		dataTable[dl1] = genData(sv.onap_project, "Lowest Score", 0, 0, 0);
-		dataTable[dl1].otherRepos.push(sv);
-	    }
-	    dataTable[dl1].otherRepos.push(datad[k]);
-	    updateData(dataTable[dl1]);
+	    dataTable[dataTable.length-1].otherRepos.push(datad[k]);
 	} else {
 	    datad[k].otherRepos = [];
-	    dataTable.push(datad[k]);
+	    dataTable.push(datad[k])
 	}
 	prevProject = datad[k].onap_project;
     }
-
     // For each element in dataTable:
     //   1) add the onap_badge element
     //   2) add the onap_rank, based on the badge percentages
     //   3) TODO: if there is more than one repo involved, set a composite score to the lowest of the repos.
     $(dataTable).each(function(index, element) {
 	    element.onap_badge = element.id;
+	    element.onap_rank = element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
 	    if (allOnapProjects[currentRelease].hasOwnProperty(element.onap_project_short))
 		allOnapProjects[currentRelease][element.onap_project_short].seen = "y";
 	});
 
     for (var project in allOnapProjects[currentRelease]) {
 	var element = allOnapProjects[currentRelease][project];
-	if ((element.seen == "n") && (!element.skip && !parms.get("skipnotstarted", false))) {
-	    dataTable.push(genData(project, project, 0, 0, 0));
+	if ((element.seen == "n") && !element.skip) {
+	    // console.log("unseen project=" + project);
+	    dataTable.push({
+		    "repo_url": goodRepoUrlPrefix + project,
+			"onap_project": project,
+			"onap_project_short": project,
+			"name": project, 
+			"id": -1,
+			"onap_badge": -1,
+			"onap_rank": 0,
+			"badge_percentage_0": 0,
+			"badge_percentage_1": 0,
+			"badge_percentage_2": 0 
+			});
+
 	}
     }
+		
 
     // now that we have a ranking, add the rank order
     addRankOrder(dataTable);
 
+    // console.log("dataTable=",dataTable);
     var datatableButtons = [ "pageLength" ];
 
     $('#tr').DataTable({
 	    "data": dataTable,
-		// "aaSorting": [[ 0, "asc" ]],
 		"paging": true,
 		"pagingType": "full_numbers",
 		"pageLength": parseInt(parms.get("pagelength", "30")),
@@ -484,9 +422,7 @@ function whenDone(datad) {
 		"autoWidth": false,
 		"buttons": datatableButtons,
 		"columns": [
-			    { "data": "onap_rank_order", className: "textright",
-				    "render": function (data, type, row, meta) { return meta.row + meta.settings._iDisplayStart + 1; }
-			    },
+			    { "data": "onap_rank_order", className: "textright" },
 			    { "data": "onap_project", "render": function ( data, type, row, meta ) { return getProject(data, type, row); } },
 			    { "data": "name", "render": function ( data, type, row, meta ) { return getAllNames(data, type, row); } },
 			    { "data": "onap_badge", "render": function ( data, type, row, meta ) { return getAllBadges(data, type, row); } },
@@ -497,17 +433,10 @@ function whenDone(datad) {
 		});
 
     $('#watermark').hide();
-    if (parms.get("skipnotstarted", false)) $('#keepnotstarted').show();
-    else $('#skipnotstarted').show();
 
     var passingCount = 0; var silverCount = 0; var goldCount = 0;
     var nonPassingCount = 0; var nonSilverCount = 0; var nonGoldCount = 0;
     var passing80Count = 0; var silver80Count = 0; var gold80Count = 0;
-    var totalCount = dataTable.length;
-
-    var passingMinusCount = 0; var silverMinusCount = 0; var goldMinusCount = 0;
-    var nonPassingMinusCount = 0; var nonSilverMinusCount = 0; var nonGoldMinusCount = 0;
-    var passing80MinusCount = 0; var silver80MinusCount = 0; var gold80MinusCount = 0;
     var totalCount = dataTable.length;
 
     $(dataTable).each(function(index, element) {
@@ -517,13 +446,6 @@ function whenDone(datad) {
 	    else { nonSilverCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) { silver80Count++; } }
 	    if (element.badge_percentage_2 == 100) goldCount++;
 	    else { nonGoldCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) { gold80Count++; } }
-	    // level 1-, 2-, 3-
-	    if (element.badge_percentage_0 >= 95) passingMinusCount++;
-	    else { nonPassingMinusCount++; if (element.badge_percentage_0 >= 80) { passing80MinusCount++; } }
-	    if (element.badge_percentage_1 >= 95) silverMinusCount++;
-	    else { nonSilverMinusCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) { silver80MinusCount++; } }
-	    if (element.badge_percentage_2 >= 95) goldMinusCount++;
-	    else { nonGoldMinusCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) { gold80MinusCount++; } }
 	});
 
     var passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
@@ -531,123 +453,55 @@ function whenDone(datad) {
     var silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
     var gold80Percentage = (nonGoldCount > 0) ? (100 * gold80Count / nonGoldCount) : 0;
 
-    var passing80MinusPercentage = (nonPassingMinusCount > 0) ? (100 * passing80MinusCount / nonPassingMinusCount) : 0;
-    var passing80MinusNeeded = (nonPassingMinusCount > 0) ? Math.ceil(0.80 * nonPassingMinusCount) : 0;
-    var silver80MinusPercentage = (nonSilverMinusCount > 0) ? (100 * silver80MinusCount / nonSilverMinusCount) : 0;
-    var gold80MinusPercentage = (nonGoldMinusCount > 0) ? (100 * gold80MinusCount / nonGoldMinusCount) : 0;
-
     $('#non-passing-level-1').html(passing80Percentage.toFixed(2));
     $('#non-passing-level-2').html(silver80Percentage.toFixed(2));
     $('#non-passing-level-3').html(gold80Percentage.toFixed(2));
-
-    $('#non-passing-level-minus-1').html(passing80MinusPercentage.toFixed(2));
-    $('#non-passing-level-minus-2').html(silver80MinusPercentage.toFixed(2));
-    $('#non-passing-level-minus-3').html(gold80MinusPercentage.toFixed(2));
 
     var passingPercentage = (100 * passingCount / totalCount);
     var passingNeeded = Math.ceil(0.70 * totalCount);
     var silverPercentage = (100 * silverCount / totalCount);
     var goldPercentage = (100 * goldCount / totalCount);
-
-    var passingMinusPercentage = (100 * passingMinusCount / totalCount);
-    var passingMinusNeeded = Math.ceil(0.70 * totalCount);
-    var silverMinusPercentage = (100 * silverMinusCount / totalCount);
-    var goldMinusPercentage = (100 * goldMinusCount / totalCount);
-
     var color = getColor(passingPercentage, silverPercentage, goldPercentage);
+
+    $('#tr2').append(
+		     "<tr>" +
+		     "<th>Projects &ge;80%/&lt;100%</th>" +
+		     "<td class='textright'>" +
+		     "<table class='noborder right'><tr><td class='noborder'>" +
+		     passing80Count +
+		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
+		     "&nbsp;&ndash;&nbsp;" + passingCount + 
+		     "&nbsp;)&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "% " +
+ 		     "<br/>" +
+		     "(" + passing80Needed + " needed)" +
+		     "</td><td class='noborder'>" +
+		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
+		      ((passing80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
+		     "</td></tr></table>" +
+		     "</td>" +
+		     "<td class='textright'>" + silver80Count + "&nbsp;/&nbsp;" + nonSilverCount +
+		     "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%" +
+		     ((color == silver) ? "<img src='checkmark.png'/>" :
+		      (color == green) ? ((silver80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
+		     "</td>" +
+		     "<td class='textright'>" + gold80Count + "&nbsp;/&nbsp;" + nonGoldCount +
+		     "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%" +
+		     ((color == gold) ? "<img src='checkmark.png'/>" :
+		      (color == silver) ? ((gold80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      "") +
+		     "</td>" +
+		     "</tr>"
+		     );
 
     $('#passing-level-1').html(passingPercentage.toFixed(2));
     $('#passing-level-2').html(silverPercentage.toFixed(2));
     $('#passing-level-3').html(goldPercentage.toFixed(2));
 
-    $('#passing-level-minus-1').html(passingMinusPercentage.toFixed(2));
-    $('#passing-level-minus-2').html(silverMinusPercentage.toFixed(2));
-    $('#passing-level-minus-3').html(goldMinusPercentage.toFixed(2));
-
-    var showOneMinus = 1; // parms.get("showminus", false);
-
-    var level = "0";
-    if (showOneMinus) if ((passingMinusPercentage >= 70) && ((nonPassingMinusCount == 0) || (passing80MinusPercentage >= 80))) { level = "1-minus"; }
-    if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) { level = "1"; }
-    if (showOneMinus) if ((silverMinusPercentage >= 70) && ((nonSilverMinusCount == 0) || (silver80MinusPercentage >= 80))) { level = "2-minus"; }
-    if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) { level = "2"; }
-    if (showOneMinus) if ((goldMinusPercentage >= 70) && ((nonGoldMinusCount == 0) || (gold80MinusPercentage >= 80))) { level = "3-minus"; }
-    if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) { level = "3"; }
+    var level = 0;
+    if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) { level = 1; }
+    if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) { level = 2; }
+    if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) { level = 3; }
     if (goldPercentage == 100) { level = 4; }
-
-    $('#tr2').append(
-		     "<thead><tr>" +
-		     "<th>&nbsp;</th>" +
-		     "<th>Passing</th>" +
-		     "<th>Silver</th>" +
-		     "<th>Gold</th>" +
-		     "</tr></thead>"
-		     );
-
-    if (showOneMinus) 
-	$('#level1minus').show();
-
-    if (showOneMinus) 
-	$('#tr2').append(
-		     "<tr>" +
-		     "<th class='minus'>Projects &ge; 95%</th>" +
-		     "<td class='minus textright'>" + 
-		     "<table class='noborder right'><tr><td class='noborder'>" +
-		     passingMinusCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + passingMinusPercentage.toFixed(2) + "% " +
- 		     "<br/>" +
-		     "(" + passingMinusNeeded + " needed for 70%)" +
-		     "</td><td class='noborder'>" +
-		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
-		      ((passingMinusPercentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
-		     "</td></tr></table>" +
-		     "</td>" +
-		     "<td class='minus textright'>" + silverMinusCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + silverMinusPercentage.toFixed(2) + "% " +
-		     ((color == silver) ? "<img src='checkmark.png'/>" :
-		      (color == green) ? ((silverMinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
-		     "</td>" +
-		     "<td class='minus textright'>" + goldMinusCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + goldMinusPercentage.toFixed(2) + "% " +
-		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((goldMinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
-		      "") +
-		     "</td>" + "</tr>"
-		     );
-
-    if (showOneMinus) 
-        $('#tr2').append(
-		     "<tr>" +
-		     "<th class='minus'>Projects &ge;80%/&lt;95%</th>" +
-		     "<td class='minus textright'>" +
-		     "<table class='noborder right'><tr><td class='noborder'>" +
-		     passing80MinusCount +
-		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
-		     "&nbsp;&ndash;&nbsp;" + passingMinusCount + 
-		     "&nbsp;)&nbsp;=&nbsp;" + passing80MinusPercentage.toFixed(2) + "% " +
- 		     "<br/>" +
-		     "(" + passing80MinusNeeded + "/" + (totalCount - passingMinusCount) + " needed for 80%)" +
-		     "</td><td class='noborder'>" +
-		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
-		      ((passing80MinusPercentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
-		     "</td></tr></table>" +
-		     "</td>" +
-		     "<td class='minus textright'>" + silver80MinusCount + "&nbsp;/&nbsp;" + nonSilverMinusCount +
-		     "&nbsp;=&nbsp;" + silver80MinusPercentage.toFixed(2) + "%" +
-		     ((color == silver) ? "<img src='checkmark.png'/>" :
-		      (color == green) ? ((silver80MinusPercentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
-		     "</td>" +
-		     "<td class='minus textright'>" + gold80MinusCount + "&nbsp;/&nbsp;" + nonGoldMinusCount +
-		     "&nbsp;=&nbsp;" + gold80MinusPercentage.toFixed(2) + "%" +
-		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((gold80MinusPercentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
-		      "") +
-		     "</td>" +
-		     "</tr>"
-		     );
 
     $('#tr2').append(
 		     "<tr>" +
@@ -658,7 +512,7 @@ function whenDone(datad) {
 		     "&nbsp;/&nbsp;" + totalCount +
 		     "&nbsp;=&nbsp;" + passingPercentage.toFixed(2) + "% " +
  		     "<br/>" +
-		     "(" + passingNeeded + " needed for 70%)" +
+		     "(" + passingNeeded + " needed)" +
 		     "</td><td class='noborder'>" +
 		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
 		      ((passingPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
@@ -677,36 +531,6 @@ function whenDone(datad) {
 		      (color == silver) ? ((goldPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
 		      "") +
 		     "</td>" + "</tr>"
-		     );
-
-    $('#tr2').append(
-		     "<tr>" +
-		     "<th>Projects &ge;80%/&lt;100%</th>" +
-		     "<td class='textright'>" +
-		     "<table class='noborder right'><tr><td class='noborder'>" +
-		     passing80Count +
-		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
-		     "&nbsp;&ndash;&nbsp;" + passingCount + 
-		     "&nbsp;)&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "% " +
- 		     "<br/>" +
-		     "(" + passing80Needed + "/" + (totalCount - passingCount) + " needed for 80%)" +
-		     "</td><td class='noborder'>" +
-		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
-		      ((passing80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
-		     "</td></tr></table>" +
-		     "</td>" +
-		     "<td class='textright'>" + silver80Count + "&nbsp;/&nbsp;" + nonSilverCount +
-		     "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%" +
-		     ((color == silver) ? "<img src='checkmark.png'/>" :
-		      (color == green) ? ((silver80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
-		     "</td>" +
-		     "<td class='textright'>" + gold80Count + "&nbsp;/&nbsp;" + nonGoldCount +
-		     "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%" +
-		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((gold80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
-		      "") +
-		     "</td>" +
-		     "</tr>"
 		     );
 
     var textcolor = (color == gold) ? black : (color == silver) ? black : white;

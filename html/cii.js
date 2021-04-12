@@ -11,6 +11,7 @@ var requiredNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var optionalNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 
 var repoUrlPrefixes = [
+		       "https://gerrit.onap.org/r/admin/repos/q/filter:",
 		       "https://gerrit.onap.org/r/#/admin/projects/",
 		       "https://gerrit.onap.org/r/p/",
 		       "https://gerrit.onap.org/r/",
@@ -44,9 +45,7 @@ var colors = [
 	      ];
 
 function getColor(passingPercentage, silverPercentage, goldPercentage) {
-    // console.log("passingPercentage=" + passingPercentage + ", silverPercentage=" + silverPercentage + ", goldPercentage=" + goldPercentage);
     var color = colors[parseInt(passingPercentage / 10, 10)];
-    // console.log("color=" + color);
     if (passingPercentage == 100 && silverPercentage == 100) {
 	if (goldPercentage == 100) { color = gold; }
 	else { color = silver; }
@@ -539,7 +538,8 @@ function fillInEditorNames(datad, editorNames, editorList, j) {
 		else fillInEditorNames(datad, editorNames, editorList, j+1);
 	    },
 		error: function(request,error, thrownError) {
-		alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+		console.log("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+		whenDone(datad, editorNames);
 	    }
 	});
 }
@@ -606,7 +606,8 @@ function getNextUrl(datad, editorNames, pagelist, j) {
 		}
 	    },
 		error: function(request,error, thrownError) {
-		alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+		console.log("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+		fillInEditorNames(datad, editorNames, getEditorList(datad, editorNames), 0);
 	    }
 	});
 }
@@ -852,7 +853,8 @@ function sortColoredColumns(level, newSortBy) {
 
 function startSortChange(nm) {
     
-    watermark("Sorting<br/>" + nm.replace(/^by_name$/, "BBBB").replace(/_name$/, "").replace(/[_]/g, " ").replace(/BBBB/, "by name"));
+    watermark("Sorting<br/>" + nm.replace(/^by_name$/, "BBBB").replace(/_name$/, "").
+	      replace(/[_]/g, " ").replace(/BBBB/, "by name").replace(/^by /, ""));
 }
 
 function resort(newSortBy) {
@@ -1294,7 +1296,6 @@ function whenDone(datad, editorNames) {
 	else
 	    editorDict[editorNames[k].id] = "unknown";
     }
-    // console.log("editorDict=", editorDict);
 
     addReleasesAndBadgingLevelsToTable();
     for (var k in datad) {
@@ -1442,16 +1443,14 @@ function whenDone(datad, editorNames) {
     $(".silver_toggle").click(function(){ $(".silver_span").each(flipThisVisibility); });
     $(".gold_toggle").click(function(){ $(".gold_span").each(flipThisVisibility); });
     $(".releasestats_toggle").click(function(){ $(".releasestats_span").each(flipThisVisibility); });
-    // $(".editors_toggle").click(function(){ $(".editors_span").each(flipThisVisibility); });
+
     $(".bronze_detail_toggle").click(function(){ $(".bronze_detail_span").each(flipThisVisibility); });
     $(".silver_detail_toggle").click(function(){ $(".silver_detail_span").each(flipThisVisibility); });
     $(".gold_detail_toggle").click(function(){ $(".gold_detail_span").each(flipThisVisibility); });
-    // $(".editors_detail_toggle").click(function(){ $(".editors_detail_span").each(flipThisVisibility); });
+
     $(".bronze_detail_display_all").click(function(){ $(".bronze_detail_span").each(makeVisible); });
     $(".bronze_detail_display_none").click(function(){ $(".bronze_detail_span").each(makeInvisible); });
-    // $(".editors_detail_display_none").click(function(){ $(".editors_detail_span").each(makeInvisible); });
-    // $(".editors_detail_display_all").click(function(){ $(".editors_detail_span").each(makeVisible); });
-    //    $('_toggle').each(function(){ console.log("found " + $(this).attr('id')); });
+
     $(".bronze_show_metstats_toggle").click(function(){ $(".bronze_show_metstats_detail_span").each(flipThisVisibility); });
     $(".silver_show_metstats_toggle").click(function(){ $(".silver_show_metstats_detail_span").each(flipThisVisibility); });
     $(".gold_show_metstats_toggle").click(function(){ $(".gold_show_metstats_detail_span").each(flipThisVisibility); });

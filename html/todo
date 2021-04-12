@@ -3,13 +3,17 @@ add all blocks on / all blocks off
 
 allow query parameters on #
 change # on option changes, particularly sorting
+as sections close/open, adjust # anchor
 
 
-add loading message when changing sort algorithms
 
 add to datacheck:
 cii-historical?
 current release?
 
 
+DONE add loading message when changing sort algorithms
 DONE sort by onapwide + type
+
+
+

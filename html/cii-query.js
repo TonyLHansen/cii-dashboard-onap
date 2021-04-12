@@ -1,7 +1,20 @@
 class Query {
     constructor() {
+	console.log("window.location=", window.location);
         var query = window.location.search.substring(1);
         this.parms = query.split('&');
+	var hashquery = window.location.hash.match(/&.*/);
+	if (hashquery != "") {
+	//	window.location.hash += ",foo";
+	    console.log("query=", query, "hashquery=", hashquery);
+	    query += hashquery;
+	    console.log("query=>", query);
+	    console.log("window.location.hash was " + window.location.hash)
+	    window.location.hash = window.location.hash.replace(/&.*/, "");
+	    console.log("window.location.hash=>" + window.location.hash)
+	}
+
+	console.log("window.location=", window.location);
     };
 
     // Return the value of a parameter. Only return the first such parameter's value that is found.
@@ -13,6 +26,19 @@ class Query {
             if ((pos > 0) && (nm == this.parms[i].substring(0, pos))) {
                 var val = decodeURIComponent(this.parms[i].substring(pos + 1).replace("+"," "));
                 return val;
+            }
+        }
+        return def;
+    } 
+
+    // Return the last value of a parameter.
+    // If that parameter does not exist, return the value of "def".
+    get(nm, def) {
+        if (def == null) def = "";
+        for (var i = 0; i < this.parms.length; i++) { 
+            var pos = this.parms[i].indexOf('=');
+            if ((pos > 0) && (nm == this.parms[i].substring(0, pos))) {
+                def = decodeURIComponent(this.parms[i].substring(pos + 1).replace("+"," "));
             }
         }
         return def;

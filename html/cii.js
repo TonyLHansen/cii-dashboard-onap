@@ -277,7 +277,55 @@ function pushData(whereTo, whereFrom) {
     });
 }
 
-function getNextUrl(datad, pagelist, j) {
+function fillInEditorNames(datad, editorNames, editorList, j) {
+    // var URL = BASESITE + "en/users/";
+    var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
+    var URLsuffix = "";
+    var editor = editorList[j];
+    // $('#watermarkPage').html("editor " + editor);
+    $('#watermarkPage').html("editors " + (j % 2 ? "." : "..") );
+    // console.log("j=", j);
+    // console.log("url=", URL);
+    // console.log("editor=", editor);
+    var lastOne = j >= (editorList.length-1);
+    // console.log("lastOne=", lastOne);
+
+    $.ajax({
+	    type: "GET",
+		url: URL + editor + ".json",
+		data: { "format": "json" },
+		success: function(json) {
+		    // console.log("ret=", json);
+		    if (typeof json == "string") pushData(editorNames, JSON.parse(json));
+		    else pushData(editorNames, json);
+		    if (json == '') whenDone(datad, editorNames);
+		    else if (lastOne) whenDone(datad, editorNames);
+		    else fillInEditorNames(datad, editorNames, editorList, j+1);
+	        },
+		error: function(request,error, thrownError) {
+		    alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+	        }
+	});
+}
+
+function getEditorList(datad) {
+    var editorDict = {};
+    for (var k in datad) {
+	editorDict[datad[k].user_id] = 1;
+	for (var ar in datad[k].additional_rights) {
+	    editorDict[datad[k].additional_rights[ar]] = 1;
+	}
+    }
+    // console.log("editorDict=", editorDict);
+    var keys = [];
+    for (var k in editorDict) {
+	keys.push(k);
+    }
+    // console.log("editor keys=", keys);
+    return keys;
+}
+
+function getNextUrl(datad, editorNames, pagelist, j) {
     var lastOne = j == pagelist.length-1;
     var p = pagelist[j];
     var URL = BASEURL;
@@ -296,9 +344,9 @@ function getNextUrl(datad, pagelist, j) {
 		if (typeof json == "string") pushData(datad, JSON.parse(json));
 		else pushData(datad, json);
 		// debuglog("got pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
-		if (json == '') whenDone(datad);
-		else if (lastOne) whenDone(datad);
-		else getNextUrl(datad, pagelist, j+1);
+		if (json == '') fillInEditorNames(datad, editorNames, getEditorList(datad), 0);
+		else if (lastOne) fillInEditorNames(datad, editorNames, getEditorList(datad), 0);
+		else getNextUrl(datad, editorNames, pagelist, j+1);
 	    },
 		error: function(request,error, thrownError) {
 		alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
@@ -441,9 +489,9 @@ function genData(project, name, bp0, bp1, bp2) {
 	    };
 }
 
-function checkEditor(data) {
-    console.log("data=" + data);
-    console.log("typeof data=" + typeof data);
+function prEditor(data, editorDict) {
+    // console.log("data=" + data);
+    // console.log("typeof data=" + typeof data);
     var editors = data.toString().split(",");
     var JimBaker = "3607";
     var hasJimBaker = editors.indexOf(JimBaker) > -1;
@@ -452,14 +500,16 @@ function checkEditor(data) {
     var editorsOut = "";
     var sep = "";
     for (var e in editors) {
-	editorsOut += sep + "<a href='" + BASESITE + "en/users/" + editors[e] + "'>" + editors[e] + "</a>";
-	sep = " ";
+	var editor = editors[e];
+	var nm = editorDict[editor] ? editorDict[editor] : "Unk";
+	editorsOut += sep + "<a href='" + BASESITE + "en/users/" + editor + "' title='" + nm.replace(/['']/g, "&quot;") + "'>" + nm + "</a>";
+	sep = "<br/>";
     }
     var ret = "<span class='xxsmall " + cl + "'>" + editorsOut + "</button>";
     return ret;
 }
 
-function addToMustTable(datad, tablename, level, levelcapname, percent) {
+function addToMustTable(datad, tablename, level, levelcapname, percent, editorDict) {
     var trdataHeaders = "<tr>" +
 	// "<th>Project<br/>Prefix</th>" +
 	"<th>Name</th>" +
@@ -526,7 +576,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 	    }
 	});
     columns.push({ "data": "editors", "render": function ( data, type, row, meta ) {
-		return "<span class='size__" + row['id'] + "'>" + checkEditor(data) + "</span>";
+		return "<span class='size__" + row['id'] + "'>" + prEditor(data, editorDict) + "</span>";
 	    }
 	});
 
@@ -609,7 +659,19 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 		});
 }
 
-function whenDone(datad) {
+function whenDone(datad, editorNames) {
+    // console.log("editorNames=", editorNames);
+    var editorDict = { };
+    for (var k in editorNames) {
+	if (editorNames[k].name && editorNames[k].name != '')
+	    editorDict[editorNames[k].id] = editorNames[k].name;
+	else if (editorNames[k].nickname && editorNames[k].nickname != '')
+	    editorDict[editorNames[k].id] = editorNames[k].nickname;
+	else
+	    editorDict[editorNames[k].id] = "unknown";
+    }
+    // console.log("editorDict=", editorDict);
+
     addReleasesAndBadgingLevelsToTable();
     for (var k in datad) {
 	var projectAndRepos = determineProjectAndRepoNames(datad[k].repo_url);
@@ -729,9 +791,9 @@ function whenDone(datad) {
 		});
 
 
-    addToMustTable(datad, 'trbronze', 'bronze', 'Passing', '0');
-    addToMustTable(datad, 'trsilver', 'silver', 'Silver', '1');
-    addToMustTable(datad, 'trgold', 'gold', 'Gold', '2');
+    addToMustTable(datad, 'trbronze', 'bronze', 'Passing', '0', editorDict);
+    addToMustTable(datad, 'trsilver', 'silver', 'Silver', '1', editorDict);
+    addToMustTable(datad, 'trgold', 'gold', 'Gold', '2', editorDict);
 
     $(".requirements_toggle").click(function(){ $(".requirements_span").each(flipThisVisibility); });
     $(".summary_toggle").click(function(){ $(".summary_span").each(flipThisVisibility); });
@@ -981,6 +1043,7 @@ function whenDone(datad) {
 $(document).ready(function() {
 	var pagelist = genPageList(parms.get("page", '1-9'));
 	var datad = [];
-	getNextUrl(datad, pagelist, 0);
+	var editorNames = [];
+	getNextUrl(datad, editorNames, pagelist, 0);
 	
 }); // end of document.ready()

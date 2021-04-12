@@ -1,7 +1,8 @@
 "use strict";
 console.clear();
-// var BASESITE = "https://master.bestpractices.coreinfrastructure.org/";
+var BETABASESITE = "https://master.bestpractices.coreinfrastructure.org/";
 var BASESITE = "https://bestpractices.coreinfrastructure.org/";
+// var BASESITE = BETABASESITE;
 var BASEURL = BASESITE + "projects.json";
 var Q = "onap";
 var repoUrlPrefixes = [
@@ -280,6 +281,7 @@ function pushData(whereTo, whereFrom) {
 function fillInEditorNames(datad, editorNames, editorList, j) {
     // var URL = BASESITE + "en/users/";
     var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
+    // var URL = BETABASESITE + "en/users/";
     var URLsuffix = "";
     var editor = editorList[j];
     // $('#watermarkPage').html("editor " + editor);
@@ -552,6 +554,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	    "</th>";
     }
 
+    trdataHeaders += "<th>Name</th>";
     trdataHeaders += "</tr>";
     $('#' + tablename).append("<thead>" + trdataHeaders + "</thead>" +
 			      "<tfoot>" + trdataHeaders + "</tfoot>");
@@ -592,13 +595,19 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			var optionalClass = optionalFields[fieldName] ? "optional" : "";
 			var classVal = /* optionalClass + */'na';
 			var projectLevelClass = (fieldName in ONAPprojectCommonResponse) ? "projectLevel" : "";
-			if (data.toLowerCase() == "met") classVal = /* optionalClass + */'met';
-			else if (data.toLowerCase() == "unmet") classVal = /* optionalClass + */'unmet';
-			else if (data.toLowerCase() == "?") classVal = /* optionalClass + */'question';
-			// console.log("optionalClass=" + optionalClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
-			// console.log("fieldname=" + fieldName + ", statusname=" + statusName + ", row[id]=" + row['id'] + ", optionalClass=" + optionalClass + ", projectlevelclass=" + projectLevelClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
-			var dataTitle = badgeDescriptions[level][statusName];
 			var justificationName = fieldName + "_justification";
+			console.log("row[" + justificationName + "]=" + row[justificationName]);
+			var urlRequired = badgeDescriptions[level][fieldName].indexOf("(URL required)") >= 0;
+			var hasUrl = (justificationName in row) && row[justificationName] && ((row[justificationName].indexOf("https://") > -1) || (row[justificationName].indexOf("http://") > -1));
+			if (data.toLowerCase() == "met") {
+			    if (urlRequired && hasUrl) classVal = 'met';
+			    else if (!urlRequired) classVal = 'met';
+			    else classVal = 'needsUrl';
+			} else if (data.toLowerCase() == "unmet") classVal = 'unmet';
+			else if (data.toLowerCase() == "?") classVal = 'question';
+			// console.log("optionalClass=" + optionalClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
+			console.log("fieldname=" + fieldName + ", statusname=" + statusName + ", row[id]=" + row['id'] + ", optionalClass=" + optionalClass + ", projectlevelclass=" + projectLevelClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal, ", urlRequired=" + urlRequired);
+			var dataTitle = badgeDescriptions[level][statusName];
 			var justification = row[justificationName];
 			var detailIdButton = "button__" + statusName + "__" + row['id'];
 			var detailClass = "detail__" + statusName + "__" + row['id'];
@@ -614,14 +623,26 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			var statusbr = "";
 			statusbr += (fieldName in row) ? (row[fieldName] + "<br/>") : "<br/>"; // ".(fieldname).<br/>";
 			statusbr += (justificationName in row) ? ((row[justificationName]) ? (row[justificationName] + "<br/>") : "<br/>") : "<br/>"; // ".(justifictionname).<br/>";
-			ret += "\" onclick='flipVisibility(\"#" + detailIdSpan + "\")'";
-			ret += ">" + data + "</button>";
+			ret += "\" onclick='flipVisibility(\"#" + detailIdSpan + "\")'>";
+			if (classVal == "needsUrl")
+			    ret += "Needs URL";
+			else
+			    ret += data;
+			ret += "</button>";
 			// ret += "detailIdButton=" + detailIdButton + ", detailClass=" + detailClass;
 			ret += "<span id='" + detailIdSpan + "' class='" + level + "_detail_span" + " " + detailClass + "'><br/><br/>" + statusbr + "</span>" + "</div>";
 			return ret;
 		    }
 	    });
     }
+    columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
+		return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
+		    "onclick='resize(" + row['id'] + ")'" +
+		    "/></span><span class='size__" + row['id'] + 
+		    "'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
+		    row['id'] + "'>" + data + "</a></span>";
+	    }
+	});
 
     var datatableButtons = [ "pageLength" ];
 

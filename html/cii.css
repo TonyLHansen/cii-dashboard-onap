@@ -79,6 +79,9 @@ td.stats {
 .unmet {
     background-color: pink;
 }
+.needsUrl, .optional > .needsUrl {
+    background-color: orange;
+}
 button.projectLevel {
     border-radius: 30px;
     border-color: gold;
@@ -121,6 +124,10 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
 
 .permalink {
       display: none;
+}
+
+.permalink a {
+    text-decoration: none;
 }
 
 .showpermalink:hover .permalink {

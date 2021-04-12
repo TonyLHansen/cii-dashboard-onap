@@ -183,6 +183,9 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
 .alternateColor_by_section_name, .alternateColor_by_section_type_name {
     background-color: #cba4ff;
 }
+.alternateColor_by_ordinal_name, .alternateColor_by_ordinal_type_name {
+    background-color: #ffcba4;
+}
 .alternateColor_by_type_name, .alternateColor_by_type_section_name {
     background-color: #a4ffcb;
 }

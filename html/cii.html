@@ -4,45 +4,31 @@
 <meta content='text/html;charset=utf-8' http-equiv='Content-Type'>
 <meta content='utf-8' http-equiv='encoding'>
 <title>ONAP Project Core Infrastructure Initiative (CII) Badging Status Dashboard</title>
-<!-- script type="text/javascript" language="javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script -->
-<script type="text/javascript" language="javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.js'></script>
-<script type="text/javascript" language="javascript" src='https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js'></script>
-<!-- script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.10.20/js/dataTables.buttons.min.js"></script -->
+<!-- see https://developers.google.com/speed/libraries#jquery for the jquery version numbers -->
+<script type="text/javascript" language="javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+<!-- see https://cdn.datatables.net/ for the version of each dataTables option -->
 
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.colVis.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.print.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/colreorder/1.5.2/js/dataTables.colReorder.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.6/js/dataTables.fixedHeader.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
-
-<!--
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.10.20/js/dataTables.buttons.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.print.min.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.colVis.min.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/responsive/2.2.1/js/dataTables.responsive.min.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.10.20/js/dataTables.colreorder.js"></script>
-<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
--->
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.5/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.colVis.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.print.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/colreorder/1.5.3/js/dataTables.colReorder.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.7/js/dataTables.fixedHeader.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.7/js/dataTables.responsive.min.js"></script>
 
 <script src='cii-query.js'></script>
 <script src='cii-historical-info.js'></script>
 <script src='cii-descriptions.js'></script>
 <script src='cii-knowneditors.js'></script>
-<link rel="shortcut icon" type="image/x-icon" href="images/onap-logo.ico">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/colreorder/1.5.2/css/colReorder.dataTables.min.css"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.6/css/fixedHeader.dataTables.min.css"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css"/>
 
-<!--
-<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css'/>
-<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/buttons/1.10.20/css/buttons.dataTables.min.css'/>
-<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/responsive/2.2.1/css/responsive.dataTables.min.css'/>
-<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js'/>
--->
+
+<link rel="shortcut icon" type="image/x-icon" href="images/onap-logo.ico">
+<!-- the versions used here should match those used above -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.5/css/buttons.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/colreorder/1.5.3/css/colReorder.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.1.7/css/fixedHeader.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.7/css/responsive.dataTables.min.css"/>
 
 <link type='text/css' rel='stylesheet' href='cii.css'/>
 </head>
@@ -62,7 +48,7 @@
     <option value="releasestats">Releases</option>
   </select>
 </form></div>
-<h1>ONAP Project Core Infrastructure Initiative (<a id='top' href='https://bestpractices.coreinfrastructure.org/'>CII</a>) <a href='https://wiki.onap.org/display/DW/CII+Badging+Program'>Badging Status</a> Dashboard</h1>
+<h1>ONAP Project Core Infrastructure Initiative (<a id='top' target='_blank' href='https://bestpractices.coreinfrastructure.org/'>CII</a>) <a target='_blank' href='https://wiki.onap.org/display/DW/CII+Badging+Program'>Badging Status</a> Dashboard</h1>
 
 <span id='working'></span>
 <h3 class='showpermalink'><a id='requirements'><a href='https://wiki.onap.org'>ONAP</a></a> Platform-level <a href='https://wiki.onap.org/pages/viewpage.action?pageId=15998867'>Requirements</a> <img style='display: none' class='requirements_toggle requirements_span' src='images/plus-9x9.png'/><img class='requirements_toggle requirements_span' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#requirements" title="Permalink to this item">&#x1f517;</a></span></h3>
@@ -106,14 +92,23 @@
 Sort by
 <span class='outline'>Name
 <input type='radio' name='sortby' value='by_name' id='sort_by_name' class='sort_by_name' checked='checked'/></span>&nbsp;
+
 <span class='outline'><span class='alternateColor_by_section_name'>Section</span>
 <input type='radio' name='sortby' value='by_section_name' id='sort_by_section_name' class='sort_by_section_name'/></span>&nbsp;
 <span class='outline'><span class='alternateColor_by_section_name'>Section+Type</span>
 <input type='radio' name='sortby' value='by_section_type_name' id='sort_by_section_type_name' class='sort_by_section_type_name'/></span>&nbsp;
+
 <span class='outline'><span class='alternateColor_by_type_name'>Type</span>
 <input type='radio' name='sortby' value='by_type_name' id='sort_by_type_name' class='sort_by_type_name'/></span>&nbsp;
 <span class='outline'><span class='alternateColor_by_type_name'>Type+Section</span>
-<input type='radio' name='sortby' value='by_type_section_name' id='sort_by_type_section_name' class='sort_by_type_section_name'/></span>&nbsp;
+<input type='radio' name='sortby' value='by_type_section_name' id='sort_by_type_section_name' class='sort_by_type_section_name'/></span>
+<br/><br/>
+
+<span class='outline'><span class='alternateColor_by_ordinal_name'>Question Order</span>
+<input type='radio' name='sortby' value='by_ordinal_name' id='sort_by_ordinal_name' class='sort_by_ordinal_name'/></span>&nbsp;
+<span class='outline'><span class='alternateColor_by_ordinal_name'>Question Order+Type</span>
+<input type='radio' name='sortby' value='by_ordinal_type_name' id='sort_by_ordinal_type_name' class='sort_by_ordinal_type_name'/></span>&nbsp;
+
 <span class='outline'><span class='alternateColor_by_onapwide_name'>ONAP-wide</span>
 <input type='radio' name='sortby' value='by_onapwide_name' id='sort_by_onapwide_name' class='sort_by_onapwide_name'/></span>&nbsp;
 <span class='outline'><span class='alternateColor_by_onapwide_name'>ONAP-wide+Section</span>
@@ -208,7 +203,9 @@ Toggle All Details: <img style='display: inline' class='editors_detail_toggle ed
 <br/>
 <span style='font-size: xx-small'><a href='?turnoff=requirements,summary,projects,releasestats'>Only show passing,silver,gold</a>
 <a href='?turnoff=bronze,silver,gold'>Turn off passing,silver,gold'</a>
-<a href='?turnoff=requirements,summary,projects,bronze,silver,gold'>Only show final stats</a></span>
+<a href='?turnoff=requirements,summary,projects,bronze,silver,gold'>Only show final stats</a><br/>
+<!-- <a id='survey_descriptions'>Survey Descriptions</a> -->
+</span>
 <form action="#" onsubmit="return false;" class='right'>
   <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">
     <option>-- jump to --</option>

@@ -90,9 +90,11 @@ var sortBy = "";
 var initSortBy = parms.get("sortby", "by_name").toLowerCase();
 if (!(initSortBy == "by_name" ||
       initSortBy == "by_section_name" ||
-      initSortBy == "by_type_section_name" ||
       initSortBy == "by_section_type_name" ||
+      initSortBy == "by_type_section_name" ||
       initSortBy == "by_type_name" ||
+      initSortBy == "by_ordinal_name" ||
+      initSortBy == "by_ordinal_type_name" ||
       initSortBy == "by_onapwide_name" ||
       initSortBy == "by_onapwide_section_name" ||
       initSortBy == "by_onapwide_type_name")
@@ -521,27 +523,28 @@ function fillInEditorNames(datad, editorNames, editorList, j) {
     // console.log("j=", j);
     // console.log("url=", URL);
     // console.log("editor=", editor);
-    console.log("editorList=", editorList);
+    // console.log("editorList=", editorList);
     var lastOne = j >= (editorList.length-1);
     // console.log("lastOne=", lastOne);
 
     $.ajax({
-	    type: "GET",
-		url: URL + editor + ".json",
-		data: { "format": "json" },
-		success: function(json) {
-		// console.log("ret=", json);
-		if (typeof json == "string") pushData(editorNames, JSON.parse(json));
-		else pushData(editorNames, json);
-		if (json == '') whenDone(datad, editorNames);
-		else if (lastOne) whenDone(datad, editorNames);
-		else fillInEditorNames(datad, editorNames, editorList, j+1);
-	    },
-		error: function(request,error, thrownError) {
-		console.log("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
-		whenDone(datad, editorNames);
-	    }
-	});
+	type: "GET",
+	url: URL + editor + ".json",
+	data: { "format": "json" },
+	success: function(json) {
+	    // console.log("ret=", json);
+	    if (typeof json == "string") pushData(editorNames, JSON.parse(json));
+	    else pushData(editorNames, json);
+	    if (json == '') whenDone(datad, editorNames);
+	    else if (lastOne) whenDone(datad, editorNames);
+	    else fillInEditorNames(datad, editorNames, editorList, j+1);
+	},
+	error: function(request,error, thrownError) {
+	    // alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+	    console.log("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+	    whenDone(datad, editorNames);
+	}
+    });
 }
 
 function getEditorList(datad, editorNames) {
@@ -575,9 +578,9 @@ function getNextUrl(datad, editorNames, pagelist, j) {
 
     $.ajax({
 	    type: "GET",
-		url: URL,
-		data: { "q": Q, "page": p },
-		success: function(json) {
+	    url: URL,
+	    data: { "q": Q, "page": p },
+	    success: function(json) {
 		// alert("json=",json);
 		// console.log("json=", json);
 		// if (typeof json == "string") pushData(historicalReleaseData[currentRelease], JSON.parse(json));
@@ -605,7 +608,8 @@ function getNextUrl(datad, editorNames, pagelist, j) {
 		    getNextUrl(datad, editorNames, pagelist, j+1);
 		}
 	    },
-		error: function(request,error, thrownError) {
+	    error: function(request,error, thrownError) {
+		// alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
 		console.log("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
 		fillInEditorNames(datad, editorNames, getEditorList(datad, editorNames), 0);
 	    }
@@ -796,7 +800,7 @@ function datacheck() {
 		if (ciiName in badgeDescriptions[level2]) {
 		    for (var p in matchedprops) {
 			var prop = matchedprops[p];
-			if (badgeDescriptions[level][ciiName][prop] != 
+			if (badgeDescriptions[level][ciiName][prop] !=
 			    badgeDescriptions[level2][ciiName][prop]) {
 			    ret += ciiName + ": " + prop + " differs " +
 				"- " + level + " " + badgeDescriptions[level][ciiName][prop] +
@@ -820,39 +824,44 @@ function sortColumns(level, newSortBy, anm, bnm) {
     var btype = rf[b]["type"];
     var asection = rf[a]["section"];
     var bsection = rf[b]["section"];
+    var aordinal = rf[a]["ord"];
+    var bordinal = rf[b]["ord"];
     var aonapwide = !rf[a]["onapwide"];
     var bonapwide = !rf[b]["onapwide"];
-    var acmpnm = newSortBy.startsWith("by_section") ? asection : 
-	newSortBy.startsWith("by_type") ? atype : 
-	newSortBy.startsWith("by_onapwide") ? aonapwide : 
+    var acmpnm = newSortBy.startsWith("by_section") ? asection :
+	newSortBy.startsWith("by_type") ? atype :
+	newSortBy.startsWith("by_onapwide") ? aonapwide :
+	newSortBy.startsWith("by_ordinal") ? aordinal :
 	"";
-    var bcmpnm = newSortBy.startsWith("by_section") ? bsection : 
-	newSortBy.startsWith("by_type") ? btype : 
-	newSortBy.startsWith("by_onapwide") ? bonapwide : 
+    var bcmpnm = newSortBy.startsWith("by_section") ? bsection :
+	newSortBy.startsWith("by_type") ? btype :
+	newSortBy.startsWith("by_onapwide") ? bonapwide :
+	newSortBy.startsWith("by_ordinal") ? bordinal :
 	"";
     acmpnm += "_";
     bcmpnm += "_";
-    acmpnm += newSortBy.endsWith("section_name") ? asection : 
+    acmpnm += newSortBy.endsWith("section_name") ? asection :
 	newSortBy.endsWith("type_name") ? atype : "";
-    bcmpnm += newSortBy.endsWith("section_name") ? bsection : 
+    bcmpnm += newSortBy.endsWith("section_name") ? bsection :
 	newSortBy.endsWith("type_name") ? btype : "";
     acmpnm += "_";
     bcmpnm += "_";
     acmpnm += a;
     bcmpnm += b;
+    
     // console.log("newSortBy=" + newSortBy, acmpnm + " <=> " + bcmpnm);
     return cmp(acmpnm, bcmpnm);
 }
 
 // mixin method to add (level,newSortBy) values to the sort functions on the columns
 function sortColoredColumns(level, newSortBy) {
-    return function(a,b) { 
+    return function(a,b) {
 	return sortColumns(level, newSortBy, a, b);
     }
 }
 
 function startSortChange(nm) {
-    
+
     watermark("Sorting<br/>" + nm.replace(/^by_name$/, "BBBB").replace(/_name$/, "").
 	      replace(/[_]/g, " ").replace(/BBBB/, "by name").replace(/^by /, ""));
 }
@@ -891,7 +900,7 @@ function resort(newSortBy) {
 	    for (var i in optionalNames[olevel]) {
 		optionalNames[level].push({ name: optionalNames[olevel][i]["name"], orig: optionalNames[olevel][i]["orig"] });
 	    }
-	}    
+	}
 
 	var requiredSlots = [ ];
 	for (var i in requiredNames[level]) {
@@ -937,6 +946,10 @@ function resort(newSortBy) {
 		(badgeDescriptions[level][ciiName]["type"] + "_" + badgeDescriptions[level][ciiName]["section"]) :
 		(sortBy == "by_section_type_name") ?
 		(badgeDescriptions[level][ciiName]["section"] + "_" + badgeDescriptions[level][ciiName]["type"]) :
+		(sortBy == "by_ordinal_name") ?
+		(badgeDescriptions[level][ciiName]["ord"]) :
+		(sortBy == "by_ordinal_type_name") ?
+		(badgeDescriptions[level][ciiName]["ord"] + "_" + badgeDescriptions[level][ciiName]["type"]) :
 		(sortBy == "by_onapwide_section_name") ?
 		(badgeDescriptions[level][ciiName]["onapwide"] + "_" + badgeDescriptions[level][ciiName]["section"]) :
 		(sortBy == "by_onapwide_type_name") ?
@@ -956,29 +969,29 @@ function resort(newSortBy) {
 		var sectionItalic = sortBy.startsWith("by_type_section");
 		$("." + ciiName + "_subtitle").html("<br/><sub><i>(" + badgeDescriptions[level][ciiName]["type"] + ")</i></sub>" +
 						    "<br/><sub>" + (sectionItalic ? "<i>" : "") + "(" +
-						    badgeDescriptions[level][ciiName]["section"] + ")" + 
+						    badgeDescriptions[level][ciiName]["section"] + ")" +
 						    (sectionItalic ? "</i>" : "") +
 						    "</sub>");
 	    } else if (sortBy.startsWith("by_section")) {
 		var typeItalic = sortBy.startsWith("by_section_type");
 		$("." + ciiName + "_subtitle").html("<br/><sub><i>(" + badgeDescriptions[level][ciiName]["section"] + ")</i></sub>" +
 						    "<br/><sub>" + (typeItalic ? "<i>" : "") + "(" +
-						    badgeDescriptions[level][ciiName]["type"] + ")" + 
+						    badgeDescriptions[level][ciiName]["type"] + ")" +
 						    (typeItalic ? "</i>" : "") +
 						    "</sub>");
 	    } else if (sortBy.startsWith("by_onapwide_section")) {
 		$("." + ciiName + "_subtitle").html(onapwideTitle[badgeDescriptions[level][ciiName]["onapwide"]] +
 						    "<br/><sub><i>(" + badgeDescriptions[level][ciiName]["section"] + ")</i></sub>" +
-						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")" + 
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")" +
 						    "</sub>");
 	    } else if (sortBy.startsWith("by_onapwide_type")) {
 		$("." + ciiName + "_subtitle").html(onapwideTitle[badgeDescriptions[level][ciiName]["onapwide"]] +
 						    "<br/><sub><i>(" + badgeDescriptions[level][ciiName]["type"] + ")</i></sub>" +
-						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")" + 
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")" +
 						    "</sub>");
 	    } else if (sortBy.startsWith("by_onapwide")) {
 		$("." + ciiName + "_subtitle").html(onapwideTitle[badgeDescriptions[level][ciiName]["onapwide"]] +
-						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")" + 
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")" +
 						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>" +
 						    "</sub>");
 	    } else {
@@ -1072,7 +1085,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 		ciiName + "_header_" + cl + "'>" +
 		"<span class='" + cl + "' title='" +
 		"[" + ciiName + "] " +
-		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + 
+		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
 		"'>" +
 		ciiName.replace(/_/g," ").
 		replace(/(\W+|^)(.)/ig,
@@ -1090,7 +1103,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
 		"<sub>" +
 		(badgeDescriptions[level][ciiName]["details"] ? "<br/><br/>&laquo;details&raquo;<br/>" : "") +
-		badgeDescriptions[level][ciiName]["details"].replace(/['']/g, "&quot;") + 
+		 badgeDescriptions[level][ciiName]["details"].replace(/['']/g, "&quot;") +
 		"</sub>" +
 		(badgeDescriptions[level][ciiName]["onapwide"] ? "<br/><br/><sup class='alternateColor_by_onapwide_name'>ONAP-wide response</sup>" : "") +
 		"</span>" +
@@ -1219,7 +1232,9 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 
     globalTables[level] =
 	$('#' + tablename).DataTable({
-		"colReorder": true,
+	    "colReorder": true,
+	    "fixedHeader": { "footer": false, "header": true },
+	    // "fixedHeader": true,
 		"data": datad,
 		"aaSorting": [[ 0, "asc" ]],
 		// fixedHeader: true,
@@ -1461,6 +1476,8 @@ function whenDone(datad, editorNames) {
     $("#sort_by_section_type_name").click(function(){ resort("by_section_type_name"); });
     $("#sort_by_type_name").click(function(){ resort("by_type_name"); });
     $("#sort_by_type_section_name").click(function(){ resort("by_type_section_name"); });
+    $("#sort_by_ordinal_name").click(function(){ resort("by_ordinal_name"); });
+    $("#sort_by_ordinal_type_name").click(function(){ resort("by_ordinal_type_name"); });
     $("#sort_by_onapwide_name").click(function(){ resort("by_onapwide_name"); });
     $("#sort_by_onapwide_section_name").click(function(){ resort("by_onapwide_section_name"); });
     $("#sort_by_onapwide_type_name").click(function(){ resort("by_onapwide_type_name"); });
@@ -1469,9 +1486,12 @@ function whenDone(datad, editorNames) {
     $("#sort_by_section_type_name").mousedown(function(){ startSortChange("by_section_type_name"); });
     $("#sort_by_type_name").mousedown(function(){ startSortChange("by_type_name"); });
     $("#sort_by_type_section_name").mousedown(function(){ startSortChange("by_type_section_name"); });
+    $("#sort_by_ordinal_name").mousedown(function(){ startSortChange("by_ordinal_name"); });
+    $("#sort_by_ordinal_type_name").mousedown(function(){ startSortChange("by_ordinal_type_name"); });
     $("#sort_by_onapwide_name").mousedown(function(){ startSortChange("by_onapwide_name"); });
     $("#sort_by_onapwide_section_name").mousedown(function(){ startSortChange("by_onapwide_section_name"); });
     $("#sort_by_onapwide_type_name").mousedown(function(){ startSortChange("by_onapwide_type_name"); });
+    $("#survey_descriptions").mousedown(function(){ surveyDescriptions(); });
 
     // TODO -- this does not work
     // $('remove-not-started-button').click(function(){

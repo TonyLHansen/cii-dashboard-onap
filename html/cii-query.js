@@ -66,4 +66,18 @@ class Query {
 	}
 	return ret;
     }
+
+    getParmsAsDict() {
+	var ret = { };
+	for (var i in this.parms) {
+	    var pos = this.parms[i].indexOf('=');
+	    if (pos > 0) {
+		var parm = this.parms[i].substring(0,pos);
+		var str = this.parms[i].substring(pos+1);
+		var dstr = decodeURIComponent((str+'').replace(/\+/g, '%20'));
+		ret[parm] = dstr;
+	    }
+	}
+	return ret;
+    }
 }

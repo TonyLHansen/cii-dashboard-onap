@@ -151,11 +151,18 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
     background-color: lightblue;
 }
 
-.alternateColor {
-    background-color: #ffcba4;
+.alternateColor_bysection {
+    background-color: #cba4ff;
 }
 
-.primaryColor {
+.primaryColor_bysection {
+}
+
+.alternateColor_bytype {
+    background-color: #a4ffcb;
+}
+
+.primaryColor_bytype {
 }
 
 .bgbronze {

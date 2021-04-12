@@ -81,6 +81,9 @@ if (help == 'y') {
   throw 'help';
 }
 
+var sortBy = parms.get("sortby", "byname").toLowerCase();
+if (!(sortBy == "byname" || sortBy == "bysection" || sortBy == "bytype")) sortBy = "byname";
+
 function flipVisibility(where) {
     // console.log("flipping display, where=" + where);
     // console.dir(where);
@@ -265,16 +268,10 @@ function fillHistoricalStatsForRelease(release, releaseData, dolog) {
 }
 
 function fillHistoricalStatsForHistoricalReleases() {
-    // console.log("adding badge percentages to historicalStats {}");
     for (var release in historicalReleaseData) {
-	// console.log("release=" + release);
-	// console.log("historicalReleaseData[" + release + "]=", historicalReleaseData[release]);
 	var hrdi = historicalReleaseData[release];
-	// console.log("hrdi=", hrdi);
 	fillHistoricalStatsForRelease(release, hrdi);
-	// console.log("all buckets filled for projects in " + release);
     }
-    // console.log("historicalStats after adding badge percentages=", historicalStats);
 }
 
 function fillRemainingHistoricalStats() {
@@ -286,31 +283,22 @@ function fillRemainingHistoricalStats() {
         for (var bucket = 0; bucket < 6; bucket++) {
 	    historicalProjectCount[release] += historicalStats[release][level][bucket]["#projects"];
         }
-        // console.log("historicalProjectCount[" + release + "]=" + historicalProjectCount[release]);
+	var releaseProjectCount = historicalProjectCount[release];
         for (var level = 0; level < 3; level++) {
 	    var cumulative = 0;
+	    var minBucket = 0, maxBucket = 0;
 	    for (var bucket = 5; bucket >= 0; bucket--) {
 		var nprojects = historicalStats[release][level][bucket]["#projects"];
 		cumulative += nprojects;
-		historicalStats[release][level][bucket]["%projects"] = (100.0 * nprojects / historicalProjectCount[release]).toFixed(1);
+		if (cumulative > 0) if (bucket > maxBucket) maxBucket = bucket;
+		if (cumulative == releaseProjectCount) if (bucket > minBucket) minBucket = bucket;
+		historicalStats[release][level][bucket]["%projects"] = (100.0 * nprojects / releaseProjectCount).toFixed(1);
 		historicalStats[release][level][bucket]["cumulative#"] = cumulative;
-		historicalStats[release][level][bucket]["cumulative%"] = (100.0 * cumulative  / historicalProjectCount[release]).toFixed(1);
+		historicalStats[release][level][bucket]["cumulative%"] = (100.0 * cumulative / releaseProjectCount).toFixed(1);
 	    }
+	    historicalStats[release][level]["minBucket"] = minBucket;
+	    historicalStats[release][level]["maxBucket"] = maxBucket;
         }
-    }
-    for (var bucket = 5; bucket >= 0; bucket--) {
-        for (var level = 0; level < 3; level++) {
-	    for (var release in releases) {
-		// var release = releases[releasei];
-		var nprojects = historicalStats[release][level][bucket]["#projects"];
-		var cumprojects = historicalStats[release][level][bucket]["%projects"];
-		var projectspct = historicalStats[release][level][bucket]["cumulative#"];
-		var cumprojectpct = historicalStats[release][level][bucket]["cumulative%"];
-		// console.log("release=" + release + ", level=" + badgingLevels[level] + ", " + 
-		// 	    "bucket=" + bucketStr[bucket] + ": " + nprojects + ", " + 
-		// 	    cumprojects + ", " + projectspct + ", " + cumprojectpct);
-	    }
-	}
     }
 }
 
@@ -322,18 +310,15 @@ function interpolateToHex(a, b, r) {
     var ret = interpolate(a,b,r);
     ret = ("000000" + ret.toString(16));
     ret = ret.substring(ret.length - 6);
-    console.log("interpolateToHex(" + a + "," + b + "," + r + ")=>" + ret);
+    // console.log("interpolateToHex(" + a + "," + b + "," + r + ")=>" + ret);
     return ret;
 }
     
 
 function showHistoricalInfo() {
-    // console.log("showHistoricalInfo()");
     var html = "<table><tr><th colspan='2' rowspan='2'>Level</th>";
     for (var release in releases) {
-	// var release = releases[releasei];
 	if (historicalProjectCount[release] > 0) {
-	    // console.log("release=" + release);
 	    html += "<td rowspan='99'>&nbsp;</td>" + "<th colspan='4'>" + release + "<br/>" + historicalProjectCount[release] + "</th>";
 	}
     }
@@ -362,6 +347,13 @@ function showHistoricalInfo() {
 		     [ "c0c0c0", "c7c2a8", "cec492", "d5c77b", "dcc962", "e3cb46",
 		       "ebcd1e", "f1d000", "f8d200", "ffd400", "ffd700", "ffd700", "ffd700" ]
 		     ];
+    var opacities = {
+	100: [ 0.00, 0.16, 0.33, 0.50, 0.66, 0.83, 1.00 ],
+	80: [ 0.26, 0.43, 0.60, 0.76, 0.93, 1.00, 1.00 ],
+	50: [ 0.43, 0.60, 0.76, 0.93, 1.00, 1.00, 1.00 ],
+	20: [ 0.60, 0.76, 0.93, 1.00, 1.00, 1.00, 1.00 ],
+	0: [ 1.00, 1.00, 1.00, 1.00, 1.00, 1.00 ]
+    };
 
     var levelSep = "";
     // for (var level = 0; level < 3; level++) {
@@ -381,6 +373,8 @@ function showHistoricalInfo() {
 	    var botColor = gradients[level][bucket*2];
 	    var topColor = gradients[level][bucket*2 + 2];
 	    var grad = "background: linear-gradient(to top, #" + botColor + ", #" + topColor + ")";
+	    var opacity = opacities[0][bucket];
+	    // console.log("base opacity=",opacity);
 	    // console.log("grad=", grad);
 
 	    html += "<td style='" + grad + "' align='right'>" + bucketStr[bucket] + "</td>";
@@ -391,11 +385,27 @@ function showHistoricalInfo() {
 		    var ncumulative = historicalStats[release][level][bucket]["cumulative#"];
 		    var pcumulative = historicalStats[release][level][bucket]["cumulative%"];
 		    var bg = (ncumulative <= 0) ? gray : grad;
+		    var minBucket = historicalStats[release][level]["minBucket"];
+		    var maxBucket = historicalStats[release][level]["maxBucket"];
+		    if (maxBucket > 4) {
+			if (minBucket == 5) {
+			    opacity = opacities[100][bucket];
+			} else if (minBucket == 4) {
+			    if (historicalStats[release][level][4]["#projects"] < historicalStats[release][level][5]["#projects"])
+				opacity = opacities[80][bucket];
+			    else if (historicalStats[release][level][5]["%projects"] > 40)
+				opacity = opacities[50][bucket];
+			    else if (historicalStats[release][level][5]["%projects"] > 20)
+				opacity = opacities[20][bucket];
+			}
+		    }
+		    // console.log("opacity=",opacity);
 		    // console.log("bg=", bg);
-		    html += "<td style='" + bg + "' align='right'>" + nprojects + "</td>" + 
-			"<td style='" + bg + "' align='right'>" + pprojects + "</td>" + 
-			"<td style='" + bg + "' align='right'>" + ncumulative + "</td>" + 
-			"<td style='" + bg + "' align='right'>" + pcumulative + "</td>";
+		    html += 
+			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + nprojects + "</td>" + 
+			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + pprojects + "</td>" + 
+			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + ncumulative + "</td>" + 
+			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + pcumulative + "</td>";
 		}
 	    }
 	    html += "</tr>\n";
@@ -780,8 +790,6 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 
     var addNameColumn = 3;
     var rf = badgeDescriptions[level];
-    var sortBy = parms.get("sortby", "byname").toLowerCase();
-    if (!(sortBy == "byname" || sortBy == "bysection" || sortBy == "bytype")) sortBy = "byname";
     
     var sortedNames = Object.keys(rf);
     sortedNames.sort(function(a,b){ 
@@ -832,8 +840,8 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 		onPrimaryColor = 1 - onPrimaryColor;
 		lastSortedType = sortedType;
 	    }
-	    console.log("sortedType=", sortedType, "onPrimaryColor=", onPrimaryColor, "columnColors[" + onPrimaryColor + "]=", columnColors[onPrimaryColor]);
-	    trdataHeaders += "<th class='" + cl + " " + columnColors[onPrimaryColor] + "'><span class='" + cl + "' title='" +
+	    // console.log("sortedType=", sortedType, "onPrimaryColor=", onPrimaryColor, "columnColors[" + onPrimaryColor + "]=", columnColors[onPrimaryColor]);
+	    trdataHeaders += "<th class='" + cl + " " + columnColors[onPrimaryColor] + "_" + sortBy + "'><span class='" + cl + "' title='" +
 		"[" + ciiName + "] " +
 		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + "'>" +
 		ciiName.replace(/_/g," ").
@@ -1398,15 +1406,21 @@ function whenDone(datad, editorNames) {
 	}
     }
 
-    // console.log("historicalReleaseData=", historicalReleaseData);
     createHistoricalStats();
     fillHistoricalStatsForHistoricalReleases();
-    // console.log("datad=", datad);
     // fillHistoricalStatsForRelease(currentRelease, datad, true);
     fillRemainingHistoricalStats();
     showHistoricalInfo();
-}
 
+    $('.sortby_' + sortBy).prop('checked', true);
+    $('#sortby_form').prop('action',window.location);
+    var pd = parms.getParmsAsDict();
+    for (var p in pd) {
+	if (p != "sortby")
+	    $('#sortby_form').append("<input type='hidden' name='" + p + "' value='" + pd[p] + "'/>");
+    }
+    $('#sortby_submit').prop('class', 'alternateColor_' + sortBy);
+}
 
 $(document).ready(function() {
 	var pagelist = genPageList(parms.get("page", '1-9'));

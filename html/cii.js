@@ -190,30 +190,30 @@ function generateRank(bp0, bp1, bp2) {
 var historicalProjectCount = { };
 
 // console.log("Extracting historicalReleaseData into invertedHistoricalReleaseData {}");
-var invertedHistoricalReleaseData = { };
-for (var release in historicalReleaseData) {
-    // console.log("release=", release);
-    // console.log("historicalReleaseData[" + release + "]=", historicalReleaseData[release]);
-    var hrdi = historicalReleaseData[release];
-    // console.log("hrdi=" + hrdi);
-    for (var j in hrdi) {
-	// console.log("j=" + j);
-	var hrdij = hrdi[j];
-	var id = hrdij["id"];
-	var badge_percentage_0 = hrdij["badge_percentage_0"];
-	var badge_percentage_1 = hrdij["badge_percentage_1"];
-	var badge_percentage_2 = hrdij["badge_percentage_2"];
-
-	if (!(id in invertedHistoricalReleaseData)) {
-	    invertedHistoricalReleaseData[id] = { };
-	}
-	if (!(release in invertedHistoricalReleaseData[id]))
-	    invertedHistoricalReleaseData[id][release] = { };
-	invertedHistoricalReleaseData[id][release][0] = badge_percentage_0;
-	invertedHistoricalReleaseData[id][release][1] = badge_percentage_1;
-	invertedHistoricalReleaseData[id][release][2] = badge_percentage_2;
-    }
-}
+// var invertedHistoricalReleaseData = { };
+// for (var release in historicalReleaseData) {
+//     // console.log("release=", release);
+//     // console.log("historicalReleaseData[" + release + "]=", historicalReleaseData[release]);
+//     var hrdi = historicalReleaseData[release];
+//     // console.log("hrdi=" + hrdi);
+//     for (var j in hrdi) {
+// 	// console.log("j=" + j);
+// 	var hrdij = hrdi[j];
+// 	var id = hrdij["id"];
+// 	var badge_percentage_0 = hrdij["badge_percentage_0"];
+// 	var badge_percentage_1 = hrdij["badge_percentage_1"];
+// 	var badge_percentage_2 = hrdij["badge_percentage_2"];
+//
+// 	if (!(id in invertedHistoricalReleaseData)) {
+// 	    invertedHistoricalReleaseData[id] = { };
+// 	}
+// 	if (!(release in invertedHistoricalReleaseData[id]))
+// 	    invertedHistoricalReleaseData[id][release] = { };
+// 	invertedHistoricalReleaseData[id][release][0] = badge_percentage_0;
+// 	invertedHistoricalReleaseData[id][release][1] = badge_percentage_1;
+// 	invertedHistoricalReleaseData[id][release][2] = badge_percentage_2;
+//     }
+// }
 
 // console.log("creating releases[] array");
 // var releases = [];
@@ -223,11 +223,8 @@ for (var release in historicalReleaseData) {
 // releases.push("Current");
 // console.log("releases=", releases);
 
-// console.log("creating historicalStats {}");
 var historicalStats = { }; // historicalStats[release][level 0/1/2][bucket 0-5]{ #-projects, cumulative-#, %-projects, cumulative-% }
-for (var release in releases) {
-    // var release = releases[releasei];
-    // console.log("release=" + release);
+function createHistoricalStatsRelease(release) {
     historicalStats[release] = [];
     for (var level = 0; level < 3; level++) {
 	historicalStats[release].push([]);
@@ -236,7 +233,12 @@ for (var release in releases) {
 	}
     }
 }
-// console.log("historicalStats after creation=", historicalStats);
+function createHistoricalStats() {
+    releases["current"] = { };
+    for (var release in releases) {
+	createHistoricalStatsRelease(release);
+    }
+}
 
 function fillHistoricalStatsForRelease(release, releaseData, dolog) {
     if (dolog) console.log("fillHistoricalStatsForRelease(" + release + ",", releaseData, ")");
@@ -313,6 +315,19 @@ function fillRemainingHistoricalStats() {
     }
 }
 
+function interpolate(a, b, r) {
+    return parseInt(a) + Math.floor((b - a) * r / 100.);
+}
+
+function interpolateToHex(a, b, r) {
+    var ret = interpolate(a,b,r);
+    ret = ("000000" + ret.toString(16));
+    ret = ret.substring(ret.length - 6);
+    console.log("interpolateToHex(" + a + "," + b + "," + r + ")=>" + ret);
+    return ret;
+}
+    
+
 function showHistoricalInfo() {
     // console.log("showHistoricalInfo()");
     var html = "<table><tr><th colspan='2' rowspan='2'>Level</th>";
@@ -333,29 +348,53 @@ function showHistoricalInfo() {
     html += "</tr>\n";
 
     var levelBgColors = [ "bgbronze", "bgsilver", "bggold" ];
+    //                     red         green           green       silver          silver      gold
+    var colorBounds = [ [ "0xff0000", "0x00ff00" ], [ "0x00ff00", "0xc0c0c0" ], [ "0xc0c0c0", "0xffd700" ] ];
+    var levelBounds = [ [ 0, 20 ], [ 20, 40 ], [ 40, 60 ], [ 60, 80 ], [ 80, 100 ], [ 100, 100 ] ];
+
+    var gradients = [
+		     // redToGreen 
+		     [ "ff0000", "fb0000", "df0000", "c20700", "a62900", "883b00", 
+		       "6d4a00", "4a5a00", "1a6800", "007500", "008300", "008300", "008300" ],
+		     // greenToSilver
+		     [ "008300", "008900", "008f00", "009526", "229c41", "44a256", 
+		       "63a86e", "7bae82", "92b497", "a9baab", "c0c0c0", "c0c0c0", "c0c0c0" ],
+		     // silverToGold
+		     [ "c0c0c0", "c7c2a8", "cec492", "d5c77b", "dcc962", "e3cb46",
+		       "ebcd1e", "f1d000", "f8d200", "ffd400", "ffd700", "ffd700", "ffd700" ]
+		     ];
+
     var levelSep = "";
-    for (var level = 0; level < 3; level++) {
+    for (var level = 2; level >= 0; level--) {
 	html += levelSep;
 	levelSep = "<tr><td colspan='99'><br/></td></tr>";
 	var shownLevel = false;
+	var gray = "background-color: white; color: #cdcdcd;";
 	for (var bucket = 5; bucket >= 0; bucket--) {
 	    html += "<tr>";
 	    if (!shownLevel) {
 		html += "<th class='" + levelBgColors[level] + "' rowspan='6'>" + badgingLevels[level] + "</th>";
 		shownLevel = true;
 	    }
-	    html += "<td bgcolor='" + colors[bucket*2] + "' align='right'>" + bucketStr[bucket] + "</td>";
+	    // background: linear-gradient(to top, $bcolor $bpct%, $tcolor $tpct%)
+	    var botColor = gradients[level][bucket*2];
+	    var topColor = gradients[level][bucket*2 + 2];
+	    var grad = "background: linear-gradient(to top, #" + botColor + ", #" + topColor + ")";
+	    console.log("grad=", grad);
+
+	    html += "<td style='" + grad + "' align='right'>" + bucketStr[bucket] + "</td>";
 	    for (var release in releases) {
 		if (historicalProjectCount[release] > 0) {
 		    var nprojects = historicalStats[release][level][bucket]["#projects"];
 		    var pprojects = historicalStats[release][level][bucket]["%projects"];
 		    var ncumulative = historicalStats[release][level][bucket]["cumulative#"];
 		    var pcumulative = historicalStats[release][level][bucket]["cumulative%"];
-		    var bg = (ncumulative <= 0) ? "gray" : colors[bucket * 2];
-		    html += "<td bgcolor='" + bg + "' align='right'>" + nprojects + "</td>" + 
-			"<td bgcolor='" + bg + "' align='right'>" + pprojects + "</td>" + 
-			"<td bgcolor='" + bg + "' align='right'>" + ncumulative + "</td>" + 
-			"<td bgcolor='" + bg + "' align='right'>" + pcumulative + "</td>";
+		    var bg = (ncumulative <= 0) ? gray : grad;
+		    console.log("bg=", bg);
+		    html += "<td style='" + bg + "' align='right'>" + nprojects + "</td>" + 
+			"<td style='" + bg + "' align='right'>" + pprojects + "</td>" + 
+			"<td style='" + bg + "' align='right'>" + ncumulative + "</td>" + 
+			"<td style='" + bg + "' align='right'>" + pcumulative + "</td>";
 		}
 	    }
 	    html += "</tr>\n";
@@ -526,18 +565,22 @@ function getNextUrl(datad, editorNames, pagelist, j) {
 		// console.log("json=", json);
 		// if (typeof json == "string") pushData(historicalReleaseData[currentRelease], JSON.parse(json));
 		// else pushData(historicalReleaseData[currentRelease], json);
-		if (!(currentRelease in historicalReleaseData)) {
-		    console.log("creating historicalReleaseData[" + currentRelease + "]");
-		    historicalReleaseData[currentRelease] = [ ];
+		if (!("current" in historicalReleaseData)) {
+		    console.log("creating historicalReleaseData[" + "current" + "]");
+		    historicalReleaseData["current"] = [ ];
 		}
+		var js;
 		if (typeof json == "string") {
 		    pushData(datad, JSON.parse(json));
-		    console.log("pushing str to historicalReleaseData[" + currentRelease + "]<=", JSON.parse(json));
-		    historicalReleaseData[currentRelease].push(JSON.parse(json));
+		    console.log("pushing str to historicalReleaseData[" + "current" + "]<=", JSON.parse(json));
+		    js = JSON.parse(json);
 		} else {
 		    pushData(datad, json);
-		    console.log("pushing json to historicalReleaseData[" + currentRelease + "]<=", json);
-		    historicalReleaseData[currentRelease].push(json);
+		    console.log("pushing json to historicalReleaseData[" + "current" + "]<=", json);
+		    js = json;
+		}
+		for (var jo in js) {
+		    historicalReleaseData["current"].push(js[jo]);
 		}
 		// debuglog("got pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
 		if (json == '') {
@@ -697,9 +740,11 @@ function prEditor(data, editorDict) {
     // console.log("typeof data=" + typeof data);
     var editors = data.toString().split(",");
     var JimBaker = "3607";
+    var DavidMcBride = "4469";
     var hasJimBaker = editors.indexOf(JimBaker) > -1;
+    var hasDavidMcBride = editors.indexOf(DavidMcBride) > -1;
     var len = editors.length;
-    var cl = (hasJimBaker && len > 1) ? "met" : (len > 1) ? "partial" : "buzz";
+    var cl = (hasDavidMcBride && len > 2) ? "met" : (hasJimBaker || len > 1) ? "partial" : "buzz";
     var editorsOut = "";
     var sep = "";
     for (var e in editors) {
@@ -1328,6 +1373,14 @@ function whenDone(datad, editorNames) {
 	    $("." + turnoffs[i] + "_span").each(flipThisVisibility);
 	}
     }
+
+    console.log("historicalReleaseData=", historicalReleaseData);
+    createHistoricalStats();
+    fillHistoricalStatsForHistoricalReleases();
+    console.log("datad=", datad);
+    // fillHistoricalStatsForRelease(currentRelease, datad, true);
+    fillRemainingHistoricalStats();
+    showHistoricalInfo();
 }
 
 
@@ -1335,14 +1388,6 @@ $(document).ready(function() {
 	var pagelist = genPageList(parms.get("page", '1-9'));
 	var datad = [];
 	var editorNames = [];
-	console.log("before getNextUrl");
 	getNextUrl(datad, editorNames, pagelist, 0);
-
-	console.log("historicalReleaseData=", historicalReleaseData);
-	fillHistoricalStatsForHistoricalReleases();
-	console.log("datad=", datad);
-	// fillHistoricalStatsForRelease(currentRelease, datad, true);
-	fillRemainingHistoricalStats();
-	showHistoricalInfo();
-	
+	// if any thing needs to be done, add it to whenDone()
 }); // end of document.ready()

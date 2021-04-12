@@ -376,6 +376,13 @@ function getBadge(txtLeft, txtRight, colorRight) {
 	"</svg>";
 }
 
+function resize(id) {
+    if ($(".size__" + id).css('font-size') == '20px')
+	$(".size__" + id).css('font-size','16px');
+    else
+	$(".size__" + id).css('font-size','20px');
+}
+
 function getAllBadges(data, type, row) {
     if (type !== 'display') return data;
     var urlPrefix = '<img src="https://bestpractices.coreinfrastructure.org/projects/';
@@ -476,14 +483,24 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 			      "<tfoot>" + trdataHeaders + "</tfoot>");
 
     var columns = [ ];
-    columns.push({ "data": "name" });
+    columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
+		return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
+		    "onclick='resize(" + row['id'] + ")'" +
+		    "/></span><span class='size__" + row['id'] + 
+		    "'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
+		    row['id'] + "'>" + data + "</a></span>";
+	    }
+	});
     columns.push({ "data": "tiered_percentage", "render": function ( data, type, row, meta ) {
 		var color = getTieredColor(data);
 		var textcolor = (color == gold) ? black : (color == silver) ? black : white;
-		return "<span style='color: " + textcolor + "; background-color: " + color + "'>" + data + "</span>";
+		return "<span class='size__" + row['id'] + "' style='color: " + textcolor + "; background-color: " + color + "'>" + data + "</span>";
 	    }
 	});
-    columns.push({ "data": "badge_percentage_"+ percent });
+    columns.push({ "data": "badge_percentage_"+ percent, "render": function ( data, type, row, meta ) {
+		return "<span class='size__" + row['id'] + "'>" + data + "</span>";
+	    }
+	});
 
     for (var k in allFields) {
 	var ciiName = allFields[k];
@@ -506,8 +523,8 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 			var detailIdButton = "button__" + statusName + "__" + row['id'];
 			var detailClass = "detail__" + statusName + "__" + row['id'];
 			var detailIdSpan = "detail__" + statusName + "__" + row['id'];
-			var ret = "<div style='height: 100%; width: 100%; ' class='" + optionalClass + "'>" +
-			    "<button id='" + detailIdButton + "' class='" + classVal + " xclickable_text' title=\"";
+			var ret = "<div style='height: 100%; width: 100%; ' class='" + optionalClass + " size__" + row['id'] + "'>" +
+			    "<button id='" + detailIdButton + "' class='" + classVal + " xclickable_text size__" + row['id'] + "' title=\"";
 			ret += (fieldName in badgeDescriptions[level]) ? (badgeDescriptions[level][fieldName] + "\n") : "--\n";
 			var status = "";
 			status += (fieldName in row) ? (row[fieldName] + "\n") : "\n"; // ".(fieldname).\n";

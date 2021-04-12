@@ -37,7 +37,7 @@ if (help == 'y') {
   throw 'help';
 }
 
-useproxy = parms.get("useproxy", "n");
+var useproxy = parms.get("useproxy", "n");
 if (useproxy == 'y') {
     proxy = "http://one.proxy.att.com:8888";
 } else {
@@ -48,8 +48,9 @@ var project = parms.get("project", "onap");
 var addMissingOnapProjects = parms.get("addMissingOnapProjects", "y");
 debuglog("project='" + project + "'");
 
-BASEURL="cii-statuses.cgi";
-BASEURL="https://bestpractices.coreinfrastructure.org/projects.json";
+
+var BASEURL="https://bestpractices.coreinfrastructure.org/projects.json";
+if (parms.get("useserver", "n") == "y") BASEURL="cii-statuses.cgi";
 var currentRelease = "current";
 
 if (project == "onap") {
@@ -169,6 +170,7 @@ function pushData(whereTo, whereFrom) {
     });
 }
 
+var pagelist = [];
 var pageRanges = page.split(",");
 for (i = 0; i < pageRanges.length; i++) {
     var pos = pageRanges[i].indexOf('-');
@@ -180,300 +182,318 @@ for (i = 0; i < pageRanges.length; i++) {
     debuglog("start=" + start + ", end=" + end);
     for (j = Number(start); j < Number(end)+1; j++) {
         debuglog("j=" + j);
-        URL = BASEURL;
-        debuglog("URL=" + URL);
-	$('#watermarkPage').html("page " + j);
-
-        $.ajax({
-		type: "GET",
-		url: URL,
-		data: { "q": Q, "page": j },
-	        async: false,
-                success: function(json) {
-		    if (typeof json == "string") pushData(releaseData[currentRelease], JSON.parse(json));
-		    else pushData(releaseData[currentRelease], json);
-                }
-        });
+	pagelist.push(j);
     }
 }
 
-debuglog("OFFSET=" + OFFSET + ";\n");
+debuglog("pagelist=%o", pagelist);
 
-// add rank information everywhere
-function addRanks(d) {
-    debuglog("adding ranks to %o", d);
-    $(d).each(function(index, element) {
-        element.rank = element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
-        debuglog("element.id=" + element.id + ", .rank=" + element.rank);
-    });
-}
+function whenDone() {
+    debuglog("OFFSET=" + OFFSET + ";\n");
 
-for (i = 0; i < releases.length; i++) {
-    addRanks(releaseData[releases[i]]);
-};
-
-$(releaseData[currentRelease]).each(function(index, element) {
-    if (element.repo_url.substring(0,43) == onapGerritPrefix) {
-        allOnapProjects[element.repo_url.substring(43)] = "y";
+    // add rank information everywhere
+    function addRanks(d) {
+	debuglog("adding ranks to %o", d);
+	$(d).each(function(index, element) {
+		element.rank = element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
+		debuglog("element.id=" + element.id + ", .rank=" + element.rank);
+	    });
     }
-});
 
-function addRankOrder(d) {
-    d.sort(function(a,b) {
-        return b.rank - a.rank;
-    });
-    // debuglog("addRankOrder(%o)", d);
-    var prev = -1;
-    var iprev = -1;
-    for (i = 0; i < d.length; i++) {
-        // debuglog("looking at d[" + i + "/" + d[i].name + "].rank = " + d[i].rank);
-        if (d[i].rank == prev) {
-            d[i].rank_order = iprev + 1;
-        } else {
-            d[i].rank_order = i + 1;
-            prev = d[i].rank;
-            iprev = i;
-        }
-	// debuglog("setting d[" + i + "].rank_order to " + d[i].rank_order);
-    }
-    // debuglog("addRankOrder() done: %o", d);
-}
+    for (i = 0; i < releases.length; i++) {
+	addRanks(releaseData[releases[i]]);
+    };
 
-// for (i = 0; i < releases.length; i++) {
-//    addRankOrder(releaseData[releases[i]]);
-//};
-addRankOrder(releaseData[currentRelease]);
-
-$(releaseData[currentRelease]).each(function(index, element) {
-    // debuglog("add url/badge to element=%o", element);
-    element.short_url = stripurl(element.repo_url, false);
-    element.badge = element._badge || ("https://bestpractices.coreinfrastructure.org/projects/" + element.id + "/badge");
-});
-
-
-
-// sort on the URL name
-function stripurl(url, doupper) {
-    var str = doupper ? url.toUpperCase().substring(OFFSET) : url.substring(OFFSET);
-    str = str.replace(/\/$/, "").replace(/^.*\//, "");
-    if (str == '') return "unknown";
-    return str;
-}
-
-releaseData[currentRelease].sort(function(a,b) {
-  var nameA = stripurl(a.repo_url); // ignore upper and lowercase
-  var nameB = stripurl(b.repo_url); // ignore upper and lowercase
-  return (nameA < nameB) ? -1 : (nameA > nameB) ? 1 : 0;
-});
-
-var passingCount = silverCount = goldCount = 0;
-var nonPassingCount = nonSilverCount = nonGoldCount = 0;
-var passing80Count = silver80Count = gold80Count = 0;
-var totalCount = releaseData[currentRelease].length;
-
-$(releaseData[currentRelease]).each(function(index, element) {
-    if (element.badge_percentage_0 == 100) passingCount++;
-    else { nonPassingCount++; if (element.badge_percentage_0 >= 80) { passing80Count++; } }
-    if (element.badge_percentage_1 == 100) silverCount++;
-    else { nonSilverCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) { silver80Count++; } }
-    if (element.badge_percentage_2 == 100) goldCount++;
-    else { nonGoldCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) { gold80Count++; } }
-
-});
-
-// invert the data to generate info indexed by the short_urls
-var releaseIndices = {};
-// debuglog("hd=" + releaseData);
-for (k = 0; k < releases.length; k++) {
-    var release = releases[k];
-    releaseIndices[release] = {};
-    var hdk = releaseData[release];
-    // debuglog("r[" + k + "]=" + releases[k] + ", h[" + k + "]=" + hdk);
-    for (l = 0; l < hdk.length; l++) {
-        var u = stripurl(hdk[l].repo_url, false);
-        // debuglog("hdk[" + l + "]=" + hdk[l] + ", release=" + release + ", u=" + u);
-        releaseIndices[release][u] = l;
-    }
-}
-
-function getPreviousData(m, fieldName, prevRelease) {
-    if (prevRelease == "") return "";
-    var index = m.short_url;
-    var prevReleaseIndex = releaseIndices[prevRelease][index];
-    var curValue = m[fieldName];
-    if (typeof prevReleaseIndex == "undefined") {
-        return 0;
-    }
-    var prevReleaseEntry = releaseData[prevRelease][prevReleaseIndex];
-    var prevValue = prevReleaseEntry[fieldName];
-    return prevValue;
-}
-
-function badgeFieldName(release, fieldname) {
-    if (release == currentRelease) return fieldname;
-    return release + "_" + fieldname;
-}
-
-// add data from previous releases to each row
-for (k = 0; k < releases.length; k++) {
-    var release = releases[k];
-    if (release == currentRelease) break;
     $(releaseData[currentRelease]).each(function(index, element) {
-        element[badgeFieldName(release, "badge_percentage_0")] = getPreviousData(element, "badge_percentage_0", release);
-        element[badgeFieldName(release, "badge_percentage_1")] = getPreviousData(element, "badge_percentage_1", release);
-        element[badgeFieldName(release, "badge_percentage_2")] = getPreviousData(element, "badge_percentage_2", release);
-    });
-}
+	    if (element.repo_url.substring(0,43) == onapGerritPrefix) {
+		allOnapProjects[element.repo_url.substring(43)] = "y";
+	    }
+	});
 
-var datatableColumns = [
-    { "data": "rank_order", className: "textright" },
-    { "data": "short_url", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
-    { "data": "name", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
-    { "data": "badge", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<img src="'+data+'"/>') : data; } },
-];
+    function addRankOrder(d) {
+	d.sort(function(a,b) {
+		return b.rank - a.rank;
+	    });
+	// debuglog("addRankOrder(%o)", d);
+	var prev = -1;
+	var iprev = -1;
+	for (i = 0; i < d.length; i++) {
+	    // debuglog("looking at d[" + i + "/" + d[i].name + "].rank = " + d[i].rank);
+	    if (d[i].rank == prev) {
+		d[i].rank_order = iprev + 1;
+	    } else {
+		d[i].rank_order = i + 1;
+		prev = d[i].rank;
+		iprev = i;
+	    }
+	    // debuglog("setting d[" + i + "].rank_order to " + d[i].rank_order);
+	}
+	// debuglog("addRankOrder() done: %o", d);
+    }
 
-var badgingFieldNames = [ "badge_percentage_0", "badge_percentage_1", "badge_percentage_2" ];
-var historicColumns = [ ];
-var columnNumber = datatableColumns.length;
-for (var bl in badgingLevels) {
-    for (var k in releases) {
-        var release = releases[k];
-	var historic = release != currentRelease;
-        if (historic) historicColumns.push(columnNumber);
-	columnNumber++;
-        var columnType = historic ? "historicData" :  "currentdata";
-	var visible = !historic;
-        datatableColumns.push({ "data": badgeFieldName(release, badgingFieldNames[bl]),
-		    "render": function ( data, type, row, meta ) {
+    // for (i = 0; i < releases.length; i++) {
+    //    addRankOrder(releaseData[releases[i]]);
+    //};
+    addRankOrder(releaseData[currentRelease]);
+
+    $(releaseData[currentRelease]).each(function(index, element) {
+	    // debuglog("add url/badge to element=%o", element);
+	    element.short_url = stripurl(element.repo_url, false);
+	    element.badge = element._badge || ("https://bestpractices.coreinfrastructure.org/projects/" + element.id + "/badge");
+	});
+
+
+
+    // sort on the URL name
+    function stripurl(url, doupper) {
+	var str = doupper ? url.toUpperCase().substring(OFFSET) : url.substring(OFFSET);
+	str = str.replace(/\/$/, "").replace(/^.*\//, "");
+	if (str == '') return "unknown";
+	return str;
+    }
+
+    releaseData[currentRelease].sort(function(a,b) {
+	    var nameA = stripurl(a.repo_url); // ignore upper and lowercase
+	    var nameB = stripurl(b.repo_url); // ignore upper and lowercase
+	    return (nameA < nameB) ? -1 : (nameA > nameB) ? 1 : 0;
+	});
+
+    var passingCount = silverCount = goldCount = 0;
+    var nonPassingCount = nonSilverCount = nonGoldCount = 0;
+    var passing80Count = silver80Count = gold80Count = 0;
+    var totalCount = releaseData[currentRelease].length;
+
+    $(releaseData[currentRelease]).each(function(index, element) {
+	    if (element.badge_percentage_0 == 100) passingCount++;
+	    else { nonPassingCount++; if (element.badge_percentage_0 >= 80) { passing80Count++; } }
+	    if (element.badge_percentage_1 == 100) silverCount++;
+	    else { nonSilverCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) { silver80Count++; } }
+	    if (element.badge_percentage_2 == 100) goldCount++;
+	    else { nonGoldCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) { gold80Count++; } }
+
+	});
+
+    // invert the data to generate info indexed by the short_urls
+    var releaseIndices = {};
+    // debuglog("hd=" + releaseData);
+    for (k = 0; k < releases.length; k++) {
+	var release = releases[k];
+	releaseIndices[release] = {};
+	var hdk = releaseData[release];
+	// debuglog("r[" + k + "]=" + releases[k] + ", h[" + k + "]=" + hdk);
+	for (l = 0; l < hdk.length; l++) {
+	    var u = stripurl(hdk[l].repo_url, false);
+	    // debuglog("hdk[" + l + "]=" + hdk[l] + ", release=" + release + ", u=" + u);
+	    releaseIndices[release][u] = l;
+	}
+    }
+
+    function getPreviousData(m, fieldName, prevRelease) {
+	if (prevRelease == "") return "";
+	var index = m.short_url;
+	var prevReleaseIndex = releaseIndices[prevRelease][index];
+	var curValue = m[fieldName];
+	if (typeof prevReleaseIndex == "undefined") {
+	    return 0;
+	}
+	var prevReleaseEntry = releaseData[prevRelease][prevReleaseIndex];
+	var prevValue = prevReleaseEntry[fieldName];
+	return prevValue;
+    }
+
+    function badgeFieldName(release, fieldname) {
+	if (release == currentRelease) return fieldname;
+	return release + "_" + fieldname;
+    }
+
+    // add data from previous releases to each row
+    for (k = 0; k < releases.length; k++) {
+	var release = releases[k];
+	if (release == currentRelease) break;
+	$(releaseData[currentRelease]).each(function(index, element) {
+		element[badgeFieldName(release, "badge_percentage_0")] = getPreviousData(element, "badge_percentage_0", release);
+		element[badgeFieldName(release, "badge_percentage_1")] = getPreviousData(element, "badge_percentage_1", release);
+		element[badgeFieldName(release, "badge_percentage_2")] = getPreviousData(element, "badge_percentage_2", release);
+	    });
+    }
+
+    var datatableColumns = [
+			    { "data": "rank_order", className: "textright" },
+			    { "data": "short_url", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
+			    { "data": "name", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
+			    { "data": "badge", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<img src="'+data+'"/>') : data; } },
+			    ];
+
+    var badgingFieldNames = [ "badge_percentage_0", "badge_percentage_1", "badge_percentage_2" ];
+    var historicColumns = [ ];
+    var columnNumber = datatableColumns.length;
+    for (var bl in badgingLevels) {
+	for (var k in releases) {
+	    var release = releases[k];
+	    var historic = release != currentRelease;
+	    if (historic) historicColumns.push(columnNumber);
+	    columnNumber++;
+	    var columnType = historic ? "historicData" :  "currentdata";
+	    var visible = !historic;
+	    datatableColumns.push({ "data": badgeFieldName(release, badgingFieldNames[bl]),
+			"render": function ( data, type, row, meta ) {
                         if (type != "display") return data;
 		        return ("<span width='100%' class=''>" + data + "</span>");
 		    },
-		    "className": "textright " + columnType,
-		    "visible": visible
-		    });
+			"className": "textright " + columnType,
+			    "visible": visible
+			    });
+	}
     }
+
+    var datatableButtonTransitionTime = 250;
+
+    var datatableButtons = [ "pageLength",
+			     {
+				 extend: 'colvisGroup',
+				 text: 'Show Historic Data',
+				 show: ':hidden',
+				 // hide: ".hideHistoricData",
+				 className: "green showHistoricData",
+				 action: function ( e, dt, button, conf ) {
+				     // definition from github
+				     dt.columns( conf.show ).visible( true, false );
+				     dt.columns( conf.hide ).visible( false, false );
+				     dt.columns.adjust();
+				     // additional action
+				     $(".hideHistoricData").show(datatableButtonTransitionTime);
+				     $(".showHistoricData").hide(datatableButtonTransitionTime);
+				 }
+			     },
+			     {
+				 extend: 'colvisGroup',
+				 text: 'Hide Historic Data',
+				 hide: historicColumns,
+				 className: "hideHistoricData",
+				 action: function ( e, dt, button, conf ) {
+				     // definition from github
+				     dt.columns( conf.show ).visible( true, false );
+				     dt.columns( conf.hide ).visible( false, false );
+				     dt.columns.adjust();
+				     // additional action
+				     $(".hideHistoricData").hide(datatableButtonTransitionTime);
+				     $(".showHistoricData").show(datatableButtonTransitionTime);
+				 }
+			     },
+			     {
+				 extend: "colvis", xtext:"foo"
+			     },
+			     ];
+
+    $('#tr').DataTable({
+	    "data": releaseData[currentRelease],
+		"paging":   true,
+		"pagingType": "full_numbers",
+		"info":     false,
+		"dom": "Bfrtip",
+		lengthMenu: [
+			     [ 10, 25, 50, 100, -1 ],
+			     [ '10 rows', '25 rows', '50 rows', '100 rows', 'Show all' ]
+			     ],
+		"searching": false,
+		"autoWidth": false,
+		"buttons": datatableButtons,
+		"columns": datatableColumns,
+		});
+
+    $(".hideHistoricData").hide();
+
+    var passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
+    var silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
+    var gold80Percentage = (nonGoldCount > 0) ? (100 * gold80Count / nonGoldCount) : 0;
+
+    $('#tr2').append(
+		     "<tr>" +
+		     "<th>Projects &ge;80%/&lt;100%</th>" +
+		     "<td class='textright'>" + passing80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonPassingCount.toFixed(2) + "&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "%</td>" +
+		     "<td class='textright'>" + silver80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonSilverCount.toFixed(2) + "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%</td>" +
+		     "<td class='textright'>" + gold80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonGoldCount.toFixed(2) + "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%</td>" +
+		     "</tr>"
+		     );
+
+    var passingPercentage = (100 * passingCount / totalCount);
+    var silverPercentage = (100 * silverCount / totalCount);
+    var goldPercentage = (100 * goldCount / totalCount);
+
+    $('#tr2').append(
+		     "<tr>" +
+		     "<th>Projects at 100%</th>" +
+		     "<td class='textright'>" + passingCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + passingPercentage.toFixed(2) + "%</td>" +
+		     "<td class='textright'>" + silverCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + silverPercentage.toFixed(2) + "%</td>" +
+		     "<td class='textright'>" + goldCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + goldPercentage.toFixed(2) + "%</td>" +
+		     "</tr>"
+		     );
+
+    var colors = [
+		  /* 0-9    */ "#c4551d",
+		  /* 10-19  */ "#ba4b13",
+		  /* 20-29  */ "#c4611d",
+		  /* 30-39  */ "#c46c1d",
+		  /* 40-49  */ "#c47a1d",
+		  /* 50-59  */ "#c4881d",
+		  /* 60-69  */ "#b5890e",
+		  /* 70-79  */ "#c4a41d",
+		  /* 80-89  */ "#b7a910",
+		  /* 90-99  */ "#c4011d",
+		  /* 100    */ "#4bc51d"
+		  ];
+    var silver = "#bbbbbb";
+    var gold   = "#f2ce0d";
+    var black  = "#000000";
+    var white  = "#ffffff";
+
+    var color = colors[parseInt(passingPercentage / 10, 10)];
+    var textcolor = white;
+    if (passingPercentage == 100 && silverPercentage == 100) {
+	if (goldPercentage == 100) { color = gold; textcolor = black; }
+	else { color = silver; textcolor = black; }
+    }
+
+    var level = "Level 0";
+    if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) { level = "Level 1"; }
+    if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) { level = "Level 2"; }
+    if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) { level = "Level 3"; }
+    if (goldPercentage == 100) { level = "Level 4"; }
+
+    $('#tr2').append(
+		     "<tr>" +
+		     "<td class='center' colspan='4' style='color: " + textcolor + "; background-color: " + color + "'><br/>" + totalCount + " Projects: " + level + "<br/><br/></td>" +
+		     "</tr>"
+		     );
+
+    $('#watermark').hide();
 }
 
-var datatableButtonTransitionTime = 250;
+function getNextUrl(j) {
+    var lastOne = j == pagelist.length-1;
+    var p = pagelist[j];
+    URL = BASEURL;
+    debuglog("URL=" + URL);
+    $('#watermarkPage').html("page " + p);
+    debuglog("getting pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
 
-var datatableButtons = [ "pageLength",
-			 {
-			     extend: 'colvisGroup',
-			     text: 'Show Historic Data',
-			     show: ':hidden',
-		             // hide: ".hideHistoricData",
-			     className: "green showHistoricData",
-			     action: function ( e, dt, button, conf ) {
-				 // definition from github
-				 dt.columns( conf.show ).visible( true, false );
-				 dt.columns( conf.hide ).visible( false, false );
-				 dt.columns.adjust();
-				 // additional action
-				 $(".hideHistoricData").show(datatableButtonTransitionTime);
-				 $(".showHistoricData").hide(datatableButtonTransitionTime);
-			     }
-			 },
-			 {
-			     extend: 'colvisGroup',
-			     text: 'Hide Historic Data',
-			     hide: historicColumns,
-			     className: "hideHistoricData",
-			     action: function ( e, dt, button, conf ) {
-				 // definition from github
-				 dt.columns( conf.show ).visible( true, false );
-				 dt.columns( conf.hide ).visible( false, false );
-				 dt.columns.adjust();
-				 // additional action
-				 $(".hideHistoricData").hide(datatableButtonTransitionTime);
-				 $(".showHistoricData").show(datatableButtonTransitionTime);
-			     }
-			 },
-                         {
-                             extend: "colvis", xtext:"foo"
-                         },
-			 ];
-
-$('#tr').DataTable({
-        "data": releaseData[currentRelease],
-	    "paging":   true,
-	    "pagingType": "full_numbers",
-	    "info":     false,
-	    "dom": "Bfrtip",
-	    lengthMenu: [
-			 [ 10, 25, 50, 100, -1 ],
-			 [ '10 rows', '25 rows', '50 rows', '100 rows', 'Show all' ]
-			 ],
-	    "searching": false,
-	    "autoWidth": false,
-	    "buttons": datatableButtons,
-	    "columns": datatableColumns,
-	    });
-
-$(".hideHistoricData").hide();
-
-var passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
-var silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
-var gold80Percentage = (nonGoldCount > 0) ? (100 * gold80Count / nonGoldCount) : 0;
-
-$('#tr2').append(
-    "<tr>" +
-    "<th>Projects &ge;80%/&lt;100%</th>" +
-    "<td class='textright'>" + passing80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonPassingCount.toFixed(2) + "&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "%</td>" +
-    "<td class='textright'>" + silver80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonSilverCount.toFixed(2) + "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%</td>" +
-    "<td class='textright'>" + gold80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonGoldCount.toFixed(2) + "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%</td>" +
-    "</tr>"
-);
-
-var passingPercentage = (100 * passingCount / totalCount);
-var silverPercentage = (100 * silverCount / totalCount);
-var goldPercentage = (100 * goldCount / totalCount);
-
-$('#tr2').append(
-    "<tr>" +
-    "<th>Projects at 100%</th>" +
-    "<td class='textright'>" + passingCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + passingPercentage.toFixed(2) + "%</td>" +
-    "<td class='textright'>" + silverCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + silverPercentage.toFixed(2) + "%</td>" +
-    "<td class='textright'>" + goldCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + goldPercentage.toFixed(2) + "%</td>" +
-    "</tr>"
-);
-
-var colors = [
-/* 0-9    */ "#c4551d",
-/* 10-19  */ "#ba4b13",
-/* 20-29  */ "#c4611d",
-/* 30-39  */ "#c46c1d",
-/* 40-49  */ "#c47a1d",
-/* 50-59  */ "#c4881d",
-/* 60-69  */ "#b5890e",
-/* 70-79  */ "#c4a41d",
-/* 80-89  */ "#b7a910",
-/* 90-99  */ "#c4011d",
-/* 100    */ "#4bc51d"
-];
-var silver = "#bbbbbb";
-var gold   = "#f2ce0d";
-var black  = "#000000";
-var white  = "#ffffff";
-
-var color = colors[parseInt(passingPercentage / 10, 10)];
-var textcolor = white;
-if (passingPercentage == 100 && silverPercentage == 100) {
-    if (goldPercentage == 100) { color = gold; textcolor = black; }
-    else { color = silver; textcolor = black; }
+    $.ajax({
+	    type: "GET",
+		url: URL,
+		data: { "q": Q, "page": p },
+                success: function(json) {
+		if (typeof json == "string") pushData(releaseData[currentRelease], JSON.parse(json));
+		else pushData(releaseData[currentRelease], json);
+		debuglog("got pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
+		if (lastOne) whenDone();
+		else getNextUrl(j+1);
+	    },
+		error: function(request,error, thrownError) {
+		alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+	    }
+        });
 }
 
-var level = "Level 0";
-if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) { level = "Level 1"; }
-if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) { level = "Level 2"; }
-if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) { level = "Level 3"; }
-if (goldPercentage == 100) { level = "Level 4"; }
-
-$('#tr2').append(
-    "<tr>" +
-    "<td class='center' colspan='4' style='color: " + textcolor + "; background-color: " + color + "'><br/>" + totalCount + " Projects: " + level + "<br/><br/></td>" +
-    "</tr>"
-);
-
-$('#watermark').hide();
+getNextUrl(0);
 
 }); // end of document.ready()

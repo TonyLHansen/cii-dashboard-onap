@@ -4,6 +4,8 @@ class Query {
         this.parms = query.split('&');
     };
 
+    // Return the value of a parameter. Only return the first such parameter's value that is found.
+    // If that parameter does not exist, return the value of "def".
     get(nm, def) {
         if (def == null) def = "";
         for (var i = 0; i < this.parms.length; i++) { 
@@ -16,25 +18,52 @@ class Query {
         return def;
     } 
 
+    // Get all occurrences of a paramter as a list of values.
+    // If that parameter does not exist, return the value of "def".
     getAll(nm, def) {
         var retA = [];
-        var foundOne = false;
         for (var i = 0; i < this.parms.length; i++) { 
             var pos = this.parms[i].indexOf('=');
             if ((pos > 0) && (nm == this.parms[i].substring(0, pos))) {
                 var val = decodeURIComponent(this.parms[i].substring(pos + 1).replace("+"," "));
                 retA.append(val);
-                foundOne = true;
             }
         }
-	if (foundOne) {
+	if (retA.length > 0) {
             return retA;
         } else {
             return def;
         }
     } 
 
+    // Pretend that a given parameter was passed.
     setParm(nm, def) {
         this.parms.push(nm + "=" + def);
+    }
+
+    // Return a copy of the parameter list, with a possible addition.
+    getParmListWith(addParm) {
+	var ret = this.parms.join("&");
+	if (addParm != null)
+	    if (this.parms.length > 0)
+		ret += "&" + addParm;
+	    else
+		ret += addParm;
+	return "?" + ret;
+    }
+
+    // Return a copy of the parameter list, after removing a possible deletion.
+    getParmListWithout(delParm) {
+	var sep = "?";
+	var ret = "";
+	for (var i in this.parms) {
+            var pos = this.parms[i].indexOf('=');
+            if ((pos <= 0) || (delParm != this.parms[i].substring(0, pos))) {
+		ret += sep;
+		ret += this.parms[i];
+	    }
+	    sep = "&";
+	}
+	return ret;
     }
 }

@@ -109,6 +109,9 @@ button.projectLevel {
 .gold_detail_span {
     display: none;
 }
+.editors_detail_span {
+    display: none;
+}
 .clickable_image {
     vertical-align: top;
 }
@@ -146,4 +149,16 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
 
 .name {
     background-color: lightblue;
+}
+
+.bgbronze {
+    background-color: #8c7853;
+}
+
+.bgsilver {
+    background-color: silver;
+}
+
+.bggold {
+    background-color: gold;
 }

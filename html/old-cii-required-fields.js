@@ -1,4 +1,4 @@
-var requiredFields =
+var orequiredFields =
 {
     "bronze": [
 	       "build",
@@ -140,6 +140,7 @@ var requiredFields =
 	     "copyright_per_file",
 	     "crypto_tls12",
 	     "crypto_used_network",
+	     "dynamic_analysis",
 	     "hardened_site",
 	     "hardening",
 	     "license_per_file",
@@ -163,6 +164,7 @@ var requiredFields =
 	    "access_continuity",
 	    "accessibility_best_practices",
 	    "achieve_passing",
+	    "achieve_silver",
 	    "assurance_case",
 	    "automated_integration_testing",
 	    "build_common_tools",
@@ -249,7 +251,7 @@ var requiredFields =
 	    "report_process",
 	    "report_responses",
 	    "report_tracker",
-	    "report_url",
+	    "repo_url",
 	    "require_2FA",
 	    "roles_responsibilities",
 	    "secure_2FA",

@@ -374,7 +374,7 @@ function addRankOrder(d) {
 
 function getProject(data, type, row) {
     if (type !== 'display') return data;
-    var ret = "<a href='" + row.repo_url + "'>" + row.onap_project_short + "</a>";
+    var ret = "<a target='_blank' href='" + row.repo_url + "'>" + row.onap_project_short + "</a>";
     if (row.onap_project_short == "UNKNOWN")
 	ret += (row.onap_badurl ? " <span class='badURL' title='There is no project prefix word in the repo URL that will identify which project this entry belongs to.'>PROJECT NOT IN URL</span>" : "");
     else
@@ -388,8 +388,8 @@ function getProject(data, type, row) {
 function getAllNames(data, type, row) {
     if (type !== 'display') return data;
     if (row.id == -1) return data;
-    var urlPrefix = '<a href="https://bestpractices.coreinfrastructure.org/projects/';
-    var urlSuffix = '">';
+    var urlPrefix = "<a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/";
+    var urlSuffix = "'>";
     var anchorEnd = '</a>';
     var ret = "<table class='noborder'>";
     ret += "<tr><td class='stats noborder'>" + urlPrefix + row.id + urlSuffix + row.name + anchorEnd + "</td></tr>";
@@ -430,10 +430,10 @@ function getBadge(txtLeft, txtRight, colorRight) {
 }
 
 function resize(id) {
-    if ($(".size__" + id).css('font-size') == '20px')
-	$(".size__" + id).css('font-size','16px');
+    if ($(".size__" + id).css('font-size') == '24px')
+	$(".size__" + id).css('font-size','');
     else
-	$(".size__" + id).css('font-size','20px');
+	$(".size__" + id).css('font-size','24px');
 }
 
 function getAllBadges(data, type, row) {
@@ -505,7 +505,7 @@ function prEditor(data, editorDict) {
     for (var e in editors) {
 	var editor = editors[e];
 	var nm = editorDict[editor] ? editorDict[editor] : "Unk";
-	editorsOut += sep + "<a href='" + BASESITE + "en/users/" + editor + "' title='" + nm.replace(/['']/g, "&quot;") + "'>" + nm + "</a>";
+	editorsOut += sep + "<a target='_blank' href='" + BASESITE + "en/users/" + editor + "' title='" + nm.replace(/['']/g, "&quot;") + "'>" + nm + "</a>";
 	sep = "<br/>";
     }
     var ret = "<span class='xxsmall " + cl + "'>" + editorsOut + "</button>";
@@ -527,19 +527,23 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 
     trdataHeaders += "<th>Editors</th>";
 
-    var addNameColumn = 1;
+    var addNameColumn = 3;
     var rf = requiredFields[level];
     var allFields = [];
     for (var k in rf) {
 	var ciiName = rf[k];
 	allFields.push(ciiName);
 	var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
-	trdataHeaders += "<th><span title='" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") + "'>" +
+	trdataHeaders += "<th><span title='" + 
+	    "[" + ciiName + "] " +
+	    badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") + "'>" +
 	    ciiName.replace(/_/g," ").
 	          replace(/(\W+|^)(.)/ig,
 		  function(match, chr) { return match.toUpperCase(); }) + 
 	    "</span>" +
-	    "<span class='" + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
+	    "<span class='" + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + 
+	    "[" + ciiName + "]<br/>" +
+	    badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
 	    "</span>" +
 	    "</th>";
 	if (++addNameColumn % 10 == 0)
@@ -554,12 +558,16 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	allFields.push(ciiName);
 	optionalFields[ciiName] = 1;
 	var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
-	trdataHeaders += "<th class='optional'><span class='optional' title='" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") + "'>" + 
+	trdataHeaders += "<th class='optional'><span class='optional' title='" + 
+	    "[" + ciiName + "]" +
+	    badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") + "'>" + 
 	    ciiName.replace(/_/g," ").
 	          replace(/(\W+|^)(.)/ig,
 		  function(match, chr) { return match.toUpperCase(); }) + 
 	    "</span>" +
-	    "<span class='optional " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
+	    "<span class='optional " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + 
+	    "[" + ciiName + "]<br/>" +
+	    badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
 	    "</span>" +
 	    "</th>";
 	if (++addNameColumn % 10 == 0)
@@ -572,7 +580,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			      "<tfoot>" + trdataHeaders + "</tfoot>");
 
     var columns = [ ];
-    addNameColumn = 1;
+    addNameColumn = 3;
     columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
 		return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
 		    "onclick='resize(" + row['id'] + ")'" +
@@ -620,14 +628,14 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			else if (data.toLowerCase() == "?") classVal = 'question';
 			// console.log("optionalClass=" + optionalClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
 			// console.log("fieldname=" + fieldName + ", statusname=" + statusName + ", row[id]=" + row['id'] + ", optionalClass=" + optionalClass + ", projectlevelclass=" + projectLevelClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal, ", urlRequired=" + urlRequired);
-			var dataTitle = badgeDescriptions[level][statusName];
+			// var dataTitle = "[" + statusName + "]<br/>" + badgeDescriptions[level][statusName];
 			var justification = row[justificationName];
 			var detailIdButton = "button__" + statusName + "__" + row['id'];
 			var detailClass = "detail__" + statusName + "__" + row['id'];
 			var detailIdSpan = "detail__" + statusName + "__" + row['id'];
 			var ret = "<div style='height: 100%; width: 100%; ' class='" + optionalClass + " size__" + row['id'] + "'>" +
 			    "<button id='" + detailIdButton + "' class='" + classVal + " " + projectLevelClass + " xclickable_text size__" + row['id'] + "' title=\"";
-			ret += (fieldName in badgeDescriptions[level]) ? (badgeDescriptions[level][fieldName].replace(/['']/g, "&quot;") + "\n") : "--\n";
+			ret += (fieldName in badgeDescriptions[level]) ? ("[" + fieldName + "]\n" + badgeDescriptions[level][fieldName].replace(/['']/g, "&quot;") + "\n") : "--\n";
 			var status = "";
 			status += (fieldName in row) ? (row[fieldName] + "\n") : "\n"; // ".(fieldname).\n";
 			status += (statusName in row) ? (row[statusName] + "\n") : "\n"; // ".(statusname).\n";

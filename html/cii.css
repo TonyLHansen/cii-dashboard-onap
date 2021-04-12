@@ -76,6 +76,11 @@ td.stats {
 .unmet {
     background-color: pink;
 }
+button.projectLevel {
+    border-radius: 30px;
+    border-color: gold;
+    border-style:solid;
+}
 .optional > .unmet {
     background-color: lightblue;
 }

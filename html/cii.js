@@ -451,12 +451,13 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
     for (var k in rf) {
 	var ciiName = rf[k];
 	allFields.push(ciiName);
-	trdataHeaders += "<th><span title='" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") + "'>" + 
+	var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
+	trdataHeaders += "<th><span title='" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") + "'>" +
 	    ciiName.replace(/_/g," ").
 	          replace(/(\W+|^)(.)/ig,
 		  function(match, chr) { return match.toUpperCase(); }) + 
 	    "</span>" +
-	    "<span class='" + level + "_detail_span'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
+	    "<span class='" + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
 	    "</span>" +
 	    "</th>";
     }
@@ -468,12 +469,13 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 	var ciiName = rf2[k];
 	allFields.push(ciiName);
 	optionalFields[ciiName] = 1;
+	var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
 	trdataHeaders += "<th class='optional'><span class='optional' title='" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") + "'>" + 
 	    ciiName.replace(/_/g," ").
 	          replace(/(\W+|^)(.)/ig,
 		  function(match, chr) { return match.toUpperCase(); }) + 
 	    "</span>" +
-	    "<span class='optional " + level + "_detail_span'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
+	    "<span class='optional " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
 	    "</span>" +
 	    "</th>";
     }
@@ -513,10 +515,12 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 			// console.log("fieldName=" + fieldName);
 			var optionalClass = optionalFields[fieldName] ? "optional" : "";
 			var classVal = /* optionalClass + */'na';
+			var projectLevelClass = (fieldName in ONAPprojectCommonResponse) ? "projectLevel" : "";
 			if (data.toLowerCase() == "met") classVal = /* optionalClass + */'met';
 			else if (data.toLowerCase() == "unmet") classVal = /* optionalClass + */'unmet';
 			else if (data.toLowerCase() == "?") classVal = /* optionalClass + */'question';
 			// console.log("optionalClass=" + optionalClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
+			// console.log("fieldname=" + fieldName + ", statusname=" + statusName + ", row[id]=" + row['id'] + ", optionalClass=" + optionalClass + ", projectlevelclass=" + projectLevelClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
 			var dataTitle = badgeDescriptions[level][statusName];
 			var justificationName = fieldName + "_justification";
 			var justification = row[justificationName];
@@ -524,7 +528,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 			var detailClass = "detail__" + statusName + "__" + row['id'];
 			var detailIdSpan = "detail__" + statusName + "__" + row['id'];
 			var ret = "<div style='height: 100%; width: 100%; ' class='" + optionalClass + " size__" + row['id'] + "'>" +
-			    "<button id='" + detailIdButton + "' class='" + classVal + " xclickable_text size__" + row['id'] + "' title=\"";
+			    "<button id='" + detailIdButton + "' class='" + classVal + " " + projectLevelClass + " xclickable_text size__" + row['id'] + "' title=\"";
 			ret += (fieldName in badgeDescriptions[level]) ? (badgeDescriptions[level][fieldName].replace(/['']/g, "&quot;") + "\n") : "--\n";
 			var status = "";
 			status += (fieldName in row) ? (row[fieldName] + "\n") : "\n"; // ".(fieldname).\n";

@@ -863,6 +863,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 		"[" + ciiName + "]<br/>" +
 		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
 		"</span>" +
+		"<span class='" + level + "_show_metstats_detail_span'><span class='metstats_" + level + "_" + ciiName + "'></span></span>" +
 		"</th>";
 	    if (++addNameColumn % 10 == 0)
 		trdataHeaders += nameHeader;
@@ -928,7 +929,6 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			    else classVal = 'needsUrl';
 			} else if (data.toLowerCase() == "unmet") classVal = 'unmet';
 			else if (data.toLowerCase() == "?") classVal = 'question';
-			// var dataTitle = "[" + statusName + "]<br/>" + badgeDescriptions[level][statusName]["description"];
 			var justification = row[justificationName];
 			var detailIdButton = "button__" + statusName + "__" + row['id'];
 			var detailClass = "detail__" + statusName + "__" + row['id'];
@@ -1012,6 +1012,38 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 		//		}
 	    }
 	});
+
+    // add in the per-requirement statistics
+    for (var k in allFields) {
+	var ciiName = allFields[k];
+	var urlRequired = badgeDescriptions[level][ciiName]["description"].indexOf("(URL required)") >= 0;
+	// console.log("ciiName=", ciiName);
+	var met = 0, needsUrl = 0, unmet = 0, question = 0, na = 0, unknown = 0;
+	for (var i in datad) {
+	    var row = datad[i];
+	    var status = row[ciiName+"_status"].toLowerCase();
+	    var justificationName = ciiName + "_justification";
+	    var hasUrl = (justificationName in row) && containsURL(row[justificationName]);
+	    if (status == "met") {
+		if (urlRequired && hasUrl) met += 1;
+		else if (!urlRequired) met += 1;
+		else needsUrl += 1;
+	    } else if (status == "unmet") unmet += 1;
+	    else if (status == "?") question += 1;
+	    else if (status == "n/a") na += 1;
+	    else {
+		unknown += 1;
+		console.log("UNKNOWN: ciiName=", ciiName, "status=", status, "urlRequired=", urlRequired, "hasUrl=", hasUrl);
+	    }
+	}
+	$('.metstats_' + level + "_" + ciiName).append((met ? "<div class='left'><button class='met'>Met</button>&nbsp;" + met : "</div>") +
+						       (na ? "<div class='left'><button class='na'>NA</button>&nbsp;" + na : "</div>") +
+						       (unmet ? "<div class='left'><button class='unmet'>Unmet</button>&nbsp;" + unmet : "</div>") +
+						       (needsUrl ? "<div class='left'><button class='needsUrl'>NeedsUrl</button>&nbsp;" + needsUrl : "</div>") +
+						       (question ? "<div class='left'><button class='question'>?</button>&nbsp;" + question : "</div>") +
+						       (unknown ? "<div class='left'><button class='badProject'>?</button>" : "</div>"));
+    }
+
 }
 
 function whenDone(datad, editorNames) {
@@ -1149,7 +1181,6 @@ function whenDone(datad, editorNames) {
     addToMustTable(datad, 'trbronze', 'bronze', 'Passing', '0', editorDict);
     addToMustTable(datad, 'trsilver', 'silver', 'Silver', '1', editorDict);
     addToMustTable(datad, 'trgold', 'gold', 'Gold', '2', editorDict);
-    // addToMustTable(datad, 'treditors', 'bronze', 'Pass', null, editorDict);
 
     $(".requirements_toggle").click(function(){ $(".requirements_span").each(flipThisVisibility); });
     $(".summary_toggle").click(function(){ $(".summary_span").each(flipThisVisibility); });
@@ -1167,7 +1198,10 @@ function whenDone(datad, editorNames) {
     $(".bronze_detail_display_none").click(function(){ $(".bronze_detail_span").each(makeInvisible); });
     // $(".editors_detail_display_none").click(function(){ $(".editors_detail_span").each(makeInvisible); });
     // $(".editors_detail_display_all").click(function(){ $(".editors_detail_span").each(makeVisible); });
-    $('_toggle').each(function(){ console.log("found " + $(this).attr('id')); });
+    //    $('_toggle').each(function(){ console.log("found " + $(this).attr('id')); });
+    $(".bronze_show_metstats_toggle").click(function(){ $(".bronze_show_metstats_detail_span").each(flipThisVisibility); });
+    $(".silver_show_metstats_toggle").click(function(){ $(".silver_show_metstats_detail_span").each(flipThisVisibility); });
+    $(".gold_show_metstats_toggle").click(function(){ $(".gold_show_metstats_detail_span").each(flipThisVisibility); });
 
     $('#watermark').hide();
 

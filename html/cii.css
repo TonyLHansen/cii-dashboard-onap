@@ -109,6 +109,15 @@ button.projectLevel {
 .gold_detail_span {
     display: none;
 }
+.bronze_show_metstats_detail_span {
+    display: none;
+}
+.silver_show_metstats_detail_span {
+    display: none;
+}
+.gold_show_metstats_detail_span {
+    display: none;
+}
 .editors_detail_span {
     display: none;
 }

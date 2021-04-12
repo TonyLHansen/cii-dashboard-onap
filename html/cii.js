@@ -32,7 +32,9 @@ var colors = [
 	      ];
 
 function getColor(passingPercentage, silverPercentage, goldPercentage) {
+    // console.log("passingPercentage=" + passingPercentage + ", silverPercentage=" + silverPercentage + ", goldPercentage=" + goldPercentage);
     var color = colors[parseInt(passingPercentage / 10, 10)];
+    // console.log("color=" + color);
     if (passingPercentage == 100 && silverPercentage == 100) {
 	if (goldPercentage == 100) { color = gold; }
 	else { color = silver; }
@@ -304,6 +306,9 @@ function getAllNames(data, type, row) {
 }
 
 function getBadge(txtLeft, txtRight, colorRight) {
+    // console.log("txtLeft=" + txtLeft);
+    // console.log("txtRight=" + txtRight);
+    // console.log("colorRight=" + colorRight);
     return "<svg xmlns='http://www.w3.org/2000/svg' width='204' height='20'>" +
 	"<linearGradient id='b' x2='0' y2='100%'>" +
 	"<stop offset='0' stop-color='#bbb' stop-opacity='.1'/>" +
@@ -318,9 +323,9 @@ function getBadge(txtLeft, txtRight, colorRight) {
 	"<path fill='url(#b)' d='M0 0h204v20H0z'/>" +
 	"</g>" +
 	"<g fill='#fff' text-anchor='middle' font-family='DejaVu Sans,Verdana,Geneva,sans-serif' font-size='11'>" +
-	"<text x='51.5' y='15' fill='#010101' fill-opacity='.3'>cii best practices</text>" +
+	"<text x='51.5' y='15' fill='#010101' fill-opacity='.3'>" + txtLeft + "</text>" +
 	"<text x='51.5' y='14'>" + txtLeft + "</text>" +
-	"<text x='152.5' y='15' fill='#010101' fill-opacity='.3'>" + txtRight + "</text>" +
+	"<text x='152.5' y='15' fill='" + colorRight + "' xfill='#010101' fill-opacity='.3'>" + txtRight + "</text>" +
 	"<text x='152.5' y='14'>" + txtRight + "</text>" +
 	"</g>" +
 	"</svg>";
@@ -629,21 +634,21 @@ function whenDone(datad) {
 		     "&nbsp;&ndash;&nbsp;" + passingMinusCount + 
 		     "&nbsp;)&nbsp;=&nbsp;" + passing80MinusPercentage.toFixed(2) + "% " +
  		     "<br/>" +
-		     "(" + passing80MinusNeeded + "/" + (totalCount - passingMinusCount) + " needed for 80%)" +
+		     "(" + passing80MinusNeeded + " of " + (totalCount - passingMinusCount) + " needed for 80%)" +
 		     "</td><td class='noborder'>" +
 		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
-		      ((passing80MinusPercentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
+		      ((passing80MinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
 		     "</td></tr></table>" +
 		     "</td>" +
 		     "<td class='minus textright'>" + silver80MinusCount + "&nbsp;/&nbsp;" + nonSilverMinusCount +
 		     "&nbsp;=&nbsp;" + silver80MinusPercentage.toFixed(2) + "%" +
 		     ((color == silver) ? "<img src='checkmark.png'/>" :
-		      (color == green) ? ((silver80MinusPercentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
+		      (color == green) ? ((silver80MinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
 		     "</td>" +
 		     "<td class='minus textright'>" + gold80MinusCount + "&nbsp;/&nbsp;" + nonGoldMinusCount +
 		     "&nbsp;=&nbsp;" + gold80MinusPercentage.toFixed(2) + "%" +
 		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((gold80MinusPercentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      (color == silver) ? ((gold80MinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
 		      "") +
 		     "</td>" +
 		     "</tr>"
@@ -689,7 +694,7 @@ function whenDone(datad) {
 		     "&nbsp;&ndash;&nbsp;" + passingCount + 
 		     "&nbsp;)&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "% " +
  		     "<br/>" +
-		     "(" + passing80Needed + "/" + (totalCount - passingCount) + " needed for 80%)" +
+		     "(" + passing80Needed + " of " + (totalCount - passingCount) + " needed for 80%)" +
 		     "</td><td class='noborder'>" +
 		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
 		      ((passing80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +

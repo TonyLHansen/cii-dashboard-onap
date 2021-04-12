@@ -74,6 +74,18 @@ if (help == 'y') {
   throw 'help';
 }
 
+function flipVisibility(where) {
+    if ( $(where).css('display') == 'none' ) {
+	$(where).css('display','inline');
+    } else {
+	$(where).css('display','none');
+    }
+}
+
+function flipThisVisibility(index) {
+    flipVisibility(this);
+}
+
 function sanitizeRelease(r, def) {
     // debuglog("sanitizeRelease(" + r + ")");
     if (r == "current") {
@@ -106,8 +118,6 @@ function intermingleReleasesAndBadgingLevels() {
     }
     return headers;
 }
-
-
 
 function addReleasesAndBadgingLevelsToTable() {
     var headers = intermingleReleasesAndBadgingLevels();
@@ -408,10 +418,11 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 
     var rf = requiredFields[level];
     for (var k in rf) {
-	trdataHeaders += "<th>" + rf[k].replace(/_/g," ").replace(/(\W+|^)(.)/ig, 
-								 function(match, chr) {
-								     return match.toUpperCase();
-								 }) + 
+	trdataHeaders += "<th><span title='" + badgeDescriptions[level][rf[k]] + "'>" + 
+	    rf[k].replace(/_/g," ").
+	          replace(/(\W+|^)(.)/ig,
+		  function(match, chr) { return match.toUpperCase(); }) + 
+	    "</span>" +
 	    "<span class='" + level + "_detail_span'><br/><br/>" + badgeDescriptions[level][rf[k]] +
 	    "</span>" +
 	    "</th>";
@@ -442,28 +453,23 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 		    var dataTitle = badgeDescriptions[level][statusName];
 		    var justificationName = fieldName + "_justification";
 		    var justification = row[justificationName];
-		    // console.log("level=" + level);
-		    // if (level == "bronze") {
-			// console.log("app name=" + row.name);
-			// console.log("app homepage_url=" + row.homepage_url);
-			// console.log("badgeDescriptions[" + level + "]=" + badgeDescriptions[level]);
-			// console.dir(badgeDescriptions[level]);
-			// console.log("statusName=" + statusName);
-			// console.log("fieldName=" + fieldName);
-			// console.log("dataTitle=" + dataTitle);
-			// console.log("justificationName=" + justificationName);
-			// console.log("justification=" + justification);
-		    // }
-		    var ret = "<span class='" + classVal + 
-			"' title=\"";
+		    var detailIdButton = "button__" + statusName + "__" + row['id'];
+		    var detailClass = "detail__" + statusName + "__" + row['id'];
+		    var detailIdSpan = "detail__" + statusName + "__" + row['id'];
+		    var ret = "<button id='" + detailIdButton + "' class='" + classVal + " xclickable_text' title=\"";
 		    ret += (fieldName in badgeDescriptions[level]) ? (badgeDescriptions[level][fieldName] + "\n") : "--\n";
 		    var status = "";
 		    status += (fieldName in row) ? (row[fieldName] + "\n") : "\n"; // ".(fieldname).\n";
 		    status += (statusName in row) ? (row[statusName] + "\n") : "\n"; // ".(statusname).\n";
 		    status += (justificationName in row) ? ((row[justificationName]) ? (row[justificationName] + "\n") : "\n") : "\n"; // ".(justifictionname).\n";
 		    ret += status;
-		    ret += "\">" + data + "</span>";
-		    ret += "<span class='" + level + "_detail_span'><br/><br/>" + status + "</span>";
+		    var statusbr = "";
+		    statusbr += (fieldName in row) ? (row[fieldName] + "<br/>") : "<br/>"; // ".(fieldname).<br/>";
+		    statusbr += (justificationName in row) ? ((row[justificationName]) ? (row[justificationName] + "<br/>") : "<br/>") : "<br/>"; // ".(justifictionname).<br/>";
+		    ret += "\" onclick='flipVisibility(\"#" + detailIdSpan + "\")'";
+		    ret += ">" + data + "</button>";
+		    // ret += "detailIdButton=" + detailIdButton + ", detailClass=" + detailClass;
+		    ret += "<span id='" + detailIdSpan + "' class='" + level + "_detail_span" + " " + detailClass + "'><br/><br/>" + statusbr + "</span>";
 		    return ret;
 		}
 	    });
@@ -474,7 +480,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
     $('#' + tablename).DataTable({
 	    "data": datad,
 		"aaSorting": [[ 0, "asc" ]],
-		fixedHeader: true,
+		// fixedHeader: true,
 		"paging": true,
 		"pagingType": "full_numbers",
 		"pageLength": parseInt(parms.get("pagelength", "50")),
@@ -487,8 +493,23 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 		"searching": true,
 		"autoWidth": false,
 		"buttons": datatableButtons,
-		"columns": columns
+		"columns": columns,
+		"initComplete": function(settings, json) {
+			console.log("table for " + level + " done");
+		//		for (var k in rf) {
+		//		    var statusName = rf[k];
+		//		    for (var r in datad) {
+		//			var detailIdButton = "#button__" + statusName + "__" + datad[r].id;
+		//			var detailIdClass = ".detail__" + statusName + "__" + datad[r].id;
+		//			console.log("detailIdButton=" + detailIdButton + ", detailIdClass=" + detailIdClass);
+			//			$(detailIdButton).click(function(){ console.log("clicking " + detailIdButton + " for " + detailIdClass);
+			//				$(detailIdClass).each(flipThisVisibility); });
+			//			console.dir($(detailIdButton));
+		//		    }
+		//		}
+	    }
 		});
+
 }
 
 function whenDone(datad) {
@@ -610,69 +631,15 @@ function whenDone(datad) {
     addToMustTable(datad, 'trsilver', 'silver', 'Silver', '1');
     addToMustTable(datad, 'trgold', 'gold', 'Gold', '2');
 
-    $(".projects_toggle").click(function(){
-	    $(".projects_span").each(function(index) {
-		    if ( $(this).css('display') == 'none' ) {
-			$(this).css('display','inline');
-		    } else {
-			$(this).css('display','none');
-		    }
-		});
-	});
-    $(".bronze_toggle").click(function(){
-	    $(".bronze_span").each(function(index) {
-		    if ( $(this).css('display') == 'none' ) {
-			$(this).css('display','inline');
-		    } else {
-			$(this).css('display','none');
-		    }
-		});
-	});
-    $(".silver_toggle").click(function(){
-	    $(".silver_span").each(function(index) {
-		    if ( $(this).css('display') == 'none' ) {
-			$(this).css('display','inline');
-		    } else {
-			$(this).css('display','none');
-		    }
-		});
-	});
-    $(".gold_toggle").click(function(){
-	    $(".gold_span").each(function(index) {
-		    if ( $(this).css('display') == 'none' ) {
-			$(this).css('display','inline');
-		    } else {
-			$(this).css('display','none');
-		    }
-		});
-	});
-    $(".bronze_detail_toggle").click(function(){
-	    $(".bronze_detail_span").each(function(index) {
-		    if ( $(this).css('display') == 'none' ) {
-			$(this).css('display','inline');
-		    } else {
-			$(this).css('display','none');
-		    }
-		});
-	});
-    $(".silver_detail_toggle").click(function(){
-	    $(".silver_detail_span").each(function(index) {
-		    if ( $(this).css('display') == 'none' ) {
-			$(this).css('display','inline');
-		    } else {
-			$(this).css('display','none');
-		    }
-		});
-	});
-    $(".gold_detail_toggle").click(function(){
-	    $(".gold_detail_span").each(function(index) {
-		    if ( $(this).css('display') == 'none' ) {
-			$(this).css('display','inline');
-		    } else {
-			$(this).css('display','none');
-		    }
-		});
-	});
+    $(".requirements_toggle").click(function(){ $(".requirements_span").each(flipThisVisibility); });
+    $(".summary_toggle").click(function(){ $(".summary_span").each(flipThisVisibility); });
+    $(".projects_toggle").click(function(){ $(".projects_span").each(flipThisVisibility); });
+    $(".bronze_toggle").click(function(){ $(".bronze_span").each(flipThisVisibility); });
+    $(".silver_toggle").click(function(){ $(".silver_span").each(flipThisVisibility); });
+    $(".gold_toggle").click(function(){ $(".gold_span").each(flipThisVisibility); });
+    $(".bronze_detail_toggle").click(function(){ $(".bronze_detail_span").each(flipThisVisibility); });
+    $(".silver_detail_toggle").click(function(){ $(".silver_detail_span").each(flipThisVisibility); });
+    $(".gold_detail_toggle").click(function(){ $(".gold_detail_span").each(flipThisVisibility); });
 
     $('#watermark').hide();
     if (parms.get("skipnotstarted", false)) $('#keepnotstarted').show();

@@ -93,3 +93,11 @@ td.stats {
 .gold_detail_span {
     display: none;
 }
+.clickable_image {
+    vertical-align: top;
+}
+.clickable_text {
+    // background:none;
+    border:none;
+    cursor:pointer;
+}

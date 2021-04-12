@@ -5,6 +5,11 @@ var BASESITE = "https://bestpractices.coreinfrastructure.org/";
 // var BASESITE = BETABASESITE;
 var BASEURL = BASESITE + "projects.json";
 var Q = "onap";
+var globalTables = { };
+var columnNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
+var requiredNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
+var optionalNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
+
 var repoUrlPrefixes = [
 		       "https://gerrit.onap.org/r/#/admin/projects/",
 		       "https://gerrit.onap.org/r/p/",
@@ -16,6 +21,7 @@ var gitRepoUrlPrefix = "https://gerrit.onap.org/r/p/".toUpperCase();
 var goodRepoUrlPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 
 var badgingLevels = ["Passing", "Silver", "Gold"];
+var badgingColors = ["bronze", "silver", "gold"];
 var bucketStr = [ "0-20%", "20-40%", "40-60%", "60-80%", "80-100%", "100%" ];
 
 var green  = "#4bc51d";
@@ -512,39 +518,44 @@ function pushData(whereTo, whereFrom) {
 }
 
 function fillInEditorNames(datad, editorNames, editorList, j) {
-    var URL = BASESITE + "en/users/";
-    // var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
-    // var URL = BETABASESITE + "en/users/";
-    var URLsuffix = "";
-    var editor = editorList[j];
-    // $('#watermarkPage').html("editor " + editor);
-    var dots = [ ".", "..", "...", "...." ];
-    $('#watermarkPage').html("editors " + (dots[j % 4]));
-    // console.log("j=", j);
-    // console.log("url=", URL);
-    // console.log("editor=", editor);
-    var lastOne = j >= (editorList.length-1);
-    // console.log("lastOne=", lastOne);
+    if (editorList.length == 0)
+	whenDone(datad, editorNames);
+    else {
+	var URL = BASESITE + "en/users/";
+	// var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
+	// var URL = BETABASESITE + "en/users/";
+	var URLsuffix = "";
+	var editor = editorList[j];
+	// $('#watermarkPage').html("editor " + editor);
+	var dots = [ ".", "..", "...", "...." ];
+	$('#watermarkPage').html("editors " + (dots[j % 4]));
+	// console.log("j=", j);
+	// console.log("url=", URL);
+	// console.log("editor=", editor);
+	console.log("editorList=", editorList);
+	var lastOne = j >= (editorList.length-1);
+	// console.log("lastOne=", lastOne);
 
-    $.ajax({
-	    type: "GET",
-		url: URL + editor + ".json",
-		data: { "format": "json" },
-		success: function(json) {
+	$.ajax({
+		type: "GET",
+		    url: URL + editor + ".json",
+		    data: { "format": "json" },
+		    success: function(json) {
 		    // console.log("ret=", json);
 		    if (typeof json == "string") pushData(editorNames, JSON.parse(json));
 		    else pushData(editorNames, json);
 		    if (json == '') whenDone(datad, editorNames);
 		    else if (lastOne) whenDone(datad, editorNames);
 		    else fillInEditorNames(datad, editorNames, editorList, j+1);
-	        },
-		error: function(request,error, thrownError) {
+		},
+		    error: function(request,error, thrownError) {
 		    alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
-	        }
-	});
+		}
+	    });
+    }
 }
 
-function getEditorList(datad) {
+function getEditorList(datad, editorNames) {
     var editorDict = {};
     for (var k in datad) {
 	editorDict[datad[k].user_id] = 1;
@@ -552,12 +563,16 @@ function getEditorList(datad) {
 	    editorDict[datad[k].additional_rights[ar]] = 1;
 	}
     }
-    // console.log("editorDict=", editorDict);
     var keys = [];
     for (var k in editorDict) {
-	keys.push(k);
+	if (k in knownEditors) {
+	    knownEditors[k]["id"] = k;
+	    pushData(editorNames, knownEditors[k]);
+	} else {
+	    keys.push(k);
+	}
     }
-    // console.log("editor keys=", keys);
+    // console.log("editor keys that need to be loaded=", keys);
     return keys;
 }
 
@@ -595,10 +610,8 @@ function getNextUrl(datad, editorNames, pagelist, j) {
 		for (var jo in js) {
 		    historicalReleaseData["current"].push(js[jo]);
 		}
-		if (json == '') {
-		    fillInEditorNames(datad, editorNames, getEditorList(datad), 0);
-		} else if (lastOne) {
-		    fillInEditorNames(datad, editorNames, getEditorList(datad), 0);
+		if (lastOne || (json == '')) {
+		    fillInEditorNames(datad, editorNames, getEditorList(datad, editorNames), 0);
 		} else {
 		    getNextUrl(datad, editorNames, pagelist, j+1);
 		}
@@ -769,6 +782,157 @@ function prEditor(data, editorDict) {
     return ret;
 }
 
+function sortColumns(level, newSortBy, anm, bnm) {
+    var a = anm["name"];
+    var b = bnm["name"];
+    var rf = badgeDescriptions[level];
+    var atype = rf[a]["type"];
+    var btype = rf[b]["type"];
+    var asection = rf[a]["section"];
+    var bsection = rf[b]["section"];
+    var aonapmet = !rf[a]["onapmet"];
+    var bonapmet = !rf[b]["onapmet"];
+    var acmpnm = newSortBy.startsWith("by_section") ? asection : 
+	newSortBy.startsWith("by_type") ? atype : 
+	newSortBy.startsWith("by_onapmet") ? aonapmet : 
+	"";
+    var bcmpnm = newSortBy.startsWith("by_section") ? bsection : 
+	newSortBy.startsWith("by_type") ? btype : 
+	newSortBy.startsWith("by_onapmet") ? bonapmet : 
+	"";
+    acmpnm += "_";
+    bcmpnm += "_";
+    acmpnm += newSortBy.endsWith("section_name") ? asection : 
+	newSortBy.endsWith("type_name") ? atype : "";
+    bcmpnm += newSortBy.endsWith("section_name") ? bsection : 
+	newSortBy.endsWith("type_name") ? btype : "";
+    acmpnm += "_";
+    bcmpnm += "_";
+    acmpnm += a;
+    bcmpnm += b;
+    return cmp(acmpnm, bcmpnm)
+}
+
+// mixin method to add (level,newSortBy) values to the sort functions on the columns
+function sortColoredColumns(level, newSortBy) {
+    return function(a,b) { 
+	return sortColumns(level, newSortBy, a, b);
+    }
+}
+
+function resort(newSortBy) {
+    // set the watermark while sorting -- this does not seem to work
+    $('#watermarkPage').html("sorting");
+    $('#watermark').show();
+    // console.log("show watermark");
+
+    sortBy = newSortBy;
+
+    for (var l in badgingColors) {
+        var level = badgingColors[l];
+
+	// save or figure out where the original names lived
+	if (!(("orig_" + level) in requiredNames)) {
+	    var olevel = "orig_" + level;
+	    requiredNames[olevel] = [];
+	    for (var i in requiredNames[level]) {
+		requiredNames[olevel].push({ name: requiredNames[level][i]["name"], orig: requiredNames[level][i]["orig"] });
+	    }
+	    optionalNames[olevel] = [];
+	    for (var i in optionalNames[level]) {
+		optionalNames[olevel].push({ name: optionalNames[level][i]["name"], orig: optionalNames[level][i]["orig"] });
+	    }
+	} else {
+	    requiredNames[level].length = 0;
+	    var olevel = "orig_" + level;
+	    for (var i in requiredNames[olevel]) {
+		requiredNames[level].push({ name: requiredNames[olevel][i]["name"], orig: requiredNames[olevel][i]["orig"] });
+	    }
+	    optionalNames[level].length = 0;
+	    for (var i in optionalNames[olevel]) {
+		optionalNames[level].push({ name: optionalNames[olevel][i]["name"], orig: optionalNames[olevel][i]["orig"] });
+	    }
+	}    
+
+	var requiredSlots = [ ];
+	for (var i in requiredNames[level]) {
+	    requiredSlots.push(requiredNames[level][i]["orig"]);
+	}
+	var optionalSlots = [ ];
+	for (var i in optionalNames[level]) {
+	    optionalSlots.push(optionalNames[level][i]["orig"]);
+	}
+
+	// re-sort the columns to the new order
+	requiredNames[level].sort(sortColoredColumns(level, newSortBy));
+	optionalNames[level].sort(sortColoredColumns(level, newSortBy));
+
+	// get the column order from the table
+	var columnOrder = globalTables[level].colReorder.order();
+
+	// update the column order
+	for (var i in requiredNames[level]) {
+	    columnOrder[requiredSlots[i]] = requiredNames[level][i]["orig"];
+	    requiredNames[level][i]["orig"] = columnOrder[requiredSlots[i]];
+	}
+	for (var i in optionalNames[level]) {
+	    columnOrder[optionalSlots[i]] = optionalNames[level][i]["orig"];
+	    optionalNames[level][i]["orig"] = columnOrder[optionalSlots[i]];
+	}
+
+	// set the new ordering
+	globalTables[level].colReorder.order(columnOrder, true);
+
+	// assign appropriate colors to the columns
+	var lastSortedType = "";
+	var columnColors = [ "primaryColor", "alternateColor" ];
+	var onPrimaryColor = 0;
+	for (var i in columnOrder) {
+	    var ciiName = columnNames[level][columnOrder[i]];
+	    if ("fixed" == ciiName) continue;
+	    var sortedType =
+		(sortBy == "by_name") ? "" :
+		(sortBy == "by_section_name") ?
+		(badgeDescriptions[level][ciiName]["section"]) :
+		(sortBy == "by_type_section_name") ?
+		(badgeDescriptions[level][ciiName]["type"] + "_" + badgeDescriptions[level][ciiName]["section"]) :
+		(sortBy == "by_section_type_name") ?
+		(badgeDescriptions[level][ciiName]["section"] + "_" + badgeDescriptions[level][ciiName]["type"]) :
+		(sortBy == "by_onapmet_name") ? badgeDescriptions[level][ciiName]["onapmet"] :
+		/* sortBy == by_type_name */
+		(badgeDescriptions[level][ciiName]["type"]);
+	    if (sortedType != lastSortedType) {
+		onPrimaryColor = 1 - onPrimaryColor;
+		lastSortedType = sortedType;
+	    }
+	    $("." + ciiName + "_header_required").removeClass().addClass("required " + ciiName + "_header_required " + columnColors[onPrimaryColor] + "_" + sortBy);
+	    $("." + ciiName + "_header_optional").removeClass().addClass("optional " + ciiName + "_header_optional " + columnColors[onPrimaryColor] + "_" + sortBy);
+
+	    if (sortBy.startsWith("by_type")) {
+		var sectionItalic = sortBy.startsWith("by_type_section");
+		$("." + ciiName + "_subtitle").html("<br/><sub><i>(" + badgeDescriptions[level][ciiName]["type"] + ")</i></sub>" +
+						    "<br/><sub>" + (sectionItalic ? "<i>" : "") + "(" +
+						    badgeDescriptions[level][ciiName]["section"] + ")" + 
+						    (sectionItalic ? "</i>" : "") +
+						    "</sub>");
+	    } else if (sortBy.startsWith("by_section")) {
+		var typeItalic = sortBy.startsWith("by_section_type");
+		$("." + ciiName + "_subtitle").html("<br/><sub><i>(" + badgeDescriptions[level][ciiName]["section"] + ")</i></sub>" +
+						    "<br/><sub>" + (typeItalic ? "<i>" : "") + "(" +
+						    badgeDescriptions[level][ciiName]["type"] + ")" + 
+						    (typeItalic ? "</i>" : "") +
+						    "</sub>");
+	    } else {
+		$("." + ciiName + "_subtitle").html("<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>" +
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>");
+	    }
+	}
+    }
+
+    // console.log("hide watermark");
+    $('#watermark').hide();
+}
+
 function containsURL(text) {
     if (!text) return false;
     text = text.toLowerCase();
@@ -779,57 +943,44 @@ function cmp(a,b) {
     return (a == b) ? 0 : (a < b) ? -1 : 1;
 }
 
-function addToMustTable(datad, tablename, level, levelcapname, percent, editorDict) {
+function addToQuestionsTable(datad, tablename, level, levelcapname, percent, editorDict) {
+    var trdataHeaders = "<tr>";
     var nameHeader = "<th class='name'>Name</th>";
-    var trdataHeaders = "<tr>" +
-	// "<th>Project<br/>Prefix</th>" +
-	nameHeader +
-	"<th>Tiered<br/>Percentage</th>";
-    if (percent !== null)
+    trdataHeaders += nameHeader;
+    columnNames[level].push("fixed");
+    var columnCount = 1;
+    // trdataHeaders += "<th>Project<br/>Prefix</th>";
+    trdataHeaders += "<th>Tiered<br/>Percentage</th>";
+    columnNames[level].push("fixed");
+    columnCount++;
+    if (percent !== null) {
 	trdataHeaders += "<th>" + levelcapname + " Badge Percentage</th>";
+	columnNames[level].push("fixed");
+	columnCount++;
+    }
 
     trdataHeaders += "<th>Editors</th>";
+    columnNames[level].push("fixed");
+    columnCount++;
 
     var addNameColumn = 3;
     var rf = badgeDescriptions[level];
 
     var sortedNames = Object.keys(rf);
-    sortedNames.sort(function(a,b){
-	    var atype = rf[a]["type"];
-	    var btype = rf[b]["type"];
-	    var asection = rf[a]["section"];
-	    var bsection = rf[b]["section"];
-	    var aonapmet = rf[a]["onapmet"];
-	    var bonapmet = rf[b]["onapmet"];
-	    // console.log("sortBy=",sortBy,"a=",a,"b=",b,"aonapmet=",aonapmet,"bonapmet=",bonapmet);
-	    return (sortBy == "by_name") ? cmp(a, b) :
-		(sortBy == "by_section_name") ? ((asection == bsection) ?
-					    cmp(a, b) : cmp(asection, bsection)) :
-		(sortBy == "by_type_section_name") ?
-		((atype == btype) ? (asection == bsection) ?
-		 (cmp(a, b)) : cmp(asection, bsection) :
-		 cmp(atype, btype)) :
-		(sortBy == "by_section_type_name") ?
-		((asection == bsection) ? 
-		 (atype == btype) ?
-		 cmp(a, b) :
-		 cmp(atype, btype) :
-		 cmp(asection, bsection)) :
-		(sortBy == "by_onapmet_name") ?
-		((aonapmet == bonapmet) ? cmp(a, b) : cmp(bonapmet, aonapmet)
-		 ) :
-		/* by_type_name */
-		((atype == btype) ? cmp(a, b) : cmp(atype, btype));
-	});
+    sortedNames.sort();
 
     var allFields = [];
     var optionalFields = {};
     if (percent !== null) {
 	// gather all of the required fields together
+	var requiredCount = 0, optionalCount = 0;;
+	var requiredLocations = { }, optionalLocations = { };
 	for (var k in sortedNames) {
 	    var ciiName = sortedNames[k];
 	    if (rf[ciiName]["required"]) {
 		allFields.push(ciiName);
+		requiredNames[level].push({ "name": ciiName });
+		requiredLocations[ciiName] = requiredCount++;
 	    }
 	}
 
@@ -838,7 +989,9 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	    var ciiName = sortedNames[k];
 	    if (!rf[ciiName]["required"]) {
 		allFields.push(ciiName);
+		optionalNames[level].push({ "name": ciiName });
 		optionalFields[ciiName] = 1;
+		optionalLocations[ciiName] = optionalCount++;
 	    }
 	}
 
@@ -849,55 +1002,66 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	for (var k in allFields) {
 	    var ciiName = allFields[k];
 	    var cl = optionalFields[ciiName] ? "optional" : "required";
+	    if (optionalFields[ciiName]) {
+		optionalNames[level][optionalLocations[ciiName]]["orig"] = columnCount;
+	    } else {
+		requiredNames[level][requiredLocations[ciiName]]["orig"] = columnCount;
+	    }
 
 	    var projectLevelClass = badgeDescriptions[level][ciiName]["onapmet"] ? "projectLevel" : "";
-	    var sortedType = (sortBy == "by_name") ? "" :
-		(sortBy == "by_section_name") ?
-		(badgeDescriptions[level][ciiName]["section"]) :
-		(sortBy == "by_type_section_name") ?
-		(badgeDescriptions[level][ciiName]["type"] + badgeDescriptions[level][ciiName]["section"]) :
-		(sortBy == "by_section_type_name") ?
-		(badgeDescriptions[level][ciiName]["section"] + badgeDescriptions[level][ciiName]["type"]) :
-		(sortBy == "by_onapmet_name") ? badgeDescriptions[level][ciiName]["onapmet"] :
-		/* sortBy == by_type_name */
-		(badgeDescriptions[level][ciiName]["type"]);
-	    if (sortedType != lastSortedType) {
-		onPrimaryColor = 1 - onPrimaryColor;
-		lastSortedType = sortedType;
-	    }
+	    //	    var sortedType = (sortBy == "by_name") ? "" :
+	    //		(sortBy == "by_section_name") ?
+	    //		(badgeDescriptions[level][ciiName]["section"]) :
+	    //		(sortBy == "by_type_section_name") ?
+	    //		(badgeDescriptions[level][ciiName]["type"] + badgeDescriptions[level][ciiName]["section"]) :
+	    //		(sortBy == "by_section_type_name") ?
+	    //		(badgeDescriptions[level][ciiName]["section"] + badgeDescriptions[level][ciiName]["type"]) :
+	    //		(sortBy == "by_onapmet_name") ? badgeDescriptions[level][ciiName]["onapmet"] :
+	    //		/* sortBy == by_type_name */
+	    //		(badgeDescriptions[level][ciiName]["type"]);
+	    //	    if (sortedType != lastSortedType) {
+	    //		onPrimaryColor = 1 - onPrimaryColor;
+	    //		lastSortedType = sortedType;
+	    //	    }
 	    // console.log("sortedType=", sortedType, "onPrimaryColor=", onPrimaryColor, "columnColors[" + onPrimaryColor + "]=", columnColors[onPrimaryColor]);
-	    trdataHeaders += "<th class='" + cl + " " + columnColors[onPrimaryColor] + "_" + sortBy + "'><span class='" + cl + "' title='" +
+
+	    trdataHeaders += "<th class='" + cl + " " +
+		// columnColors[onPrimaryColor] + "_" + sortBy +
+		ciiName + "_header_" + cl + "'>" +
+		"<span class='" + cl + "' title='" +
 		"[" + ciiName + "] " +
 		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + "'>" +
 		ciiName.replace(/_/g," ").
 		replace(/(\W+|^)(.)/ig,
 			function(match, chr) { return match.toUpperCase(); }) +
-		"</span>";
+		"</span>" +
+		"<span class='" + ciiName + "_subtitle'></span>";
 
-	    if ((sortBy == "by_type_section_name") || (sortBy == "by_type_name")) {
-		trdataHeaders +=
-		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>" +
-		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>";
-	    } else {
-		trdataHeaders +=
-		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>" +
-		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>";
-	    }
+	    columnNames[level].push(ciiName);
+	    columnCount++;
+
 	    trdataHeaders +=
+		"</span>" +
 		"<span class='" + cl + " " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" +
 		"[" + ciiName + "]<br/>" +
 		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
 		"</span>" +
 		"<span class='" + level + "_show_metstats_detail_span'><span class='metstats_" + level + "_" + ciiName + "'></span></span>" +
 		"</th>";
-	    if (++addNameColumn % 10 == 0)
+	    if (++addNameColumn % 10 == 0) {
 		trdataHeaders += nameHeader;
+		columnNames[level].push("fixed");
+		columnCount++;
+	    }
 	}
     }
 
     var addLastNameColumn = !trdataHeaders.endsWith(nameHeader);
-    if (addLastNameColumn)
+    if (addLastNameColumn) {
 	trdataHeaders += nameHeader;
+	columnNames[level].push("fixed");
+	columnCount++;
+    }
     trdataHeaders += "</tr>";
     $('#' + tablename).append("<thead>" + trdataHeaders + "</thead>" +
 			      "<tfoot>" + trdataHeaders + "</tfoot>");
@@ -1005,8 +1169,10 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 
     var datatableButtons = [ "pageLength" ];
 
-    $('#' + tablename).DataTable({
-	    "data": datad,
+    globalTables[level] =
+	$('#' + tablename).DataTable({
+		"colReorder": true,
+		"data": datad,
 		"aaSorting": [[ 0, "asc" ]],
 		// fixedHeader: true,
 		"paging": true,
@@ -1072,7 +1238,6 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 }
 
 function whenDone(datad, editorNames) {
-    // console.log("editorNames=", editorNames);
     var editorDict = { };
     for (var k in editorNames) {
 	if (editorNames[k].name && editorNames[k].name != '')
@@ -1203,9 +1368,9 @@ function whenDone(datad, editorNames) {
 		});
 
 
-    addToMustTable(datad, 'trbronze', 'bronze', 'Passing', '0', editorDict);
-    addToMustTable(datad, 'trsilver', 'silver', 'Silver', '1', editorDict);
-    addToMustTable(datad, 'trgold', 'gold', 'Gold', '2', editorDict);
+    addToQuestionsTable(datad, 'trbronze', 'bronze', 'Passing', '0', editorDict);
+    addToQuestionsTable(datad, 'trsilver', 'silver', 'Silver', '1', editorDict);
+    addToQuestionsTable(datad, 'trgold', 'gold', 'Gold', '2', editorDict);
 
     $(".requirements_toggle").click(function(){ $(".requirements_span").each(flipThisVisibility); });
     $(".summary_toggle").click(function(){ $(".summary_span").each(flipThisVisibility); });
@@ -1473,13 +1638,15 @@ function whenDone(datad, editorNames) {
     showHistoricalInfo();
 
     $('.sortby_' + sortBy).prop('checked', true);
-    $('#sortby_form').prop('action',window.location);
+    // $('#sortby_form').prop('action',window.location);
     var pd = parms.getParmsAsDict();
     for (var p in pd) {
 	if (p != "sortby")
 	    $('#sortby_form').append("<input type='hidden' name='" + p + "' value='" + pd[p] + "'/>");
     }
     $('#sortby_submit').prop('class', 'alternateColor_' + sortBy);
+
+    resort(sortBy);
 }
 
 $(document).ready(function() {

@@ -15,8 +15,8 @@ var historicalReleaseData = {
 var allOnapProjects = {
     "R1 Amsterdam": {
 	"aaf": { "seen": "n" }, "aai": { "seen": "n" }, "appc": { "seen":  "n" }, "ccsdk": { "seen":  "n" }, "ci-management": { "seen":  "n" },
-	"clamp": { "seen": "n" }, "cli": { "seen": "n" }, "dcaegen2": { "seen":  "n" }, "demo": { "seen": "n" }, "dmaap": { "seen":  "n" },
-	"doc": { "seen": "n" }, "ecompsdkos": { "seen": "n" }, "externalapi": { "seen": "n" }, "holmes": { "seen": "n" },
+	"clamp": { "seen": "n" }, "cli": { "seen": "n" }, "dcaegen2": { "seen":  "n" }, "dmaap": { "seen":  "n" },
+	"doc": { "seen": "n" }, "externalapi": { "seen": "n" }, "holmes": { "seen": "n" },
 	"integration": { "seen": "n" }, "logging-analytics": { "seen": "n" }, "modeling": { "seen": "n" }, "msb": { "seen": "n" },
 	"mso": { "seen": "n" }, "multicloud": { "seen": "n" }, "ncomp": { "seen": "n" }, "oom": { "seen": "n" }, "oparent": { "seen": "n" },
 	"optf": { "seen": "n" }, "policy": { "seen": "n" }, "portal": { "seen": "n" }, "sdc": { "seen": "n" }, "sdnc": { "seen": "n" },
@@ -24,27 +24,35 @@ var allOnapProjects = {
 	"vfc": { "seen": "n" }, "vid": { "seen": "n" }, "vnfrqts": { "seen": "n" }, "vvp": { "seen": "n" },
     },
     "R2 Beijing": {
-	"aaf": { "seen": "n" }, "aai": { "seen": "n" }, "appc": { "seen": "n" }, "ccsdk": { "seen": "n" }, "ci-management": { "seen": "n" },
+	"aaf": { "seen": "n" }, "aai": { "seen": "n" }, "appc": { "seen": "n" }, "ccsdk": { "seen": "n" }, 
 	"clamp": { "seen": "n" }, "cli": { "seen": "n" }, "dcaegen2": { "seen": "n" }, "demo": { "seen": "n" }, "dmaap": { "seen": "n" },
 	"ecompsdkos": { "seen": "n" }, "externalapi": { "seen": "n" }, "holmes": { "seen": "n" },
 	"logging-analytics": { "seen": "n" }, "modeling": { "seen": "n" }, "msb": { "seen": "n" },
-	"mso": { "seen": "n" }, "multicloud": { "seen": "n" }, "ncomp": { "seen": "n" }, "oom": { "seen": "n" },
+	 "multicloud": { "seen": "n" }, "oom": { "seen": "n" },
 	"optf": { "seen": "n" }, "policy": { "seen": "n" }, "portal": { "seen": "n" }, "sdc": { "seen": "n" }, "sdnc": { "seen": "n" },
-	"so": { "seen": "n" }, "testsuite": { "seen": "n" }, "ui": { "seen": "n" }, "usecase-ui": { "seen": "n" },
+	"so": { "seen": "n" }, "usecase-ui": { "seen": "n" },
 	"vfc": { "seen": "n" }, "vid": { "seen": "n" }, "vnfsdk": { "seen": "n" }, "vvp": { "seen": "n" },
 	"music": { "seen": "n" }, 
 
 	// projects with no code:
-	"cla": { "seen": "n", "skip": "empty in R2" }, "onap-cli": { "seen": "n", "skip": "empty in R2" },
+	"cla": { "seen": "n", "skip": "empty in R2" }, 
 
 	// deprecated projects:
 	"dcae": { "seen": "n", "skip": "deprecated after R1" },
+	"ecompsdkos": { "seen": "n", "skip": "deprecated after R1" },
+	"ncomp": { "seen": "n", "skip": "deprecated after R1" },
 
 	// non-code projects:
-	"doc": { "seen": "n", "skip": "noncode" }, "integration": { "seen": "n", "skip": "noncode" }, "oparent": { "seen": "n", "skip": "noncode" },
-	"university": { "seen": "n", "skip": "noncode" }, "vnfrqts": { "seen": "n", "skip": "noncode" },
-
+	"ci-management": { "seen": "n", "skip": "noncode" },
+	"demo": { "seen": "n", "skip": "test only code not delivered" },
+	"doc": { "seen": "n", "skip": "noncode" },
+	"integration": { "seen": "n", "skip": "noncode" },
+	"mso": { "seen": "n", "skip": "renamed to so" },
+	"onap-cli": { "seen": "n", "skip": "renamed to cli" },	
+	"oparent": { "seen": "n", "skip": "noncode" },
+	"ui": { "seen": "n", "skip": "test only code not delivered" }, 
+	"university": { "seen": "n", "skip": "noncode" },
+	"vnfrqts": { "seen": "n", "skip": "noncode" },
     },
-
 
 };

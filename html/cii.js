@@ -12,6 +12,11 @@ var badRepoUrlPrefix = "https://gerrit.onap.org/r/".toUpperCase();
 var gitRepoUrlPrefix = "https://gerrit.onap.org/r/p/".toUpperCase();
 var goodRepoUrlPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 
+var green  = "#4bc51d";
+var silver = "#bbbbbb";
+var gold   = "#f2ce0d";
+var black  = "#000000";
+var white  = "#ffffff";
 var colors = [
 	      /* 0-9    */ "#c4551d",
 	      /* 10-19  */ "#ba4b13",
@@ -23,12 +28,8 @@ var colors = [
 	      /* 70-79  */ "#c4a41d",
 	      /* 80-89  */ "#b7a910",
 	      /* 90-99  */ "#c4011d",
-	      /* 100    */ "#4bc51d"
+	      /* 100    */ green
 	      ];
-var silver = "#bbbbbb";
-var gold   = "#f2ce0d";
-var black  = "#000000";
-var white  = "#ffffff";
 
 function getColor(passingPercentage, silverPercentage, goldPercentage) {
     var color = colors[parseInt(passingPercentage / 10, 10)];
@@ -99,20 +100,6 @@ function intermingleReleasesAndBadgingLevels() {
 
 function addReleasesAndBadgingLevelsToTable() {
     var headers = intermingleReleasesAndBadgingLevels();
-    //    $('#tr').append("<thead><tr>" +
-    //		    "<th>RankOrder</th>" +
-    //		    "<th>Project/Repo Name</th>" +
-    //		    "<th>Project Name</th>" +
-    //		    "<th>Badge</th>" +
-    //		    headers +
-    //		    "</tr></thead>" +
-    //		    "<tfoot><tr>" +
-    //		    "<th>RankOrder</th>" +
-    //		    "<th>Project/Repo Name</th>" +
-    //		    "<th>Project Name</th>" +
-    //		    "<th>Badge</th>" +
-    //		    headers +
-    //		    "</tr></tfoot>");
     var headers = "<tr>" +
 		    "<th>RankOrder</th>" +
 		    "<th>Project&nbsp;Prefix</th>" +
@@ -156,8 +143,20 @@ function generateRank(element) {
     return element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
 }
 
-// "repo_url": "https://gerrit.onap.org",    <- bad
-// "repo_url": "https://gerrit.onap.org/r/#/admin/projects", <- bad
+// A sample of repo_urls captured during a run:
+//
+// Bad URLs:
+// "repo_url": "https://gerrit.onap.org",    <- bad, not specific
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects", <- bad, not specific
+//
+// Semi-bad URLs:
+// "repo_url": "https://gerrit.onap.org/r/msb",	<- bad, 404, but recognizable
+// "repo_url": "https://gerrit.onap.org/r/sdc",	<- bad, 404, but recognizable
+// "repo_url": "https://gerrit.onap.org/r/so",	<- bad, 404, but recognizable
+// "repo_url": "https://gerrit.onap.org/r/vfc",	<- bad, 404, but recognizable
+// "repo_url": "https://gerrit.onap.org/r/vid",	<- bad, 404, but recognizable
+//
+// Good URLs:
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/aai/esr-server",
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/aai/sparky-fe",
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/appc",
@@ -168,13 +167,7 @@ function generateRank(element) {
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/portal",
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/sdnc",
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/vnfsdk",
-// "repo_url": "https://gerrit.onap.org/r/msb",
-// "repo_url": "https://gerrit.onap.org/r/sdc",
-// "repo_url": "https://gerrit.onap.org/r/so",
-// "repo_url": "https://gerrit.onap.org/r/vfc",
-// "repo_url": "https://gerrit.onap.org/r/vid",
 // "repo_url": "https://git.onap.org/holmes",
-
 
 /*
   From a list of Repo URLs, generate an array with the project name as the first element
@@ -244,7 +237,9 @@ function pushData(whereTo, whereFrom) {
 function getNextUrl(datad, pagelist, j) {
     var lastOne = j == pagelist.length-1;
     var p = pagelist[j];
-    URL = BASEURL;
+    var URL = BASEURL;
+    // URL = "https://gerrit.onap.org/projects/";
+    // alert("URL=" + URL);
     $('#watermarkPage').html("page " + p);
 
     $.ajax({
@@ -252,6 +247,7 @@ function getNextUrl(datad, pagelist, j) {
 		url: URL,
 		data: { "q": Q, "page": p },
 		success: function(json) {
+		// alert("json=",json);
 		// if (typeof json == "string") pushData(historicalReleaseData[currentRelease], JSON.parse(json));
 		// else pushData(historicalReleaseData[currentRelease], json);
 		if (typeof json == "string") pushData(datad, JSON.parse(json));
@@ -285,10 +281,13 @@ function addRankOrder(d) {
 function getProject(data, type, row) {
     if (type !== 'display') return data;
     var ret = "<a href='" + row.repo_url + "'>" + row.onap_project_short + "</a>";
-    ret += (row.onap_badurl ? " <span class='badURL'>BAD URL</span>" : "");
-    ret += (row.onap_badurlsuffix ? " <span class='badURL'>MISSING .git SUFFIX</span>" : "");
+    if (row.onap_project_short == "UNKNOWN")
+	ret += (row.onap_badurl ? " <span class='badURL' title='There is no project prefix word in the repo URL that will identify which project this entry belongs to.'>PROJECT NOT IN URL</span>" : "");
+    else
+	ret += (row.onap_badurl ? " <span class='badURL' title='The given repo URL is invalid and returns a 404 NOT FOUND when visited.'>404 NOT FOUND</span>" : "");
+    ret += (row.onap_badurlsuffix ? " <span class='badURL' title='If a git URL is specified for the repo URL, it must have a suffix of .git'>MISSING .git SUFFIX</span>" : "");
     if (row.onap_project_short != "UNKNOWN")
-	ret += (row.onap_valid_project ? " <span class='badProject'>UNKNOWN PREFIX</span>" : "");
+	ret += (row.onap_invalid_project ? (" <span class='badProject' title='The project prefix word (" + row.onap_project_short + ") in the repo URL is not a valid project name.'>UNKNOWN PROJECT PREFIX '" + row.onap_project_short + "' FOUND IN REPO URL</span>") : "");
     return ret;
 }
 
@@ -351,7 +350,8 @@ function whenDone(datad) {
 	datad[k].onap_badurl = (n != -1);
 	datad[k].onap_badurlsuffix = (datad[k].onap_project.indexOf("-BADURLSUFFIX") != -1);
 	datad[k].onap_repos = projectAndRepos.shift();
-	datad[k].onap_valid_project = !allOnapProjects[currentRelease].hasOwnProperty(project);
+	datad[k].onap_invalid_project = !allOnapProjects[currentRelease].hasOwnProperty(project);
+	// console.log("allOnapProjects[" + currentRelease + "].hasOwnProperty(" + project + ")=" + allOnapProjects[currentRelease].hasOwnProperty(project));
     }
     datad.sort(function(a, b) {
 	    var ap = a.onap_project.toUpperCase();
@@ -415,7 +415,7 @@ function whenDone(datad) {
 	    "data": dataTable,
 		"paging": true,
 		"pagingType": "full_numbers",
-		"pageLength": parseInt(parms.get("pagelength", "20")),
+		"pageLength": parseInt(parms.get("pagelength", "30")),
 		"info": false,
 		"dom": "Bfrtip",
 		lengthMenu: [
@@ -453,6 +453,7 @@ function whenDone(datad) {
 	});
 
     var passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
+    var passing80Needed = (nonPassingCount > 0) ? Math.ceil(0.80 * nonPassingCount) : 0;
     var silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
     var gold80Percentage = (nonGoldCount > 0) ? (100 * gold80Count / nonGoldCount) : 0;
 
@@ -460,47 +461,99 @@ function whenDone(datad) {
     $('#non-passing-level-2').html(silver80Percentage.toFixed(2));
     $('#non-passing-level-3').html(gold80Percentage.toFixed(2));
 
-    $('#tr2').append(
-		     "<tr>" +
-		     "<th>Projects &ge;80%/&lt;100%</th>" +
-		     "<td class='textright'>" + passing80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonPassingCount.toFixed(2) + "&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "%</td>" +
-		     "<td class='textright'>" + silver80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonSilverCount.toFixed(2) + "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%</td>" +
-		     "<td class='textright'>" + gold80Count.toFixed(2) + "&nbsp;/&nbsp;" + nonGoldCount.toFixed(2) + "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%</td>" +
-		     "</tr>"
-		     );
-
     var passingPercentage = (100 * passingCount / totalCount);
+    var passingNeeded = Math.ceil(0.70 * totalCount);
     var silverPercentage = (100 * silverCount / totalCount);
     var goldPercentage = (100 * goldCount / totalCount);
+    var color = getColor(passingPercentage, silverPercentage, goldPercentage);
 
     $('#passing-level-1').html(passingPercentage.toFixed(2));
     $('#passing-level-2').html(silverPercentage.toFixed(2));
     $('#passing-level-3').html(goldPercentage.toFixed(2));
 
+    var level = 0;
+    if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) { level = 1; }
+    if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) { level = 2; }
+    if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) { level = 3; }
+    if (goldPercentage == 100) { level = 4; }
+
+    $('#tr2').append(
+		     "<thead><tr>" +
+		     "<th>&nbsp;</th>" +
+		     "<th>Passing</th>" +
+		     "<th>Silver</th>" +
+		     "<th>Gold</th>" +
+		     "</tr></thead>"
+		     );
+
     $('#tr2').append(
 		     "<tr>" +
 		     "<th>Projects at 100%</th>" +
-		     "<td class='textright'>" + passingCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + passingPercentage.toFixed(2) + "%</td>" +
-		     "<td class='textright'>" + silverCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + silverPercentage.toFixed(2) + "%</td>" +
-		     "<td class='textright'>" + goldCount.toFixed(2) + "&nbsp;/&nbsp;" + totalCount.toFixed(2) + "&nbsp;=&nbsp;" + goldPercentage.toFixed(2) + "%</td>" +
-		     "</tr>"
+		     "<td class='textright'>" + 
+		     "<table class='noborder right'><tr><td class='noborder'>" +
+		     passingCount +
+		     "&nbsp;/&nbsp;" + totalCount +
+		     "&nbsp;=&nbsp;" + passingPercentage.toFixed(2) + "% " +
+ 		     "<br/>" +
+		     "(" + passingNeeded + " needed for 70%)" +
+		     "</td><td class='noborder'>" +
+		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
+		      ((passingPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
+		     "</td></tr></table>" +
+		     "</td>" +
+		     "<td class='textright'>" + silverCount +
+		     "&nbsp;/&nbsp;" + totalCount +
+		     "&nbsp;=&nbsp;" + silverPercentage.toFixed(2) + "% " +
+		     ((color == silver) ? "<img src='checkmark.png'/>" :
+		      (color == green) ? ((silverPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
+		     "</td>" +
+		     "<td class='textright'>" + goldCount +
+		     "&nbsp;/&nbsp;" + totalCount +
+		     "&nbsp;=&nbsp;" + goldPercentage.toFixed(2) + "% " +
+		     ((color == gold) ? "<img src='checkmark.png'/>" :
+		      (color == silver) ? ((goldPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      "") +
+		     "</td>" + "</tr>"
 		     );
-
-    var color = getColor(passingPercentage, silverPercentage, goldPercentage);
-    var textcolor = (color == gold) ? black : (color == silver) ? black : white;
-
-    var level = "Level 0";
-    if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) { level = "Level 1"; }
-    if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) { level = "Level 2"; }
-    if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) { level = "Level 3"; }
-    if (goldPercentage == 100) { level = "Level 4"; }
 
     $('#tr2').append(
 		     "<tr>" +
-		     "<td class='center' colspan='4' style='color: " + textcolor + "; background-color: " + color + "'><br/>" + totalCount + " Projects: " + level + "<br/><br/></td>" +
+		     "<th>Projects &ge;80%/&lt;100%</th>" +
+		     "<td class='textright'>" +
+		     "<table class='noborder right'><tr><td class='noborder'>" +
+		     passing80Count +
+		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
+		     "&nbsp;&ndash;&nbsp;" + passingCount + 
+		     "&nbsp;)&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "% " +
+ 		     "<br/>" +
+		     "(" + passing80Needed + " needed for 80%)" +
+		     "</td><td class='noborder'>" +
+		     (((color == silver) || (color == gold)) ? "<img src='checkmark.png'/>" :
+		      ((passing80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>")) +
+		     "</td></tr></table>" +
+		     "</td>" +
+		     "<td class='textright'>" + silver80Count + "&nbsp;/&nbsp;" + nonSilverCount +
+		     "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%" +
+		     ((color == silver) ? "<img src='checkmark.png'/>" :
+		      (color == green) ? ((silver80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : "") +
+		     "</td>" +
+		     "<td class='textright'>" + gold80Count + "&nbsp;/&nbsp;" + nonGoldCount +
+		     "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%" +
+		     ((color == gold) ? "<img src='checkmark.png'/>" :
+		      (color == silver) ? ((gold80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      "") +
+		     "</td>" +
 		     "</tr>"
 		     );
 
+    var textcolor = (color == gold) ? black : (color == silver) ? black : white;
+
+    $('#tr2').append(
+		     "<tr>" +
+		     "<th>Current&nbsp;Level</th>" + 
+		     "<td class='center' colspan='3' style='color: " + textcolor + "; background-color: " + color + "'><br/>Level&nbsp;" + level + "<br/><br/></td>" +
+		     "</tr>"
+		     );
 
 }
 

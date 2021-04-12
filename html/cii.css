@@ -2,6 +2,9 @@ table, th, td {
     border-collapse: collapse;
     border: solid black 1px;
 }
+table.noborder, th.noborder, td.noborder {
+    border: none;
+}
 .top {
     float: top;
 }

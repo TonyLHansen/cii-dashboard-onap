@@ -74,3 +74,13 @@ td.stats {
     background-color: green;
     color: white;
 }
+
+.unmet {
+    background-color: pink;
+}
+.met {
+    background-color: palegreen;
+}
+.na {
+    background-color: gray;
+}

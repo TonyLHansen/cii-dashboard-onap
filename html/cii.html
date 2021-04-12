@@ -5,16 +5,18 @@
 <meta content='utf-8' http-equiv='encoding'>
 <title>ONAP Project Core Infrastructure Initiative (CII) Badging Status Dashboard</title>
 <script type="text/javascript" language="javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
-<script type="text/javascript" language="javascript" src='https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js'></script>
+<script type="text/javascript" language="javascript" src='https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js'></script>
 <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
 <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.2.1/js/buttons.print.min.js"></script>
 <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.colVis.min.js"></script>
 <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/responsive/2.2.1/js/dataTables.responsive.min.js"></script>
 <script src='cii-query.js'></script>
 <script src='cii-historical-info.js'></script>
+<script src='cii-required-fields.js'></script>
+<script src='cii-descriptions.js'></script>
 <script src='cii.js'></script>
 <link rel="shortcut icon" type="image/x-icon" href="onap-logo.ico">
-<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css'/>
+<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css'/>
 <link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/buttons/1.5.1/css/buttons.dataTables.min.css'/>
 <link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/responsive/2.2.1/css/responsive.dataTables.min.css'/>
 <link type='text/css' rel='stylesheet' href='cii.css'/>
@@ -49,8 +51,34 @@ Loading
 <h2>Summary</h2>
 <table id='tr2' class='display compact'></table>
 
-<h2>Projects</h2>
-<table id='tr' class="display compact" >
-</table>
+<h2>Projects <img style='display: none' class='projects_toggle projects_span' src='plus.png'/><img class='projects_toggle projects_span' src='minus.png'/></h2>
+<span class='projects_span'>
+<table id='tr' class="display compact" ></table>
+</span>
+
+<h2>Bronze MUST <img style='display: none' class='bronze_toggle bronze_span' src='plus.png' id='bi1'/><img class='bronze_toggle bronze_span' src='minus.png' id='bi2'/></h2>
+<span class='bronze_span' id='b1'>
+<table><tr><td style='background: #8c7853' colspan='3'>&nbsp;</td></tr>
+<tr><td style='background: #8c7853'>&nbsp;</td>
+<td><table id='trbronze' class="display compact" ></table></td>
+<td style='background: #8c7853'>&nbsp;</td></tr>
+<tr><td style='background: #8c7853' colspan='3'>&nbsp;</td></tr></table>
+</span>
+<h2>Silver MUST <img style='display: none' class='silver_toggle silver_span' src='plus.png'/><img class='silver_toggle silver_span' src='minus.png'/></h2>
+<span class='silver_span'>
+<table><tr><td style='background: silver' colspan='3'>&nbsp;</td></tr>
+<tr><td style='background: silver'>&nbsp;</td>
+<td><table id='trsilver' class="display compact" ></table></td>
+<td style='background: silver'>&nbsp;</td></tr>
+<tr><td style='background: silver' colspan='3'>&nbsp;</td></tr></table>
+</span>
+<h2>Gold MUST <img style='display: none' class='gold_toggle gold_span' src='plus.png'/><img class='gold_toggle gold_span' src='minus.png'/></h2>
+<span class='gold_span'>
+<table><tr><td style='background: gold' colspan='3'>&nbsp;</td></tr>
+<tr><td style='background: gold'>&nbsp;</td>
+<td><table id='trgold' class="display compact" ></table></td>
+<td style='background: gold'>&nbsp;</td></tr>
+<tr><td style='background: gold' colspan='3'>&nbsp;</td></tr></table>
+</span>
 </body>
 </html>

@@ -42,6 +42,15 @@ function getColor(passingPercentage, silverPercentage, goldPercentage) {
     return color;
 }
 
+function getTieredColor(tieredPercentage) {
+    var color = colors[0];
+    if (tieredPercentage < 100) color = colors[parseInt(tieredPercentage / 10, 10)];
+    else if (tieredPercentage < 200) color = green;
+    else if (tieredPercentage < 300) color = silver;
+    else color = gold;
+    return color;
+}
+
 
 var parms = new Query();
 var debug = "y"; // parms.get("debug", "n");
@@ -391,6 +400,90 @@ function genData(project, name, bp0, bp1, bp2) {
 	    };
 }
 
+function addToMustTable(datad, tablename, level, levelcapname, percent) {
+    var trdataHeaders = "<tr>" +
+	"<th>Name</th>" +
+	"<th>Tiered Percentage</th>" +
+	"<th>" + levelcapname + " Badge Percentage</th>";
+
+    var rf = requiredFields[level];
+    for (var k in rf) {
+	trdataHeaders += "<th>" + rf[k].replace(/_/g," ").replace(/(\W+|^)(.)/ig, 
+								 function(match, chr) {
+								     return match.toUpperCase();
+								 }) + "</th>";
+    }
+    trdataHeaders += "</tr>";
+    $('#' + tablename).append("<thead>" + trdataHeaders + "</thead>" +
+			      "<tfoot>" + trdataHeaders + "</tfoot>");
+
+    var columns = [ ];
+    columns.push({ "data": "name" });
+    columns.push({ "data": "tiered_percentage", "render": function ( data, type, row, meta ) {
+		var color = getTieredColor(data);
+		var textcolor = (color == gold) ? black : (color == silver) ? black : white;
+		return "<span style='color: " + textcolor + "; background-color: " + color + "'>" + data + "</span>";
+	    }
+	});
+    columns.push({ "data": "badge_percentage_"+ percent });
+    for (var k in rf) {
+	columns.push({ "data": rf[k] + "_status",
+		    "name": rf[k],
+		    "render": 
+		    function ( data, type, row, meta ) { 
+		    var classVal = 'na';
+		    if (data.toLowerCase() == "met") classVal = 'met';
+		    else if (data.toLowerCase() == "unmet") classVal = 'unmet';
+		    var statusName = meta.settings.aoColumns[meta.col].data;
+		    var fieldName = meta.settings.aoColumns[meta.col].name;
+		    var dataTitle = badgeDescriptions[level][statusName];
+		    var justificationName = fieldName + "_justification";
+		    var justification = row[justificationName];
+		    // console.log("level=" + level);
+		    // if (level == "bronze") {
+			// console.log("app name=" + row.name);
+			// console.log("app homepage_url=" + row.homepage_url);
+			// console.log("badgeDescriptions[" + level + "]=" + badgeDescriptions[level]);
+			// console.dir(badgeDescriptions[level]);
+			// console.log("statusName=" + statusName);
+			// console.log("fieldName=" + fieldName);
+			// console.log("dataTitle=" + dataTitle);
+			// console.log("justificationName=" + justificationName);
+			// console.log("justification=" + justification);
+		    // }
+		    var ret = "<span class='" + classVal + 
+			"' title=\"";
+		    ret += (fieldName in badgeDescriptions[level]) ? (badgeDescriptions[level][fieldName] + "\n") : "--\n";
+		    ret += (fieldName in row) ? (row[fieldName] + "\n") : "\n"; // ".(fieldname).\n";
+		    ret += (statusName in row) ? (row[statusName] + "\n") : "\n"; // ".(statusname).\n";
+		    ret += (justificationName in row) ? ((row[justificationName]) ? (row[justificationName] + "\n") : "\n") : "\n"; // ".(justifictionname).\n";
+		    ret += "\">" + data + "</span>";
+		    return ret;
+		}
+	    });
+    }
+
+    var datatableButtons = [ "pageLength" ];
+
+    $('#' + tablename).DataTable({
+	    "data": datad,
+		// "aaSorting": [[ 0, "asc" ]],
+		"paging": true,
+		"pagingType": "full_numbers",
+		"pageLength": parseInt(parms.get("pagelength", "50")),
+		"info": false,
+		"dom": "Bfrtip",
+		lengthMenu: [
+			     [ 10, 20, 25, 50, 100, -1 ],
+			     [ '10 rows', '20 rows', '25 rows', '50 rows', '100 rows', 'Show all' ]
+			     ],
+		"searching": true,
+		"autoWidth": false,
+		"buttons": datatableButtons,
+		"columns": columns
+		});
+}
+
 function whenDone(datad) {
     addReleasesAndBadgingLevelsToTable();
     for (var k in datad) {
@@ -504,6 +597,48 @@ function whenDone(datad) {
 			    { "data": "badge_percentage_2", "render": function ( data, type, row, meta ) { return getAllPercentages(data, type, row,"2"); } },
 			    ]
 		});
+
+
+    addToMustTable(datad, 'trbronze', 'bronze', 'Bronze', '0');
+    addToMustTable(datad, 'trsilver', 'silver', 'Silver', '1');
+    addToMustTable(datad, 'trgold', 'gold', 'Gold', '2');
+
+    $(".projects_toggle").click(function(){
+	    $(".projects_span").each(function(index) {
+		    if ( $(this).css('display') == 'none' ) {
+			$(this).css('display','inline');
+		    } else {
+			$(this).css('display','none');
+		    }
+		});
+	});
+    $(".bronze_toggle").click(function(){
+	    $(".bronze_span").each(function(index) {
+		    if ( $(this).css('display') == 'none' ) {
+			$(this).css('display','inline');
+		    } else {
+			$(this).css('display','none');
+		    }
+		});
+	});
+    $(".silver_toggle").click(function(){
+	    $(".silver_span").each(function(index) {
+		    if ( $(this).css('display') == 'none' ) {
+			$(this).css('display','inline');
+		    } else {
+			$(this).css('display','none');
+		    }
+		});
+	});
+    $(".gold_toggle").click(function(){
+	    $(".gold_span").each(function(index) {
+		    if ( $(this).css('display') == 'none' ) {
+			$(this).css('display','inline');
+		    } else {
+			$(this).css('display','none');
+		    }
+		});
+	});
 
     $('#watermark').hide();
     if (parms.get("skipnotstarted", false)) $('#keepnotstarted').show();

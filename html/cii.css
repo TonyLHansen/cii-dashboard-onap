@@ -1,0 +1,29 @@
+table, th, td {
+    border-collapse: collapse;
+    border: solid black 1px;
+}
+.right {
+    float: right;
+}
+.textright {
+    text-align: right;
+}
+.textleft {
+    text-align: textleft;
+}
+.center {
+    text-align: center;
+}
+.improving {
+    background-color: lime;
+}
+.worsening {
+    background-color: pink;
+}
+.small {
+    font-size: small;
+}
+
+.historic {
+    background-color: #cbcbcb;
+}

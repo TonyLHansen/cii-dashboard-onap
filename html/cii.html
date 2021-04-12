@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content='text/html;charset=utf-8' http-equiv='Content-Type'>
+<meta content='utf-8' http-equiv='encoding'>
+<title>ONAP Project Core Infrastructure Initiative (CII) Badging Status Dashboard</title>
+<script type="text/javascript" language="javascript" src='http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+<script type="text/javascript" language="javascript" src='https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js'></script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.colVis.min.js"></script>
+<script src='cii-query.js'></script>
+<script src='cii-historical-info.js'></script>
+<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css'/>
+<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/buttons/1.5.1/css/buttons.dataTables.min.css'/>
+<link type='text/css' rel='stylesheet' href='cii.css'/>
+</head>
+<body>
+<div class='right'><img src='https://wiki.onap.org/download/thumbnails/1015829/onap_704x271%20copy.png'/><br/>
+ONAP Projects:
+&nbsp;&nbsp;&nbsp;<a id='onapurl' href="?project=onap&addMissingOnapProjects=n">Registered at coreinfrastructure.org</a>
+&nbsp;&nbsp;&nbsp;<a id='onapallurl' href="?project=onap&addMissingOnapProjects=y">All</a><br/>
+All Projects:
+&nbsp;&nbsp;&nbsp;<a id='allurl' href="?project=all&page=1-2">Sample</a>
+&nbsp;&nbsp;&nbsp;<a id='allallurl' href="?project=all&page=1-99">All</a>
+</div>
+<h1><span class='projecttitle'></span> Project Core Infrastructure Initiative (<a href='https://bestpractices.coreinfrastructure.org/'>CII</a>) Badging Status Dashboard</h1>
+
+<span id='working'></span>
+<h3><a href='https://wiki.onap.org'>ONAP</a> Platform-level <a href='https://wiki.onap.org/pages/viewpage.action?pageId=15998867'>Requirements</a></h3>
+<ul>
+<li> Level 1: 70 % of the projects passing the level 1 <br/>
+        with the non-passing projects reaching 80% passing level <br/>
+        Non-passing projects MUST pass specific cryptography criteria outlined by the Security Subcommittee*
+<li>    Level 2: 70 % of the projects passing silver <br/>
+        with non-silver projects completed passing level and 80% towards silver level
+<li>    Level 3: 70% of the projects passing gold <br/>
+        with non-gold projects achieving silver level and achieving 80% towards gold level
+<li>    Level 4: 100 % passing gold.
+</ul>
+
+<span id='retrieving_data'></span>
+
+<h2><span class='projecttitle'></span> Summary</h2>
+<table id='tr2' class='display compact'>
+<thead><tr>
+<th>&nbsp;</th>
+<th>Passing</th>
+<th>Silver</th>
+<th>Gold</th>
+</tr></thead>
+</table>
+
+<h2><span class='projecttitle'></span> Projects</h2>
+<h3>The columns with data from <span class='historic'>previous releases</span> is historic. The columns marked as "Current" comes from a query to <a href='https://bestpractices.coreinfrastructure.org/projects.json?q=ONAP'>coreinfrastructure.org</a>.</h3>
+<table id='tr' class="display compact" >
+</table>
+
+<script src='cii.js'></script>
+</body>
+</html>

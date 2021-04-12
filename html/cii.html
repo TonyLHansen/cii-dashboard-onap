@@ -8,22 +8,35 @@
 <script type="text/javascript" language="javascript" src='https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js'></script>
 <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
 <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.colVis.min.js"></script>
+<script type="text/javascript" language="javascript" src="https://cdn.datatables.net/responsive/2.2.1/js/dataTables.responsive.min.js"></script>
 <script src='cii-query.js'></script>
 <script src='cii-historical-info.js'></script>
+<script src='cii.js'></script>
+<link rel="shortcut icon" type="image/x-icon" href="onap-logo.ico">
 <link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css'/>
 <link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/buttons/1.5.1/css/buttons.dataTables.min.css'/>
+<link type='text/css' rel='stylesheet' href='https://cdn.datatables.net/responsive/2.2.1/css/responsive.dataTables.min.css'/>
 <link type='text/css' rel='stylesheet' href='cii.css'/>
 </head>
 <body>
-<div class='right'><img src='https://wiki.onap.org/download/thumbnails/1015829/onap_704x271%20copy.png'/><br/>
-ONAP Projects:
-&nbsp;&nbsp;&nbsp;<a id='onapurl' href="?project=onap&addMissingOnapProjects=n">Registered at coreinfrastructure.org</a>
-&nbsp;&nbsp;&nbsp;<a id='onapallurl' href="?project=onap&addMissingOnapProjects=y">All</a><br/>
-All Projects:
-&nbsp;&nbsp;&nbsp;<a id='allurl' href="?project=all&page=1-2">Sample</a>
-&nbsp;&nbsp;&nbsp;<a id='allallurl' href="?project=all&page=1-99">All</a>
+<div id="watermark" class='watermark'>
+Loading data
+<span id='watermarkPage'></span>
 </div>
-<h1><span class='projecttitle'></span> Project Core Infrastructure Initiative (<a href='https://bestpractices.coreinfrastructure.org/'>CII</a>) Badging Status Dashboard</h1>
+<div class='right'><span><img align='middle' src='https://wiki.onap.org/download/thumbnails/1015829/onap_704x271%20copy.png'/>&nbsp;<img align='middle' height='74' width='74' src='https://bestpractices.coreinfrastructure.org/assets/home_badge@2x-3fa8312701d53a7fc262246fa1c2a62595aeebd0afc36c5a8597a7eb2b8e1eb8.png'/></span><br/>
+<div class='center'>
+<span class='demoonly'>ONAP Projects:</span>
+<!--
+&nbsp;&nbsp;&nbsp;<a id='xonapurl' href="?project=onap&addMissingOnapProjects=n">Registered Only</a>
+&nbsp;&nbsp;&nbsp;<a id='xonapallurl' href="?project=onap&addMissingOnapProjects=y">All ONAP Projects</a><br/>
+-->
+&nbsp;&nbsp;&nbsp;<a id='onapurl'    style='display: none' class='showWhenAll' href="?project=onap&addMissingOnapProjects=n"><button class='greenButton'>Registered Only</button></a>
+&nbsp;&nbsp;&nbsp;<a id='onapallurl' style='display: none' class='hideWhenAll' href="?project=onap&addMissingOnapProjects=y"><button class='greenButton'>All ONAP Projects</button></a><br/>
+<span class='demoonly'> All Projects:
+&nbsp;&nbsp;&nbsp;<a id='allurl'    href="?project=all&page=1-2" ><button class='greenButton'>Sample</button></a>
+&nbsp;&nbsp;&nbsp;<a id='allallurl' href="?project=all&page=1-99"><button class='greenButton'>All</button></a>
+</span></div></div>
+<h1><span class='projecttitle'></span> Project Core Infrastructure Initiative (<a href='https://bestpractices.coreinfrastructure.org/'>CII</a>) <a href='https://wiki.onap.org/display/DW/CII+Badging+Program'>Badging Status</a> Dashboard</h1>
 
 <span id='working'></span>
 <h3><a href='https://wiki.onap.org'>ONAP</a> Platform-level <a href='https://wiki.onap.org/pages/viewpage.action?pageId=15998867'>Requirements</a></h3>
@@ -38,8 +51,6 @@ All Projects:
 <li>    Level 4: 100 % passing gold.
 </ul>
 
-<span id='retrieving_data'></span>
-
 <h2><span class='projecttitle'></span> Summary</h2>
 <table id='tr2' class='display compact'>
 <thead><tr>
@@ -51,10 +62,9 @@ All Projects:
 </table>
 
 <h2><span class='projecttitle'></span> Projects</h2>
-<h3>The columns with data from <span class='historic'>previous releases</span> is historic. The columns marked as "Current" comes from a query to <a href='https://bestpractices.coreinfrastructure.org/projects.json?q=ONAP'>coreinfrastructure.org</a>.</h3>
+<h3>The columns with data from <span class='historicText'>previous releases</span> (initially hidden) are historic.
+The columns marked as "Current" comes from a dynamic query to <a href='https://bestpractices.coreinfrastructure.org/projects.json?q=ONAP'>coreinfrastructure.org</a>.</h3>
 <table id='tr' class="display compact" >
 </table>
-
-<script src='cii.js'></script>
 </body>
 </html>

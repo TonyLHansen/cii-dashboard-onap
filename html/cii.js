@@ -1,5 +1,7 @@
-parms = new Query();
-debug = parms.get("debug", "");
+$(document).ready(function() {
+
+var parms = new Query();
+var debug = parms.get("debug", "");
 function debuglog(msg, parm) {
     if (debug == "y") 
         if (typeof parm != 'undefined') console.log(msg, parm);
@@ -42,11 +44,13 @@ if (useproxy == 'y') {
     proxy = "";
 }
 
-project = parms.get("project", "onap");
+var project = parms.get("project", "onap");
+var addMissingOnapProjects = parms.get("addMissingOnapProjects", "y");
 debuglog("project='" + project + "'");
 
-BASEURL="https://bestpractices.coreinfrastructure.org/projects.json";
 BASEURL="cii-statuses.cgi";
+BASEURL="https://bestpractices.coreinfrastructure.org/projects.json";
+var currentRelease = "current";
 
 if (project == "onap") {
   OFFSET=43;  // length(onapGerritPrefix)
@@ -55,15 +59,39 @@ if (project == "onap") {
   // IGNOREPAGE = false;
   PROJECTTITLE = "ONAP";
   Q = "onap";
+
+  if (addMissingOnapProjects == "y") {
+      console.log("addMissingOnapProjects == y");
+      for (var k in allOnapProjects) {
+	  console.log("k=%o", k);
+          releaseData[currentRelease].push({ "repo_url": onapGerritPrefix + k, "name": k, "_badge": "cii-not-started.png", "rank": 0, "badge_percentage_0": 0,  "badge_percentage_1": 0,  "badge_percentage_2": 0 });
+      }
+
+      $('.showWhenAll').show();
+      // $('.hideWhenall').hide();
+  } else {
+      console.log("addMissingOnapProjects == n");
+
+      // $('.showWhenAll').hide();
+      $('.hideWhenAll').show();
+  }
 } else if (project == "all") {
   OFFSET = 0;
   URLSUFFIX = "?page=";
   IGNOREPAGE = false;
   PROJECTTITLE = "All";
   Q = "";
+  $('.showWhenAll').show();
+  $('.hideWhenAll').show();
+  parms.setParm("demo","y");
 } else {
   document.write("project not onap or all");
   throw ("project not onap or all");
+}
+
+var demo = parms.get("demo", "");
+if (demo == "y") {
+    $('.demoonly').show();
 }
 
 var optlist = "";
@@ -86,7 +114,6 @@ for (i = 0; i < addOptlistTo.length; i++) {
     $("#" + addOptlistTo[i]).href += optlist;
 }
 $('.projecttitle').append(PROJECTTITLE);
-$('#retrieving_data').innerHTML = "Retrieving Data";
 
 function titleCase(str) {
     if (str.length == 0) return str;
@@ -116,8 +143,6 @@ $('#tr').append("<thead><tr>" +
                 headers +
                 "</tr></tfoot>");
 
-$(document).ready(function() {
-
 var datad = [];
 
 var jsonformat = parms.get("jsonformat", "");
@@ -126,9 +151,6 @@ if (jsonformat == "pretty") {
 } else {
   prettyjson = 0;
 }
-
-var r0 = sanitizeRelease(parms.get("r0", ""), "");
-var r1 = sanitizeRelease(parms.get("r1", "current"), "current");
 
 var page = parms.get("page");
 if (page == '') {
@@ -160,6 +182,7 @@ for (i = 0; i < pageRanges.length; i++) {
         debuglog("j=" + j);
         URL = BASEURL;
         debuglog("URL=" + URL);
+	$('#watermarkPage').html("page " + j);
 
         $.ajax({
 		type: "GET",
@@ -167,7 +190,8 @@ for (i = 0; i < pageRanges.length; i++) {
 		data: { "q": Q, "page": j },
 	        async: false,
                 success: function(json) {
-		    pushData(releaseData["current"], JSON.parse(json));
+		    if (typeof json == "string") pushData(releaseData[currentRelease], JSON.parse(json));
+		    else pushData(releaseData[currentRelease], json);
                 }
         });
     }
@@ -188,62 +212,11 @@ for (i = 0; i < releases.length; i++) {
     addRanks(releaseData[releases[i]]);
 };
 
-// remember which ONAP projects have already been seen
-
-var allOnapProjects = {
-    "aaf/authz": "n", "aaf/cadi": "n", "aaf/inno": "n", "aaf/luaplugin": "n", "aai/aai-common": "n",
-    "aai/aai-config": "n", "aai/aai-data": "n", "aai/aai-service": "n", "aai/babel": "n", "aai/champ": "n",
-    "aai/data-router": "n", "aai/esr-gui": "n", "aai/esr-server": "n", "aai/gizmo": "n", "aai/logging-service": "n",
-    "aai/model-loader": "n", "aai/resources": "n", "aai/rest-client": "n", "aai/router-core": "n", "aai/search-data-service": "n",
-    "aai/sparky-be": "n", "aai/sparky-fe": "n", "aai/test-config": "n", "aai/traversal": "n", "appc": "n",
-    "appc/deployment": "n", "ccsdk/dashboard": "n", "ccsdk/distribution": "n", "ccsdk/parent": "n", "ccsdk/platform/blueprints": "n",
-    "ccsdk/platform/nbapi": "n", "ccsdk/platform/plugins": "n", "ccsdk/sli/adaptors": "n", "ccsdk/sli/core": "n", "ccsdk/sli/northbound": "n",
-    "ccsdk/sli/plugins": "n", "ccsdk/storage/esaas": "n", "ccsdk/storage/pgaas": "n", "ccsdk/utils": "n", "ci-management": "n",
-    "clamp": "n", "cli": "n", "dcaegen2": "n", "dcaegen2/analytics": "n", "dcaegen2/analytics/tca": "n",
-    "dcaegen2/collectors": "n", "dcaegen2/collectors/snmptrap": "n", "dcaegen2/collectors/ves": "n", "dcaegen2/deployments": "n", "dcaegen2/platform": "n",
-    "dcaegen2/platform/blueprints": "n", "dcaegen2/platform/cdapbroker": "n", "dcaegen2/platform/cli": "n", "dcaegen2/platform/configbinding": "n", "dcaegen2/platform/deployment-handler": "n",
-    "dcaegen2/platform/inventory-api": "n", "dcaegen2/platform/plugins": "n", "dcaegen2/platform/policy-handler": "n", "dcaegen2/platform/registrator": "n", "dcaegen2/platform/servicechange-handler": "n",
-    "dcaegen2/utils": "n", "demo": "n", "dmaap/buscontroller": "n", "dmaap/datarouter": "n", "dmaap/dbcapi": "n",
-    "dmaap/messagerouter/dmaapclient": "n", "dmaap/messagerouter/messageservice": "n", "dmaap/messagerouter/mirroragent": "n", "dmaap/messagerouter/msgrtr": "n", "doc": "n",
-    "doc/tools": "n", "ecompsdkos": "n", "externalapi/nbi": "n", "holmes/common": "n", "holmes/dsa": "n",
-    "holmes/engine-management": "n", "holmes/rule-management": "n", "integration": "n", "logging-analytics": "n", "modeling/modelspec": "n",
-    "modeling/toscaparsers": "n", "msb/apigateway": "n", "msb/discovery": "n", "msb/java-sdk": "n", "msb/swagger-sdk": "n",
-    "mso": "n", "mso/chef-repo": "n", "mso/docker-config": "n", "mso/libs": "n", "mso/mso-config": "n",
-    "multicloud/azure": "n", "multicloud/framework": "n", "multicloud/openstack": "n", "multicloud/openstack/vmware": "n", "multicloud/openstack/windriver": "n",
-    "ncomp": "n", "ncomp/cdap": "n", "ncomp/core": "n", "ncomp/docker": "n", "ncomp/maven": "n",
-    "ncomp/openstack": "n", "ncomp/sirius": "n", "ncomp/sirius/manager": "n", "ncomp/utils": "n", "oom": "n",
-    "oom/registrator": "n", "oparent": "n", "optf/cmso": "n", "optf/has": "n", "optf/osdf": "n",
-    "policy/api": "n", "policy/common": "n", "policy/docker": "n", "policy/drools-applications": "n", "policy/drools-pdp": "n",
-    "policy/engine": "n", "policy/gui": "n", "policy/pap": "n", "policy/pdp": "n", "portal": "n",
-    "portal/sdk": "n", "sdc": "n", "sdc/jtosca": "n", "sdc/sdc-distribution-client": "n", "sdc/sdc-docker-base": "n",
-    "sdc/sdc-titan-cassandra": "n", "sdc/sdc-tosca": "n", "sdc/sdc-workflow-designer": "n", "sdnc/adaptors": "n", "sdnc/architecture": "n",
-    "sdnc/core": "n", "sdnc/features": "n", "sdnc/northbound": "n", "sdnc/oam": "n", "sdnc/parent": "n",
-    "sdnc/plugins": "n", "so": "n", "so/chef-repo": "n", "so/docker-config": "n", "so/libs": "n",
-    "so/so-config": "n", "testsuite": "n", "testsuite/heatbridge": "n", "testsuite/properties": "n", "testsuite/python-testing-utils": "n",
-    "ui": "n", "ui/dmaapbc": "n", "university": "n", "usecase-ui": "n", "usecase-ui/server": "n",
-    "vfc/gvnfm/vnflcm": "n", "vfc/gvnfm/vnfmgr": "n", "vfc/gvnfm/vnfres": "n", "vfc/nfvo/catalog": "n", "vfc/nfvo/driver/ems": "n",
-    "vfc/nfvo/driver/sfc": "n", "vfc/nfvo/driver/vnfm/gvnfm": "n", "vfc/nfvo/driver/vnfm/svnfm": "n", "vfc/nfvo/lcm": "n", "vfc/nfvo/resmanagement": "n",
-    "vfc/nfvo/wfengine": "n", "vid": "n", "vid/asdcclient": "n", "vnfrqts/epics": "n", "vnfrqts/guidelines": "n",
-    "vnfrqts/requirements": "n", "vnfrqts/testcases": "n", "vnfrqts/usecases": "n", "vnfsdk/compliance": "n", "vnfsdk/functest": "n",
-    "vnfsdk/lctest": "n", "vnfsdk/model": "n", "vnfsdk/pkgtools": "n", "vnfsdk/refrepo": "n", "vnfsdk/validation": "n",
-    "vvp/ansible-ice-bootstrap": "n", "vvp/cms": "n", "vvp/devkit": "n", "vvp/documentation": "n", "vvp/engagementmgr": "n",
-    "vvp/gitlab": "n", "vvp/image-scanner": "n", "vvp/jenkins": "n", "vvp/portal": "n", "vvp/postgresql": "n",
-    "vvp/test-engine": "n", "vvp/validation-scripts": "n"
-};
-
-$(releaseData[r1]).each(function(index, element) {
+$(releaseData[currentRelease]).each(function(index, element) {
     if (element.repo_url.substring(0,43) == onapGerritPrefix) {
         allOnapProjects[element.repo_url.substring(43)] = "y";
     }
 });
-
-var addMissingOnapProjects = parms.get("addMissingOnapProjects", "y");
-
-if (addMissingOnapProjects == "y") {
-    for (var k in allOnapProjects) {
-        releaseData[r1].push({ "repo_url": onapGerritPrefix + k, "name": k, "_badge": "cii-not-started.png", "rank": 0, "badge_percentage_0": 0,  "badge_percentage_1": 0,  "badge_percentage_2": 0 });
-    }
-}
 
 function addRankOrder(d) {
     d.sort(function(a,b) {
@@ -269,13 +242,12 @@ function addRankOrder(d) {
 // for (i = 0; i < releases.length; i++) {
 //    addRankOrder(releaseData[releases[i]]);
 //};
-if (r0 != '') addRankOrder(releaseData[r0]);
-addRankOrder(releaseData[r1]);
+addRankOrder(releaseData[currentRelease]);
 
-$(releaseData[r1]).each(function(index, element) {
+$(releaseData[currentRelease]).each(function(index, element) {
     // debuglog("add url/badge to element=%o", element);
     element.short_url = stripurl(element.repo_url, false);
-    element.badge = element._badge ? element._badge : ("https://bestpractices.coreinfrastructure.org/projects/" + element.id + "/badge");
+    element.badge = element._badge || ("https://bestpractices.coreinfrastructure.org/projects/" + element.id + "/badge");
 });
 
 
@@ -288,25 +260,18 @@ function stripurl(url, doupper) {
     return str;
 }
 
-releaseData[r1].sort(function(a,b) {
+releaseData[currentRelease].sort(function(a,b) {
   var nameA = stripurl(a.repo_url); // ignore upper and lowercase
   var nameB = stripurl(b.repo_url); // ignore upper and lowercase
-  if (nameA < nameB) {
-    return -1;
-  } else if (nameA > nameB) {
-    return 1;
-  } else {
-    // names must be equal
-    return 0;
-  }
+  return (nameA < nameB) ? -1 : (nameA > nameB) ? 1 : 0;
 });
 
 var passingCount = silverCount = goldCount = 0;
 var nonPassingCount = nonSilverCount = nonGoldCount = 0;
 var passing80Count = silver80Count = gold80Count = 0;
-var totalCount = releaseData[r1].length;
+var totalCount = releaseData[currentRelease].length;
 
-$(releaseData[r1]).each(function(index, element) {
+$(releaseData[currentRelease]).each(function(index, element) {
     if (element.badge_percentage_0 == 100) passingCount++;
     else { nonPassingCount++; if (element.badge_percentage_0 >= 80) { passing80Count++; } }
     if (element.badge_percentage_1 == 100) silverCount++;
@@ -345,15 +310,15 @@ function getPreviousData(m, fieldName, prevRelease) {
 }
 
 function badgeFieldName(release, fieldname) {
-    if (release == "current") return fieldname;
+    if (release == currentRelease) return fieldname;
     return release + "_" + fieldname;
 }
 
 // add data from previous releases to each row
 for (k = 0; k < releases.length; k++) {
     var release = releases[k];
-    if (release == "current") break;
-    $(releaseData["current"]).each(function(index, element) {
+    if (release == currentRelease) break;
+    $(releaseData[currentRelease]).each(function(index, element) {
         element[badgeFieldName(release, "badge_percentage_0")] = getPreviousData(element, "badge_percentage_0", release);
         element[badgeFieldName(release, "badge_percentage_1")] = getPreviousData(element, "badge_percentage_1", release);
         element[badgeFieldName(release, "badge_percentage_2")] = getPreviousData(element, "badge_percentage_2", release);
@@ -361,37 +326,90 @@ for (k = 0; k < releases.length; k++) {
 }
 
 var datatableColumns = [
-            { "data": "rank_order", className: "textright" },
-            { "data": "short_url" },
-            { "data": "name" },
-            { "data": "badge", "render": function ( data, type, row, meta ) { return type === 'display' ?  '<img src="'+data+'"/>' : data; } },
+    { "data": "rank_order", className: "textright" },
+    { "data": "short_url", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
+    { "data": "name", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
+    { "data": "badge", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<img src="'+data+'"/>') : data; } },
 ];
 
 var badgingFieldNames = [ "badge_percentage_0", "badge_percentage_1", "badge_percentage_2" ];
+var historicColumns = [ ];
+var columnNumber = datatableColumns.length;
 for (var bl in badgingLevels) {
     for (var k in releases) {
         var release = releases[k];
-        var color = (release == "current") ? "" : "historic";
-        datatableColumns.push(
-            { "data": badgeFieldName(release, badgingFieldNames[bl]),
-              "render": function ( data, type, row, meta ) {
-                if (type != "display") return data;
-		return ("<span width='100%' class=''>" + data + "</span>");
-              },
-              className: "textright " + color });
+	var historic = release != currentRelease;
+        if (historic) historicColumns.push(columnNumber);
+	columnNumber++;
+        var columnType = historic ? "historicData" :  "currentdata";
+	var visible = !historic;
+        datatableColumns.push({ "data": badgeFieldName(release, badgingFieldNames[bl]),
+		    "render": function ( data, type, row, meta ) {
+                        if (type != "display") return data;
+		        return ("<span width='100%' class=''>" + data + "</span>");
+		    },
+		    "className": "textright " + columnType,
+		    "visible": visible
+		    });
     }
 }
 
+var datatableButtonTransitionTime = 250;
+
+var datatableButtons = [ "pageLength",
+			 {
+			     extend: 'colvisGroup',
+			     text: 'Show Historic Data',
+			     show: ':hidden',
+		             // hide: ".hideHistoricData",
+			     className: "green showHistoricData",
+			     action: function ( e, dt, button, conf ) {
+				 // definition from github
+				 dt.columns( conf.show ).visible( true, false );
+				 dt.columns( conf.hide ).visible( false, false );
+				 dt.columns.adjust();
+				 // additional action
+				 $(".hideHistoricData").show(datatableButtonTransitionTime);
+				 $(".showHistoricData").hide(datatableButtonTransitionTime);
+			     }
+			 },
+			 {
+			     extend: 'colvisGroup',
+			     text: 'Hide Historic Data',
+			     hide: historicColumns,
+			     className: "hideHistoricData",
+			     action: function ( e, dt, button, conf ) {
+				 // definition from github
+				 dt.columns( conf.show ).visible( true, false );
+				 dt.columns( conf.hide ).visible( false, false );
+				 dt.columns.adjust();
+				 // additional action
+				 $(".hideHistoricData").hide(datatableButtonTransitionTime);
+				 $(".showHistoricData").show(datatableButtonTransitionTime);
+			     }
+			 },
+                         {
+                             extend: "colvis", xtext:"foo"
+                         },
+			 ];
+
 $('#tr').DataTable({
-        "data": releaseData[r1],
-        "paging":   false,
-        "info":     false,
-        "dom": "B",
-        "searching": false,
-        "autoWidth": false,
-        "buttons": [ "colvis" ],
-        "columns": datatableColumns,
-    });
+        "data": releaseData[currentRelease],
+	    "paging":   true,
+	    "pagingType": "full_numbers",
+	    "info":     false,
+	    "dom": "Bfrtip",
+	    lengthMenu: [
+			 [ 10, 25, 50, 100, -1 ],
+			 [ '10 rows', '25 rows', '50 rows', '100 rows', 'Show all' ]
+			 ],
+	    "searching": false,
+	    "autoWidth": false,
+	    "buttons": datatableButtons,
+	    "columns": datatableColumns,
+	    });
+
+$(".hideHistoricData").hide();
 
 var passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
 var silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
@@ -456,6 +474,6 @@ $('#tr2').append(
     "</tr>"
 );
 
-$('#retrieving_data').innerHTML = "";
+$('#watermark').hide();
 
 }); // end of document.ready()

@@ -33,4 +33,8 @@ class Query {
             return def;
         }
     } 
+
+    setParm(nm, def) {
+        this.parms.push(nm + "=" + def);
+    }
 }

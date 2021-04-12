@@ -4,14 +4,17 @@
 </head>
 <body>
 Hello,
-<span id='world'>world</span>
+<span id='world'>world<br/></span>
 <script>
 $(document).ready(function() {
 var q = $.getJSON(
-    'https://bestpractices.coreinfrastructure.org/projects.json',
+    'https://master.bestpractices.coreinfrastructure.org/projects.json',
     { 'q': 'ONAP' }, 
     function(json) {
-        $('world').append(json.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;"));
+console.log("json=%o", json);
+        var j = json;
+	if (typeof json != "string") j = JSON.stringify(json);
+        $('#world').append(j.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;"));
     });
 });
 </script>

@@ -84,3 +84,12 @@ td.stats {
 .na {
     background-color: gray;
 }
+.bronze_detail_span {
+    display: none;
+}
+.silver_detail_span {
+    display: none;
+}
+.gold_detail_span {
+    display: none;
+}

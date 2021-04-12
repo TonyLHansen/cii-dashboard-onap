@@ -411,7 +411,10 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 	trdataHeaders += "<th>" + rf[k].replace(/_/g," ").replace(/(\W+|^)(.)/ig, 
 								 function(match, chr) {
 								     return match.toUpperCase();
-								 }) + "</th>";
+								 }) + 
+	    "<span class='" + level + "_detail_span'><br/><br/>" + badgeDescriptions[level][rf[k]] +
+	    "</span>" +
+	    "</th>";
     }
     trdataHeaders += "</tr>";
     $('#' + tablename).append("<thead>" + trdataHeaders + "</thead>" +
@@ -433,7 +436,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 		    function ( data, type, row, meta ) { 
 		    var classVal = 'na';
 		    if (data.toLowerCase() == "met") classVal = 'met';
-		    else if (data.toLowerCase() == "unmet") classVal = 'unmet';
+		    else if ((data.toLowerCase() == "unmet") || (data.toLowerCase() == "?")) classVal = 'unmet';
 		    var statusName = meta.settings.aoColumns[meta.col].data;
 		    var fieldName = meta.settings.aoColumns[meta.col].name;
 		    var dataTitle = badgeDescriptions[level][statusName];
@@ -454,10 +457,13 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 		    var ret = "<span class='" + classVal + 
 			"' title=\"";
 		    ret += (fieldName in badgeDescriptions[level]) ? (badgeDescriptions[level][fieldName] + "\n") : "--\n";
-		    ret += (fieldName in row) ? (row[fieldName] + "\n") : "\n"; // ".(fieldname).\n";
-		    ret += (statusName in row) ? (row[statusName] + "\n") : "\n"; // ".(statusname).\n";
-		    ret += (justificationName in row) ? ((row[justificationName]) ? (row[justificationName] + "\n") : "\n") : "\n"; // ".(justifictionname).\n";
+		    var status = "";
+		    status += (fieldName in row) ? (row[fieldName] + "\n") : "\n"; // ".(fieldname).\n";
+		    status += (statusName in row) ? (row[statusName] + "\n") : "\n"; // ".(statusname).\n";
+		    status += (justificationName in row) ? ((row[justificationName]) ? (row[justificationName] + "\n") : "\n") : "\n"; // ".(justifictionname).\n";
+		    ret += status;
 		    ret += "\">" + data + "</span>";
+		    ret += "<span class='" + level + "_detail_span'><br/><br/>" + status + "</span>";
 		    return ret;
 		}
 	    });
@@ -467,7 +473,8 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 
     $('#' + tablename).DataTable({
 	    "data": datad,
-		// "aaSorting": [[ 0, "asc" ]],
+		"aaSorting": [[ 0, "asc" ]],
+		fixedHeader: true,
 		"paging": true,
 		"pagingType": "full_numbers",
 		"pageLength": parseInt(parms.get("pagelength", "50")),
@@ -599,7 +606,7 @@ function whenDone(datad) {
 		});
 
 
-    addToMustTable(datad, 'trbronze', 'bronze', 'Bronze', '0');
+    addToMustTable(datad, 'trbronze', 'bronze', 'Passing', '0');
     addToMustTable(datad, 'trsilver', 'silver', 'Silver', '1');
     addToMustTable(datad, 'trgold', 'gold', 'Gold', '2');
 
@@ -632,6 +639,33 @@ function whenDone(datad) {
 	});
     $(".gold_toggle").click(function(){
 	    $(".gold_span").each(function(index) {
+		    if ( $(this).css('display') == 'none' ) {
+			$(this).css('display','inline');
+		    } else {
+			$(this).css('display','none');
+		    }
+		});
+	});
+    $(".bronze_detail_toggle").click(function(){
+	    $(".bronze_detail_span").each(function(index) {
+		    if ( $(this).css('display') == 'none' ) {
+			$(this).css('display','inline');
+		    } else {
+			$(this).css('display','none');
+		    }
+		});
+	});
+    $(".silver_detail_toggle").click(function(){
+	    $(".silver_detail_span").each(function(index) {
+		    if ( $(this).css('display') == 'none' ) {
+			$(this).css('display','inline');
+		    } else {
+			$(this).css('display','none');
+		    }
+		});
+	});
+    $(".gold_detail_toggle").click(function(){
+	    $(".gold_detail_span").each(function(index) {
 		    if ( $(this).css('display') == 'none' ) {
 			$(this).css('display','inline');
 		    } else {

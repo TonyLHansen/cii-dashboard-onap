@@ -355,24 +355,24 @@ function getBadge(txtLeft, txtRight, colorRight) {
     // console.log("txtRight=" + txtRight);
     // console.log("colorRight=" + colorRight);
     return "<svg xmlns='http://www.w3.org/2000/svg' width='204' height='20'>" +
-	"<linearGradient id='b' x2='0' y2='100%'>" +
-	"<stop offset='0' stop-color='#bbb' stop-opacity='.1'/>" +
-	"<stop offset='1' stop-opacity='.1'/>" +
-	"</linearGradient>" +
-	"<mask id='a'>" +
-	"<rect width='204' height='20' rx='3' fill='#fff'/>" +
-	"</mask>" +
-	"<g mask='url(#a)'>" +
-	"<path fill='#555' d='M0 0h103v20H0z'/>" +
-	"<path fill='" + colorRight + "' d='M103 0h101v20H103z'/>" +
-	"<path fill='url(#b)' d='M0 0h204v20H0z'/>" +
-	"</g>" +
-	"<g fill='#fff' text-anchor='middle' font-family='DejaVu Sans,Verdana,Geneva,sans-serif' font-size='11'>" +
-	"<text x='51.5' y='15' fill='#010101' fill-opacity='.3'>" + txtLeft + "</text>" +
-	"<text x='51.5' y='14'>" + txtLeft + "</text>" +
-	"<text x='152.5' y='15' fill='" + colorRight + "' xfill='#010101' fill-opacity='.3'>" + txtRight + "</text>" +
-	"<text x='152.5' y='14'>" + txtRight + "</text>" +
-	"</g>" +
+	"  <linearGradient id='b' x2='0' y2='100%'>" +
+	"    <stop offset='0' stop-color='#bbb' stop-opacity='.1'/>" +
+	"    <stop offset='1' stop-opacity='.1'/>" +
+	"  </linearGradient>" +
+	"  <mask id='a'>" +
+	"    <rect width='204' height='20' rx='3' fill='#fff'/>" +
+	"  </mask>" +
+	"  <g mask='url(#a)'>" +
+	"    <path fill='#555' d='M0 0h103v20H0z'/>" +
+	"    <path fill='" + colorRight + "' d='M103 0h101v20H103z'/>" +
+	"    <path fill='url(#b)' d='M0 0h204v20H0z'/>" +
+	"  </g>" +
+	"  <g fill='#fff' text-anchor='middle' font-family='DejaVu Sans,Verdana,Geneva,sans-serif' font-size='11'>" +
+	"    <text x='51.5' y='15' fill='#010101' fill-opacity='.3'>" + txtLeft + "</text>" +
+	"    <text x='51.5' y='14'>" + txtLeft + "</text>" +
+	"    <text x='152.5' y='15' fill='" + colorRight + "' xfill='#010101' fill-opacity='.3'>" + txtRight + "</text>" +
+	"    <text x='152.5' y='14'>" + txtRight + "</text>" +
+	"  </g>" +
 	"</svg>";
 }
 

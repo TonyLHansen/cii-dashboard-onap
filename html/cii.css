@@ -115,3 +115,14 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
     background: bisque;
     font-style: oblique; // italic;
 }
+
+.permalink {
+      display: none;
+}
+
+.showpermalink:hover .permalink {
+    display: inline-block;
+    font-size: 25%;
+    text-decoration: none !important;
+    vertical-align: super;
+}

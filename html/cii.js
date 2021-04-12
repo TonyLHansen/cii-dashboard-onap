@@ -430,10 +430,13 @@ function getBadge(txtLeft, txtRight, colorRight) {
 }
 
 function resize(id) {
-    if ($(".size__" + id).css('font-size') == '24px')
+    if ($(".size__" + id).css('font-size') == '24px') {
+	$(".size__" + id).css('font-size','8px');
+    } else if ($(".size__" + id).css('font-size') == '8px') {
 	$(".size__" + id).css('font-size','');
-    else
+    } else {
 	$(".size__" + id).css('font-size','24px');
+    }
 }
 
 function getAllBadges(data, type, row) {

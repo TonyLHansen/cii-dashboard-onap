@@ -39,6 +39,9 @@ td.stats {
 .small {
     font-size: small;
 }
+.xxsmall {
+    font-size: xx-small;
+}
 
 .historicText, .historicData {
     background-color: #cbcbcb;
@@ -126,3 +129,11 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
     text-decoration: none !important;
     vertical-align: super;
 }
+
+.partial {
+    background-color: pink;
+}
+.buzz {
+    background-color: red;
+}
+

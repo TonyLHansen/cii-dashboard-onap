@@ -1,6 +1,8 @@
 "use strict";
 console.clear();
-var BASEURL = "https://bestpractices.coreinfrastructure.org/projects.json";
+// var BASESITE = "https://master.bestpractices.coreinfrastructure.org/";
+var BASESITE = "https://bestpractices.coreinfrastructure.org/";
+var BASEURL = BASESITE + "projects.json";
 var Q = "onap";
 var repoUrlPrefixes = [
 		       "https://gerrit.onap.org/r/#/admin/projects/", 
@@ -439,12 +441,32 @@ function genData(project, name, bp0, bp1, bp2) {
 	    };
 }
 
+function checkEditor(data) {
+    console.log("data=" + data);
+    console.log("typeof data=" + typeof data);
+    var editors = data.toString().split(",");
+    var JimBaker = "3607";
+    var hasJimBaker = editors.indexOf(JimBaker) > -1;
+    var len = editors.length;
+    var cl = (hasJimBaker && len > 1) ? "met" : (len > 1) ? "partial" : "buzz";
+    var editorsOut = "";
+    var sep = "";
+    for (var e in editors) {
+	editorsOut += sep + "<a href='" + BASESITE + "en/users/" + editors[e] + "'>" + editors[e] + "</a>";
+	sep = " ";
+    }
+    var ret = "<span class='xxsmall " + cl + "'>" + editorsOut + "</button>";
+    return ret;
+}
+
 function addToMustTable(datad, tablename, level, levelcapname, percent) {
     var trdataHeaders = "<tr>" +
 	// "<th>Project<br/>Prefix</th>" +
 	"<th>Name</th>" +
 	"<th>Tiered<br/>Percentage</th>" +
 	"<th>" + levelcapname + " Badge Percentage</th>";
+
+    trdataHeaders += "<th>Editors</th>";
 
     var rf = requiredFields[level];
     var allFields = [];
@@ -499,8 +521,12 @@ function addToMustTable(datad, tablename, level, levelcapname, percent) {
 		return "<span class='size__" + row['id'] + "' style='color: " + textcolor + "; background-color: " + color + "'>" + data + "</span>";
 	    }
 	});
-    columns.push({ "data": "badge_percentage_"+ percent, "render": function ( data, type, row, meta ) {
+    columns.push({ "data": "badge_percentage_" + percent, "render": function ( data, type, row, meta ) {
 		return "<span class='size__" + row['id'] + "'>" + data + "</span>";
+	    }
+	});
+    columns.push({ "data": "editors", "render": function ( data, type, row, meta ) {
+		return "<span class='size__" + row['id'] + "'>" + checkEditor(data) + "</span>";
 	    }
 	});
 
@@ -596,6 +622,11 @@ function whenDone(datad) {
 	datad[k].onap_badurlsuffix = (datad[k].onap_project.indexOf("-BADURLSUFFIX") != -1);
 	datad[k].onap_repos = projectAndRepos.shift();
 	datad[k].onap_invalid_project = !allOnapProjects[currentRelease].hasOwnProperty(project);
+	datad[k].editors = datad[k].user_id;
+        for (var ar in datad[k].additional_rights) {
+	    if (datad[k].additional_rights[ar] != datad[k].user_id)
+		datad[k].editors = datad[k].editors + "," + datad[k].additional_rights[ar];
+	}
     }
     datad.sort(function(a, b) {
 	    var ap = a.onap_project.toUpperCase();

@@ -507,40 +507,41 @@ function pushData(whereTo, whereFrom) {
 }
 
 function fillInEditorNames(datad, editorNames, editorList, j) {
-    if (editorList.length == 0)
+    if (editorList.length == 0) {
 	whenDone(datad, editorNames);
-    else {
-	var URL = BASESITE + "en/users/";
-	// var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
-	// var URL = BETABASESITE + "en/users/";
-	var URLsuffix = "";
-	var editor = editorList[j];
-	var dots = [ ".", "..", "...", "...." ];
-	watermark("Loading<br/>editors " + (dots[j % 4]));
-	// console.log("j=", j);
-	// console.log("url=", URL);
-	// console.log("editor=", editor);
-	console.log("editorList=", editorList);
-	var lastOne = j >= (editorList.length-1);
-	// console.log("lastOne=", lastOne);
-
-	$.ajax({
-		type: "GET",
-		    url: URL + editor + ".json",
-		    data: { "format": "json" },
-		    success: function(json) {
-		    // console.log("ret=", json);
-		    if (typeof json == "string") pushData(editorNames, JSON.parse(json));
-		    else pushData(editorNames, json);
-		    if (json == '') whenDone(datad, editorNames);
-		    else if (lastOne) whenDone(datad, editorNames);
-		    else fillInEditorNames(datad, editorNames, editorList, j+1);
-		},
-		    error: function(request,error, thrownError) {
-		    alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
-		}
-	    });
+	return;
     }
+
+    var URL = BASESITE + "en/users/";
+    // var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
+    // var URL = BETABASESITE + "en/users/";
+    var URLsuffix = "";
+    var editor = editorList[j];
+    var dots = [ ".", "..", "...", "...." ];
+    watermark("Loading<br/>editors " + (dots[j % 4]));
+    // console.log("j=", j);
+    // console.log("url=", URL);
+    // console.log("editor=", editor);
+    console.log("editorList=", editorList);
+    var lastOne = j >= (editorList.length-1);
+    // console.log("lastOne=", lastOne);
+
+    $.ajax({
+	    type: "GET",
+		url: URL + editor + ".json",
+		data: { "format": "json" },
+		success: function(json) {
+		// console.log("ret=", json);
+		if (typeof json == "string") pushData(editorNames, JSON.parse(json));
+		else pushData(editorNames, json);
+		if (json == '') whenDone(datad, editorNames);
+		else if (lastOne) whenDone(datad, editorNames);
+		else fillInEditorNames(datad, editorNames, editorList, j+1);
+	    },
+		error: function(request,error, thrownError) {
+		alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+	    }
+	});
 }
 
 function getEditorList(datad, editorNames) {
@@ -772,10 +773,19 @@ function prEditor(data, editorDict) {
 
 function datacheck() {
     var ret = "";
-    var props = ["onapwide", "section", "type"];
+    var matchedprops = ["onapwide", "section", "type"];
+    var allprops = ["onapwide", "section", "required", "type", "description", "details"];
     for (var l = 0; l < badgingColors.length-1; l++) {
         var level = badgingColors[l];
 	for (var ciiName in badgeDescriptions[level]) {
+	    for (var p in allprops) {
+		var prop = allprops[p];
+		if (!(prop in badgeDescriptions[level][ciiName])) {
+		    ret += ciiName + ": " + prop + " is missing<br/>\n";
+		}
+	    }
+
+	    if (!("onapwide" in badgeDescriptions[level][ciiName]))
 	    if (("Infrastructure" == badgeDescriptions[level][ciiName]["type"]) &&
 		!badgeDescriptions[level][ciiName]["onapwide"]) {
 		ret += ciiName + ": has the type Infrastructure, but onapwide is not set.<br/>\n";
@@ -783,8 +793,8 @@ function datacheck() {
 	    for (var l2 = l+1; l2 < badgingColors.length; l2++) {
 		var level2 = badgingColors[l2];
 		if (ciiName in badgeDescriptions[level2]) {
-		    for (var p in props) {
-			var prop = props[p];
+		    for (var p in matchedprops) {
+			var prop = matchedprops[p];
 			if (badgeDescriptions[level][ciiName][prop] != 
 			    badgeDescriptions[level2][ciiName][prop]) {
 			    ret += ciiName + ": " + prop + " differs " +
@@ -840,11 +850,16 @@ function sortColoredColumns(level, newSortBy) {
     }
 }
 
+function startSortChange(nm) {
+    
+    watermark("Sorting<br/>" + nm.replace(/^by_name$/, "BBBB").replace(/_name$/, "").replace(/[_]/g, " ").replace(/BBBB/, "by name"));
+}
+
 function resort(newSortBy) {
-    if (newSortBy == sortBy) return;
-    // TODO -- set the watermark while sorting -- this does not seem to work
-    watermark("Sorting");
-    //    $('#sorting').fadeIn('fast');
+    if (newSortBy == sortBy) {
+	watermark("");
+	return;
+    }
 
     sortBy = newSortBy;
 
@@ -972,7 +987,6 @@ function resort(newSortBy) {
     }
 
     watermark("");
-    //    $('#sorting').fadeOut('slow');
 }
 
 function containsURL(text) {
@@ -1451,6 +1465,14 @@ function whenDone(datad, editorNames) {
     $("#sort_by_onapwide_name").click(function(){ resort("by_onapwide_name"); });
     $("#sort_by_onapwide_section_name").click(function(){ resort("by_onapwide_section_name"); });
     $("#sort_by_onapwide_type_name").click(function(){ resort("by_onapwide_type_name"); });
+    $("#sort_by_name").mousedown(function(){ startSortChange("by_name"); });
+    $("#sort_by_section_name").mousedown(function(){ startSortChange("by_section_name"); });
+    $("#sort_by_section_type_name").mousedown(function(){ startSortChange("by_section_type_name"); });
+    $("#sort_by_type_name").mousedown(function(){ startSortChange("by_type_name"); });
+    $("#sort_by_type_section_name").mousedown(function(){ startSortChange("by_type_section_name"); });
+    $("#sort_by_onapwide_name").mousedown(function(){ startSortChange("by_onapwide_name"); });
+    $("#sort_by_onapwide_section_name").mousedown(function(){ startSortChange("by_onapwide_section_name"); });
+    $("#sort_by_onapwide_type_name").mousedown(function(){ startSortChange("by_onapwide_type_name"); });
 
     // TODO -- this does not work
     // $('remove-not-started-button').click(function(){
@@ -1702,7 +1724,7 @@ function whenDone(datad, editorNames) {
     }
     // $('.sortby_submit').prop('class', 'alternateColor_' + sortBy);
 
-    watermark("");
+    startSortChange(initSortBy);
     resort(initSortBy);
     $('#datacheck').html(datacheck());
 }

@@ -170,18 +170,18 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
     background-color: orange;
 }
 
+.primaryColor_by_name, .primaryColor_by_section_name, .primaryColor_by_section_type_name,
+.primaryColor_by_type_name, .primaryColor_by_type_section_name, .primaryColor_by_onapmet_name {
+}
+
 .alternateColor_by_section_name, .alternateColor_by_section_type_name {
     background-color: #cba4ff;
 }
-
-.primaryColor_by_section_name, .primaryColor_by_section_type_name {
-}
-
 .alternateColor_by_type_name, .alternateColor_by_type_section_name {
     background-color: #a4ffcb;
 }
-
-.primaryColor_by_type_name, .primaryColor_by_type_section_name {
+.alternateColor_by_onapmet_name {
+    background-color: #ffff99;
 }
 
 .bgbronze {

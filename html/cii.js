@@ -86,7 +86,9 @@ if (!(sortBy == "by_name" ||
       sortBy == "by_section_name" ||
       sortBy == "by_type_section_name" ||
       sortBy == "by_section_type_name" ||
-      sortBy == "by_type_name"))
+      sortBy == "by_type_name" ||
+      sortBy == "by_onapmet_name")
+    )
     sortBy = "by_name";
 
 function flipVisibility(where) {
@@ -143,11 +145,6 @@ function sanitizeRelease(r, def) {
 function titleCase(str) {
     if (str.length == 0) return str;
     return str.charAt(0).toUpperCase() + str.substring(1);
-}
-
-var ONAPprojectCommonResponse = { };
-for (var i in ONAPprojectCommonResponseList) {
-    ONAPprojectCommonResponse[ONAPprojectCommonResponseList[i]] = 1;
 }
 
 function addReleasesAndBadgingLevelsToTable() {
@@ -802,6 +799,9 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	    var btype = rf[b]["type"];
 	    var asection = rf[a]["section"];
 	    var bsection = rf[b]["section"];
+	    var aonapmet = rf[a]["onapmet"];
+	    var bonapmet = rf[b]["onapmet"];
+	    // console.log("sortBy=",sortBy,"a=",a,"b=",b,"aonapmet=",aonapmet,"bonapmet=",bonapmet);
 	    return (sortBy == "by_name") ? cmp(a, b) :
 		(sortBy == "by_section_name") ? ((asection == bsection) ?
 					    cmp(a, b) : cmp(asection, bsection)) :
@@ -815,6 +815,9 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 		 cmp(a, b) :
 		 cmp(atype, btype) :
 		 cmp(asection, bsection)) :
+		(sortBy == "by_onapmet_name") ?
+		((aonapmet == bonapmet) ? cmp(a, b) : cmp(bonapmet, aonapmet)
+		 ) :
 		/* by_type_name */
 		((atype == btype) ? cmp(a, b) : cmp(atype, btype));
 	});
@@ -847,7 +850,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	    var ciiName = allFields[k];
 	    var cl = optionalFields[ciiName] ? "optional" : "required";
 
-	    var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
+	    var projectLevelClass = badgeDescriptions[level][ciiName]["onapmet"] ? "projectLevel" : "";
 	    var sortedType = (sortBy == "by_name") ? "" :
 		(sortBy == "by_section_name") ?
 		(badgeDescriptions[level][ciiName]["section"]) :
@@ -855,6 +858,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 		(badgeDescriptions[level][ciiName]["type"] + badgeDescriptions[level][ciiName]["section"]) :
 		(sortBy == "by_section_type_name") ?
 		(badgeDescriptions[level][ciiName]["section"] + badgeDescriptions[level][ciiName]["type"]) :
+		(sortBy == "by_onapmet_name") ? badgeDescriptions[level][ciiName]["onapmet"] :
 		/* sortBy == by_type_name */
 		(badgeDescriptions[level][ciiName]["type"]);
 	    if (sortedType != lastSortedType) {
@@ -940,7 +944,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			var fieldName = meta.settings.aoColumns[meta.col].name;
 			var optionalClass = optionalFields[fieldName] ? "optional" : "";
 			var classVal = /* optionalClass + */'na';
-			var projectLevelClass = (fieldName in ONAPprojectCommonResponse) ? "projectLevel" : "";
+			var projectLevelClass = badgeDescriptions[level][fieldName]["onapmet"] ? "projectLevel" : "";
 			var justificationName = fieldName + "_justification";
 			var urlRequired = badgeDescriptions[level][fieldName]["description"].indexOf("(URL required)") >= 0;
 			var hasUrl = (justificationName in row) && containsURL(row[justificationName]);

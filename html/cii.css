@@ -1,9 +1,16 @@
+* { 
+    font-family: sans-serif;
+}
 table, th, td {
     border-collapse: collapse;
     border: solid black 1px;
 }
 table.noborder, th.noborder, td.noborder {
     border: none;
+    border-collapse: collapse;
+}
+td.stats {
+    height: 24px;
 }
 .top {
     float: top;
@@ -50,6 +57,10 @@ table.noborder, th.noborder, td.noborder {
 
 .demoonly, .hidden {
     display: none;
+}
+
+.minus {
+    background-color: #fff0f2;
 }
 
 .badURL {

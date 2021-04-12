@@ -175,7 +175,6 @@ function genPageList(page) {
 	    start = pageRanges[i].substring(0, pos);
 	    end = pageRanges[i].substring(pos+1);
 	}
-	// debuglog("start=" + start + ", end=" + end);
 	for (var j = Number(start); j < Number(end)+1; j++) {
 	    pagelist.push(j);
 	}
@@ -365,11 +364,13 @@ function showHistoricalInfo() {
 		     ];
 
     var levelSep = "";
+    // for (var level = 0; level < 3; level++) {
     for (var level = 2; level >= 0; level--) {
 	html += levelSep;
 	levelSep = "<tr><td colspan='99'><br/></td></tr>";
 	var shownLevel = false;
-	var gray = "background-color: white; color: #cdcdcd;";
+	var gray = "background-color: white; color: #cdcdcd; ";
+	// for (var bucket = 0; bucket < 6; bucket++) {
 	for (var bucket = 5; bucket >= 0; bucket--) {
 	    html += "<tr>";
 	    if (!shownLevel) {
@@ -380,7 +381,7 @@ function showHistoricalInfo() {
 	    var botColor = gradients[level][bucket*2];
 	    var topColor = gradients[level][bucket*2 + 2];
 	    var grad = "background: linear-gradient(to top, #" + botColor + ", #" + topColor + ")";
-	    console.log("grad=", grad);
+	    // console.log("grad=", grad);
 
 	    html += "<td style='" + grad + "' align='right'>" + bucketStr[bucket] + "</td>";
 	    for (var release in releases) {
@@ -390,7 +391,7 @@ function showHistoricalInfo() {
 		    var ncumulative = historicalStats[release][level][bucket]["cumulative#"];
 		    var pcumulative = historicalStats[release][level][bucket]["cumulative%"];
 		    var bg = (ncumulative <= 0) ? gray : grad;
-		    console.log("bg=", bg);
+		    // console.log("bg=", bg);
 		    html += "<td style='" + bg + "' align='right'>" + nprojects + "</td>" + 
 			"<td style='" + bg + "' align='right'>" + pprojects + "</td>" + 
 			"<td style='" + bg + "' align='right'>" + ncumulative + "</td>" + 
@@ -404,7 +405,7 @@ function showHistoricalInfo() {
     // html += "</tr>\n";
     html += "</table>\n";
     // console.log("historical html=", html);
-    $('#finalstats').append(html);
+    $('#releasestats_div').append(html);
     // console.log("end of showHistoricalInfo()");
 }
 
@@ -566,23 +567,22 @@ function getNextUrl(datad, editorNames, pagelist, j) {
 		// if (typeof json == "string") pushData(historicalReleaseData[currentRelease], JSON.parse(json));
 		// else pushData(historicalReleaseData[currentRelease], json);
 		if (!("current" in historicalReleaseData)) {
-		    console.log("creating historicalReleaseData[" + "current" + "]");
+		    // console.log("creating historicalReleaseData[" + "current" + "]");
 		    historicalReleaseData["current"] = [ ];
 		}
 		var js;
 		if (typeof json == "string") {
 		    pushData(datad, JSON.parse(json));
-		    console.log("pushing str to historicalReleaseData[" + "current" + "]<=", JSON.parse(json));
+		    // console.log("pushing str to historicalReleaseData[" + "current" + "]<=", JSON.parse(json));
 		    js = JSON.parse(json);
 		} else {
 		    pushData(datad, json);
-		    console.log("pushing json to historicalReleaseData[" + "current" + "]<=", json);
+		    // console.log("pushing json to historicalReleaseData[" + "current" + "]<=", json);
 		    js = json;
 		}
 		for (var jo in js) {
 		    historicalReleaseData["current"].push(js[jo]);
 		}
-		// debuglog("got pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
 		if (json == '') {
 		    fillInEditorNames(datad, editorNames, getEditorList(datad), 0);
 		} else if (lastOne) {
@@ -763,10 +763,15 @@ function containsURL(text) {
     return ((text.indexOf("https://") > -1) || (text.indexOf("http://") > -1));
 }
 
+function cmp(a,b) {
+    return (a == b) ? 0 : (a < b) ? -1 : 1;
+}
+
 function addToMustTable(datad, tablename, level, levelcapname, percent, editorDict) {
+    var nameHeader = "<th class='name'>Name</th>";
     var trdataHeaders = "<tr>" +
 	// "<th>Project<br/>Prefix</th>" +
-	"<th class='name'>Name</th>" +
+	nameHeader +
 	"<th>Tiered<br/>Percentage</th>";
     if (percent !== null)
 	trdataHeaders += "<th>" + levelcapname + " Badge Percentage</th>";
@@ -774,67 +779,91 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
     trdataHeaders += "<th>Editors</th>";
 
     var addNameColumn = 3;
-    // var rf = requiredFields[level];
     var rf = badgeDescriptions[level];
+    var sortBy = parms.get("sortby", "byname").toLowerCase();
+    if (!(sortBy == "byname" || sortBy == "bysection" || sortBy == "bytype")) sortBy = "byname";
+    
+    var sortedNames = Object.keys(rf);
+    sortedNames.sort(function(a,b){ 
+	    var atype = rf[a]["type"];
+	    var btype = rf[b]["type"];
+	    var asection = rf[a]["section"];
+	    var bsection = rf[b]["section"];
+	    return (sortBy == "byname") ? cmp(a, b) :
+		(sortBy == "bysection") ? ((asection == bsection) ? cmp(a, b) : cmp(asection, bsection)) :
+		((atype == btype) ? 
+		 (asection == bsection) ? (cmp(a, b)) : cmp(asection, bsection) :
+		 cmp(atype, btype));
+	});
+
     var allFields = [];
+    var optionalFields = {};
     if (percent !== null) {
-	for (var k in rf) {
-	    if (rf[k]["required"]) {
-		// var ciiName = rf[k];
-		var ciiName = k;
+	// gather all of the required fields together
+	for (var k in sortedNames) {
+	    var ciiName = sortedNames[k];
+	    if (rf[ciiName]["required"]) {
 		allFields.push(ciiName);
-		// debuglog("k=" + k + ", ciiName=" + ciiName);
-		var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
-		trdataHeaders += "<th><span title='" +
-		    "[" + ciiName + "] " +
-		    badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + "'>" +
-		    ciiName.replace(/_/g," ").
-		    replace(/(\W+|^)(.)/ig,
-			    function(match, chr) { return match.toUpperCase(); }) +
-		    "</span>" +
-		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>" +
-		    "<span class='" + level + "_detail_span " + projectLevelClass + "'><br/><br/>" +
-		    "[" + ciiName + "]<br/>" +
-		    badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
-		    "</span>" +
-		    "</th>";
-		if (++addNameColumn % 10 == 0)
-		    trdataHeaders += "<th class='name'>Name</th>";
 	    }
 	}
 
-	var lenRequiredFields = allFields.length;
-
-	// var rf2 = requiredFields[level + "Optional"];
-	var rf2 = badgeDescriptions[level];
-	var optionalFields = {};
-	for (var k in rf2) {
-	    if (!rf2[k]["required"]) {
-		// var ciiName = rf2[k];
-		var ciiName = k;
+	// now gather all of the optional fields together
+	for (var k in sortedNames) {
+	    var ciiName = sortedNames[k];
+	    if (!rf[ciiName]["required"]) {
 		allFields.push(ciiName);
 		optionalFields[ciiName] = 1;
-		var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
-		trdataHeaders += "<th class='optional'><span class='optional' title='" +
-		    "[" + ciiName + "]" +
-		    badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + "'>" +
-		    ciiName.replace(/_/g," ").
-		    replace(/(\W+|^)(.)/ig,
-			    function(match, chr) { return match.toUpperCase(); }) +
-		    "</span>" +
-		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>" +
-		    "<span class='optional " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" +
-		    "[" + ciiName + "]<br/>" +
-		    badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
-		    "</span>" +
-		    "</th>";
-		if (++addNameColumn % 10 == 0)
-		    trdataHeaders += "<th class='name'>Name</th>";
 	    }
+	}
+
+	// create each of the header/footer elements
+	var lastSortedType = "";
+	var columnColors = [ "primaryColor", "alternateColor" ];
+	var onPrimaryColor = 0;
+	for (var k in allFields) {
+	    var ciiName = allFields[k];
+	    var cl = optionalFields[ciiName] ? "optional" : "required";
+		
+	    var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
+	    var sortedType = (sortBy == "byname") ? "" :
+		(sortBy == "bysection") ? badgeDescriptions[level][ciiName]["section"] :
+		(badgeDescriptions[level][ciiName]["type"] + badgeDescriptions[level][ciiName]["section"]);
+	    if (sortedType != lastSortedType) {
+		onPrimaryColor = 1 - onPrimaryColor;
+		lastSortedType = sortedType;
+	    }
+	    console.log("sortedType=", sortedType, "onPrimaryColor=", onPrimaryColor, "columnColors[" + onPrimaryColor + "]=", columnColors[onPrimaryColor]);
+	    trdataHeaders += "<th class='" + cl + " " + columnColors[onPrimaryColor] + "'><span class='" + cl + "' title='" +
+		"[" + ciiName + "] " +
+		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + "'>" +
+		ciiName.replace(/_/g," ").
+		replace(/(\W+|^)(.)/ig,
+			function(match, chr) { return match.toUpperCase(); }) +
+		"</span>";
+
+	    if (sortBy == "bytype") {
+		trdataHeaders += 
+		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>" +
+		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>";
+	    } else {
+		trdataHeaders += 
+		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>" +
+		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>";
+	    }
+	    trdataHeaders += 
+		"<span class='" + cl + " " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" +
+		"[" + ciiName + "]<br/>" +
+		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
+		"</span>" +
+		"</th>";
+	    if (++addNameColumn % 10 == 0)
+		trdataHeaders += nameHeader;
 	}
     }
     
-    trdataHeaders += "<th class='name'>Name</th>";
+    var addLastNameColumn = !trdataHeaders.endsWith(nameHeader);
+    if (addLastNameColumn)
+	trdataHeaders += nameHeader;
     trdataHeaders += "</tr>";
     $('#' + tablename).append("<thead>" + trdataHeaders + "</thead>" +
 			      "<tfoot>" + trdataHeaders + "</tfoot>");
@@ -873,19 +902,16 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
     if (percent !== null) {
 	for (var k in allFields) {
 	    var ciiName = allFields[k];
-	    // debuglog("k=" + k + ", ciiName=" + ciiName);
 	    columns.push({ "data": ciiName + "_status",
 			"name": ciiName,
 			"render":
 			function ( data, type, row, meta ) {
 		        var statusName = meta.settings.aoColumns[meta.col].data;
 			var fieldName = meta.settings.aoColumns[meta.col].name;
-			// console.log("fieldName=" + fieldName);
 			var optionalClass = optionalFields[fieldName] ? "optional" : "";
 			var classVal = /* optionalClass + */'na';
 			var projectLevelClass = (fieldName in ONAPprojectCommonResponse) ? "projectLevel" : "";
 			var justificationName = fieldName + "_justification";
-			// console.log("row[" + justificationName + "]=" + row[justificationName]);
 			var urlRequired = badgeDescriptions[level][fieldName]["description"].indexOf("(URL required)") >= 0;
 			var hasUrl = (justificationName in row) && containsURL(row[justificationName]);
 			if (data.toLowerCase() == "met") {
@@ -894,8 +920,6 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			    else classVal = 'needsUrl';
 			} else if (data.toLowerCase() == "unmet") classVal = 'unmet';
 			else if (data.toLowerCase() == "?") classVal = 'question';
-			// console.log("optionalClass=" + optionalClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
-			// console.log("fieldname=" + fieldName + ", statusname=" + statusName + ", row[id]=" + row['id'] + ", optionalClass=" + optionalClass + ", projectlevelclass=" + projectLevelClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal, ", urlRequired=" + urlRequired);
 			// var dataTitle = "[" + statusName + "]<br/>" + badgeDescriptions[level][statusName]["description"];
 			var justification = row[justificationName];
 			var detailIdButton = "button__" + statusName + "__" + row['id'];
@@ -935,19 +959,17 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 		    });
 	}
 
-	columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
-		    return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
-			"onclick='resize(" + row['id'] + ")'" +
-			"/></span><span class='size__" + row['id'] +
-			"'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
-			row['id'] + "'>" + data + "</a></span>";
-		}
-	    });
+	if (addLastNameColumn)
+	    columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
+			return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
+			    "onclick='resize(" + row['id'] + ")'" +
+			    "/></span><span class='size__" + row['id'] +
+			    "'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
+			    row['id'] + "'>" + data + "</a></span>";
+		    }
+		});
     }
 
-    // debuglog("percent=" + percent);
-    // debuglog("datad=", datad);
-    // debuglog("columns=", columns);
     var datatableButtons = [ "pageLength" ];
 
     $('#' + tablename).DataTable({
@@ -1127,6 +1149,7 @@ function whenDone(datad, editorNames) {
     $(".bronze_toggle").click(function(){ $(".bronze_span").each(flipThisVisibility); });
     $(".silver_toggle").click(function(){ $(".silver_span").each(flipThisVisibility); });
     $(".gold_toggle").click(function(){ $(".gold_span").each(flipThisVisibility); });
+    $(".releasestats_toggle").click(function(){ $(".releasestats_span").each(flipThisVisibility); });
     // $(".editors_toggle").click(function(){ $(".editors_span").each(flipThisVisibility); });
     $(".bronze_detail_toggle").click(function(){ $(".bronze_detail_span").each(flipThisVisibility); });
     $(".silver_detail_toggle").click(function(){ $(".silver_detail_span").each(flipThisVisibility); });
@@ -1136,6 +1159,7 @@ function whenDone(datad, editorNames) {
     $(".bronze_detail_display_none").click(function(){ $(".bronze_detail_span").each(makeInvisible); });
     // $(".editors_detail_display_none").click(function(){ $(".editors_detail_span").each(makeInvisible); });
     // $(".editors_detail_display_all").click(function(){ $(".editors_detail_span").each(makeVisible); });
+    $('_toggle').each(function(){ console.log("found " + $(this).attr('id')); });
 
     $('#watermark').hide();
 
@@ -1374,10 +1398,10 @@ function whenDone(datad, editorNames) {
 	}
     }
 
-    console.log("historicalReleaseData=", historicalReleaseData);
+    // console.log("historicalReleaseData=", historicalReleaseData);
     createHistoricalStats();
     fillHistoricalStatsForHistoricalReleases();
-    console.log("datad=", datad);
+    // console.log("datad=", datad);
     // fillHistoricalStatsForRelease(currentRelease, datad, true);
     fillRemainingHistoricalStats();
     showHistoricalInfo();

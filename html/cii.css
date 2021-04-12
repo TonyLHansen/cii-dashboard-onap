@@ -151,6 +151,13 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
     background-color: lightblue;
 }
 
+.alternateColor {
+    background-color: #ffcba4;
+}
+
+.primaryColor {
+}
+
 .bgbronze {
     background-color: #8c7853;
 }

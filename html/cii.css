@@ -83,10 +83,10 @@ td.stats {
     background-color: gray;
 }
 .question {
-    background-color: palegreen;
+    background-color: coral;
 }
 .optional > .question {
-    background-color: pink;
+    background-color: coral;
 }
 
 .bronze_detail_span {

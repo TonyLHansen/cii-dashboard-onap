@@ -1,1 +1,0 @@
-cd `/bin/pwd`/.. && tar -czvf onap.tgz onap/*

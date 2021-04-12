@@ -1,30 +1,55 @@
-$(document).ready(function() {
+"use strict";
+console.clear();
+var BASEURL = "https://bestpractices.coreinfrastructure.org/projects.json";
+var Q = "onap";
+var repoUrlPrefixes = [
+		       "https://gerrit.onap.org/r/#/admin/projects/", 
+		       "https://gerrit.onap.org/r/p/",
+		       "https://gerrit.onap.org/r/",
+		       "https://git.onap.org/"
+		       ];
+var badRepoUrlPrefix = "https://gerrit.onap.org/r/".toUpperCase();
+var gitRepoUrlPrefix = "https://gerrit.onap.org/r/p/".toUpperCase();
+var goodRepoUrlPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 
-var parms = new Query();
-var debug = parms.get("debug", "");
-function debuglog(msg, parm) {
-    if (debug == "y") 
-        if (typeof parm != 'undefined') console.log(msg, parm);
-        else console.log(msg);
+var colors = [
+	      /* 0-9    */ "#c4551d",
+	      /* 10-19  */ "#ba4b13",
+	      /* 20-29  */ "#c4611d",
+	      /* 30-39  */ "#c46c1d",
+	      /* 40-49  */ "#c47a1d",
+	      /* 50-59  */ "#c4881d",
+	      /* 60-69  */ "#b5890e",
+	      /* 70-79  */ "#c4a41d",
+	      /* 80-89  */ "#b7a910",
+	      /* 90-99  */ "#c4011d",
+	      /* 100    */ "#4bc51d"
+	      ];
+var silver = "#bbbbbb";
+var gold   = "#f2ce0d";
+var black  = "#000000";
+var white  = "#ffffff";
+
+function getColor(passingPercentage, silverPercentage, goldPercentage) {
+    var color = colors[parseInt(passingPercentage / 10, 10)];
+    if (passingPercentage == 100 && silverPercentage == 100) {
+	if (goldPercentage == 100) { color = gold; }
+	else { color = silver; }
+    }
+    return color;
 }
 
-var onapGerritPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 
-function sanitizeRelease(r, def) {
-    debuglog("sanitizeRelease(" + r + ")");
-    if (r == "current") {
-        debuglog("found current");
-        return r;
+var parms = new Query();
+var debug = "y"; // parms.get("debug", "n");
+function debuglog(msg, parm) {
+    if (debug == "y") {
+        if (typeof parm != 'undefined') console.log(msg, parm);
+        else console.log(msg);
+    } else if (debug == "alert") {
+        if (typeof parm != 'undefined') alert(msg, parm);
+        else alert(msg);
     }
-    for (k = 0; k < releases.length; k++) {
-        var release = releases[k];
-        if (r == release) {
-            debuglog("found the release");
-            return r;
-        }
-    }
-    debuglog("release not found, returning default: '" + def + "'");
-    return def;
 }
 
 var help = parms.get("help", "n");
@@ -37,130 +62,68 @@ if (help == 'y') {
   throw 'help';
 }
 
-var useproxy = parms.get("useproxy", "n");
-if (useproxy == 'y') {
-    proxy = "http://one.proxy.att.com:8888";
-} else {
-    proxy = "";
-}
-
-var project = parms.get("project", "onap");
-var addMissingOnapProjects = parms.get("addMissingOnapProjects", "y");
-debuglog("project='" + project + "'");
-
-
-var BASEURL="https://bestpractices.coreinfrastructure.org/projects.json";
-if (parms.get("useserver", "n") == "y") BASEURL="cii-statuses.cgi";
-var currentRelease = "current";
-
-if (project == "onap") {
-  OFFSET=43;  // length(onapGerritPrefix)
-  URLSUFFIX = "";
-  IGNOREPAGE = true;
-  // IGNOREPAGE = false;
-  PROJECTTITLE = "ONAP";
-  Q = "onap";
-
-  if (addMissingOnapProjects == "y") {
-      console.log("addMissingOnapProjects == y");
-      for (var k in allOnapProjects) {
-	  console.log("k=%o", k);
-          releaseData[currentRelease].push({ "repo_url": onapGerritPrefix + k, "name": k, "_badge": "cii-not-started.png", "rank": 0, "badge_percentage_0": 0,  "badge_percentage_1": 0,  "badge_percentage_2": 0 });
-      }
-
-      $('.showWhenAll').show();
-      // $('.hideWhenall').hide();
-  } else {
-      console.log("addMissingOnapProjects == n");
-
-      // $('.showWhenAll').hide();
-      $('.hideWhenAll').show();
-  }
-} else if (project == "all") {
-  OFFSET = 0;
-  URLSUFFIX = "?page=";
-  IGNOREPAGE = false;
-  PROJECTTITLE = "All";
-  Q = "";
-  $('.showWhenAll').show();
-  $('.hideWhenAll').show();
-  parms.setParm("demo","y");
-} else {
-  document.write("project not onap or all");
-  throw ("project not onap or all");
-}
-
-var demo = parms.get("demo", "");
-if (demo == "y") {
-    $('.demoonly').show();
-}
-
-var optlist = "";
-var opts = ["debug","useproxy","jsonformat"];
-debuglog("opts=" + opts);
-var sep = "";
-for (i = 0; i < opts.length; i++) {
-    var opt = opts[i];
-    debuglog("looking at opt=" + opt);
-    var p = parms.get(opt, null);
-    if (p != null) {
-        debuglog("found opt=" + opt);
-        optlist += sep + opt + "=" + p;
-        sep = "&";
+function sanitizeRelease(r, def) {
+    // debuglog("sanitizeRelease(" + r + ")");
+    if (r == "current") {
+        // debuglog("found current");
+        return r;
     }
+    for (var k = 0; k < releases.length; k++) {
+        var release = releases[k];
+        if (r == release) {
+            // debuglog("found the release");
+            return r;
+        }
+    }
+    debuglog("release not found, returning default: '" + def + "'");
+    return def;
 }
-debuglog("optlist='" + optlist + "'");
-var addOptlistTo = [ 'onapurl', 'onapallurl', 'allurl', 'allallurl' ];
-for (i = 0; i < addOptlistTo.length; i++) {
-    $("#" + addOptlistTo[i]).href += optlist;
-}
-$('.projecttitle').append(PROJECTTITLE);
 
 function titleCase(str) {
     if (str.length == 0) return str;
     return str.charAt(0).toUpperCase() + str.substring(1);
 }
 
-var headers = "";
-var badgingLevels = ["Passing", "Silver", "Gold"];
-for (var bl in badgingLevels) {
-    for (var k in releases) {
-        headers += "<th>" + titleCase(releases[k]) + "<br/>%&nbsp;" + badgingLevels[bl] + "</th>";
+function intermingleReleasesAndBadgingLevels() {
+    var headers = "";
+    var badgingLevels = ["Passing", "Silver", "Gold"];
+    for (var bl in badgingLevels) {
+        for (var k in releases) {
+            headers += "<th>" + titleCase(releases[k].short_name) + "<br/>%&nbsp;" + badgingLevels[bl] + "</th>";
+        }
     }
+    return headers;
 }
 
-$('#tr').append("<thead><tr>" +
-                "<th>RankOrder</th>" +
-                "<th>Project Name<br/>(from URL)</th>" +
-                "<th>Project Name</th>" +
-                "<th>Badge</th>" +
-                headers +
-                "</tr></thead>" +
-                "<tfoot><tr>" +
-                "<th>RankOrder</th>" +
-                "<th>Project Name<br/>(from URL)</th>" +
-                "<th>Project Name</th>" +
-                "<th>Badge</th>" +
-                headers +
-                "</tr></tfoot>");
 
-var datad = [];
 
-var jsonformat = parms.get("jsonformat", "");
-if (jsonformat == "pretty") {
-  prettyjson = JSON_PRETTY_PRINT;
-} else {
-  prettyjson = 0;
-}
-
-var page = parms.get("page");
-if (page == '') {
-  page = "1-9";
-}
-
-if (IGNOREPAGE) {
-  URLSUFFIX = '';
-  page = "1";
+function addReleasesAndBadgingLevelsToTable() {
+    var headers = intermingleReleasesAndBadgingLevels();
+    //    $('#tr').append("<thead><tr>" +
+    //		    "<th>RankOrder</th>" +
+    //		    "<th>Project/Repo Name</th>" +
+    //		    "<th>Project Name</th>" +
+    //		    "<th>Badge</th>" +
+    //		    headers +
+    //		    "</tr></thead>" +
+    //		    "<tfoot><tr>" +
+    //		    "<th>RankOrder</th>" +
+    //		    "<th>Project/Repo Name</th>" +
+    //		    "<th>Project Name</th>" +
+    //		    "<th>Badge</th>" +
+    //		    headers +
+    //		    "</tr></tfoot>");
+    var headers = "<tr>" +
+		    "<th>RankOrder</th>" +
+		    "<th>Project&nbsp;Prefix</th>" +
+		    "<th>Name</th>" +
+		    "<th>Badge</th>" +
+		    "<th>Passing&nbsp;%</th>" +
+		    "<th>Silver&nbsp;%</th>" +
+		    "<th>Gold&nbsp;%</th>" +
+		    "</tr>";
+    $('#tr').append("<thead>" + headers + "</thead>" +
+		    "<tfoot>" + headers + "</tfoot>");
 }
 
 // store the current data into data[]
@@ -170,242 +133,332 @@ function pushData(whereTo, whereFrom) {
     });
 }
 
-var pagelist = [];
-var pageRanges = page.split(",");
-for (i = 0; i < pageRanges.length; i++) {
-    var pos = pageRanges[i].indexOf('-');
-    var start = end = pageRanges[i];
-    if (pos > 0) {
-        start = pageRanges[i].substring(0, pos);
-        end = pageRanges[i].substring(pos+1);
+function genPageList(page) {
+    var pagelist = [];
+    var pageRanges = page.split(",");
+    for (var i = 0; i < pageRanges.length; i++) {
+	var pos = pageRanges[i].indexOf('-');
+	var start = pageRanges[i];
+	var end = start;
+	if (pos > 0) {
+	    start = pageRanges[i].substring(0, pos);
+	    end = pageRanges[i].substring(pos+1);
+	}
+	// debuglog("start=" + start + ", end=" + end);
+	for (var j = Number(start); j < Number(end)+1; j++) {
+	    pagelist.push(j);
+	}
     }
-    debuglog("start=" + start + ", end=" + end);
-    for (j = Number(start); j < Number(end)+1; j++) {
-        debuglog("j=" + j);
-	pagelist.push(j);
+    return pagelist;
+}
+
+function generateRank(element) {
+    return element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
+}
+
+// "repo_url": "https://gerrit.onap.org",    <- bad
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects", <- bad
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/aai/esr-server",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/aai/sparky-fe",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/appc",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/ccsdk",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/clamp",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/cli",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/policy",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/portal",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/sdnc",
+// "repo_url": "https://gerrit.onap.org/r/#/admin/projects/vnfsdk",
+// "repo_url": "https://gerrit.onap.org/r/msb",
+// "repo_url": "https://gerrit.onap.org/r/sdc",
+// "repo_url": "https://gerrit.onap.org/r/so",
+// "repo_url": "https://gerrit.onap.org/r/vfc",
+// "repo_url": "https://gerrit.onap.org/r/vid",
+// "repo_url": "https://git.onap.org/holmes",
+
+
+/*
+  From a list of Repo URLs, generate an array with the project name as the first element
+  and the Repo names as the remaining elements.
+*/
+var badUrlCount = 0;
+function determineProjectAndRepoNames(urlList) {
+    var urls = urlList.split(/[\s,]+/);
+    // console.log("urls=" + urls);
+    var repos = ["UNKNOWN"];
+    
+    for (var u in urls) {
+	var url = urls[u];
+	// console.log("looking at url=" + url);
+	var urlUpper = url.toUpperCase();
+	// console.log("urlUpper=" + urlUpper);
+	var repo = "UNKNOWN-BADURL";
+	for (var up in repoUrlPrefixes) {
+	    var urlPrefix = repoUrlPrefixes[up];
+	    // console.log("looking at urlPrefix=" + urlPrefix);
+	    var lenPrefix = urlPrefix.length;
+	    // console.log("lenPrefix=" + lenPrefix);
+	    var urlPrefixUpper = urlPrefix.toUpperCase();
+	    var urlUpperStart = urlUpper.substring(0, lenPrefix);
+	    // console.log("comparing " + urlPrefixUpper + " with " + urlUpperStart);
+	    if (urlPrefixUpper == urlUpperStart) {
+		repo = url.substring(lenPrefix).toLowerCase();
+		if (urlPrefixUpper == badRepoUrlPrefix) {
+		    repo += "-BADURL";
+		} else if (urlPrefixUpper == gitRepoUrlPrefix) {
+		    if (repo.endsWith(".git")) {
+			repo = repo.substring(0, repo.length-4);
+		    } else {
+			repo += "-BADURLSUFFIX";
+		    }
+		}
+		break;
+	    }
+	}
+	repos.push(repo);
+    }
+
+    // Figure out the project name from the first repo in the list.
+    // "abc/def" => "abc". "wxy" => "wxy".
+    var n = repos[1].indexOf("/");
+    if (n == -1) {
+	repos[0] = repos[1];
+    } else {
+	repos[0] = repos[1].substring(0, n);
+    }
+    if (repos[0] == '#') repos[0] = "UNKNOWN-BADURL";
+    if (repos[0].endsWith("-BADURL")) {
+	repos[0] = repos[0] + badUrlCount;
+	badUrlCount++;
+    }
+
+    return repos;
+}
+
+// store the current data into data[]
+function pushData(whereTo, whereFrom) {
+    $(whereFrom).each(function(index, element) {
+        whereTo.push(element);
+    });
+}
+
+function getNextUrl(datad, pagelist, j) {
+    var lastOne = j == pagelist.length-1;
+    var p = pagelist[j];
+    URL = BASEURL;
+    $('#watermarkPage').html("page " + p);
+
+    $.ajax({
+	    type: "GET",
+		url: URL,
+		data: { "q": Q, "page": p },
+		success: function(json) {
+		// if (typeof json == "string") pushData(historicalReleaseData[currentRelease], JSON.parse(json));
+		// else pushData(historicalReleaseData[currentRelease], json);
+		if (typeof json == "string") pushData(datad, JSON.parse(json));
+		else pushData(datad, json);
+		// debuglog("got pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
+		if (json == '') whenDone(datad);
+		else if (lastOne) whenDone(datad);
+		else getNextUrl(datad, pagelist, j+1);
+	    },
+		error: function(request,error, thrownError) {
+		alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
+	    }
+	});
+}
+
+function addRankOrder(d) {
+    d.sort(function(a,b) { return b.onap_rank - a.onap_rank; });
+    var prev = -1;
+    var iprev = -1;
+    for (var i = 0; i < d.length; i++) {
+	if (d[i].onap_rank == prev) {
+	    d[i].onap_rank_order = iprev + 1;
+	} else {
+	    d[i].onap_rank_order = i + 1;
+	    prev = d[i].onap_rank;
+	    iprev = i;
+	}
     }
 }
 
-debuglog("pagelist=%o", pagelist);
+function getProject(data, type, row) {
+    if (type !== 'display') return data;
+    var ret = "<a href='" + row.repo_url + "'>" + row.onap_project_short + "</a>";
+    ret += (row.onap_badurl ? " <span class='badURL'>BAD URL</span>" : "");
+    ret += (row.onap_badurlsuffix ? " <span class='badURL'>MISSING .git SUFFIX</span>" : "");
+    if (row.onap_project_short != "UNKNOWN")
+	ret += (row.onap_valid_project ? " <span class='badProject'>UNKNOWN PREFIX</span>" : "");
+    return ret;
+}
 
-function whenDone() {
-    debuglog("OFFSET=" + OFFSET + ";\n");
-
-    // add rank information everywhere
-    function addRanks(d) {
-	debuglog("adding ranks to %o", d);
-	$(d).each(function(index, element) {
-		element.rank = element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
-		debuglog("element.id=" + element.id + ", .rank=" + element.rank);
-	    });
-    }
-
-    for (i = 0; i < releases.length; i++) {
-	addRanks(releaseData[releases[i]]);
-    };
-
-    $(releaseData[currentRelease]).each(function(index, element) {
-	    if (element.repo_url.substring(0,43) == onapGerritPrefix) {
-		allOnapProjects[element.repo_url.substring(43)] = "y";
-	    }
-	});
-
-    function addRankOrder(d) {
-	d.sort(function(a,b) {
-		return b.rank - a.rank;
-	    });
-	// debuglog("addRankOrder(%o)", d);
-	var prev = -1;
-	var iprev = -1;
-	for (i = 0; i < d.length; i++) {
-	    // debuglog("looking at d[" + i + "/" + d[i].name + "].rank = " + d[i].rank);
-	    if (d[i].rank == prev) {
-		d[i].rank_order = iprev + 1;
-	    } else {
-		d[i].rank_order = i + 1;
-		prev = d[i].rank;
-		iprev = i;
-	    }
-	    // debuglog("setting d[" + i + "].rank_order to " + d[i].rank_order);
+function getAllNames(data, type, row) {
+    if (type !== 'display') return data;
+    if (row.id == -1) return data;
+    var urlPrefix = '<a href="https://bestpractices.coreinfrastructure.org/projects/';
+    var urlSuffix = '">';
+    var anchorEnd = '</a>';
+    var ret = urlPrefix + row.id + urlSuffix + row.name + anchorEnd;
+    if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
+	for (var k in row.otherRepos) {
+	    var otherRepo = row.otherRepos[k];
+	    ret += "<br/>";
+	    ret += urlPrefix + otherRepo.id + urlSuffix + otherRepo.name + anchorEnd;
 	}
-	// debuglog("addRankOrder() done: %o", d);
     }
+    return ret;
+}
 
-    // for (i = 0; i < releases.length; i++) {
-    //    addRankOrder(releaseData[releases[i]]);
-    //};
-    addRankOrder(releaseData[currentRelease]);
+function getAllBadges(data, type, row) {
+    if (type !== 'display') return data;
+    if (row.id == -1) return '<img src="cii-not-started.png"/>';
+    var urlPrefix = '<img src="https://bestpractices.coreinfrastructure.org/projects/';
+    var urlSuffix = '/badge"/>';
+    var ret = urlPrefix + row.id + urlSuffix;
+    if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
+	for (var k in row.otherRepos) {
+	    var otherRepo = row.otherRepos[k];
+	    ret += "<br/>";
+	    ret += urlPrefix + otherRepo.id + urlSuffix;
+	}
+    }
+    return ret;
+}
 
-    $(releaseData[currentRelease]).each(function(index, element) {
-	    // debuglog("add url/badge to element=%o", element);
-	    element.short_url = stripurl(element.repo_url, false);
-	    element.badge = element._badge || ("https://bestpractices.coreinfrastructure.org/projects/" + element.id + "/badge");
+function getAllPercentages(data, type, row, num) {
+    if (type !== 'display') return data;
+    var ret = row["badge_percentage_"+num];
+    if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
+	for (var k in row.otherRepos) {
+	    var otherRepo = row.otherRepos[k];
+	    ret += "<br/>";
+	    ret += otherRepo["badge_percentage_"+num];
+	}
+    }
+    return ret;
+}
+
+
+function whenDone(datad) {
+    addReleasesAndBadgingLevelsToTable();
+    for (var k in datad) {
+	var projectAndRepos = determineProjectAndRepoNames(datad[k].repo_url);
+	var project = projectAndRepos[0];
+	datad[k].onap_project = project;
+	var n = datad[k].onap_project.indexOf("-BADURL");
+	if (n != -1) project = project.substring(0, n);
+	datad[k].onap_project_short = project;
+	datad[k].onap_badurl = (n != -1);
+	datad[k].onap_badurlsuffix = (datad[k].onap_project.indexOf("-BADURLSUFFIX") != -1);
+	datad[k].onap_repos = projectAndRepos.shift();
+	datad[k].onap_valid_project = !allOnapProjects[currentRelease].hasOwnProperty(project);
+    }
+    datad.sort(function(a, b) {
+	    var ap = a.onap_project.toUpperCase();
+	    var bp = b.onap_project.toUpperCase();
+	    return ap > bp ? 1 : bp > ap ? -1 : 0;
 	});
 
+    var dataTable = [ ];
 
-
-    // sort on the URL name
-    function stripurl(url, doupper) {
-	var str = doupper ? url.toUpperCase().substring(OFFSET) : url.substring(OFFSET);
-	str = str.replace(/\/$/, "").replace(/^.*\//, "");
-	if (str == '') return "unknown";
-	return str;
+    // Move the additional repo information for a project into an element called otherRepos.
+    // At the end of this, all data is in dataTable instead of datad.
+    var prevProject = "";
+    for (var k in datad) {
+	if (datad[k].onap_project == prevProject) {
+	    dataTable[dataTable.length-1].otherRepos.push(datad[k]);
+	} else {
+	    datad[k].otherRepos = [];
+	    dataTable.push(datad[k])
+	}
+	prevProject = datad[k].onap_project;
     }
-
-    releaseData[currentRelease].sort(function(a,b) {
-	    var nameA = stripurl(a.repo_url); // ignore upper and lowercase
-	    var nameB = stripurl(b.repo_url); // ignore upper and lowercase
-	    return (nameA < nameB) ? -1 : (nameA > nameB) ? 1 : 0;
+    // For each element in dataTable:
+    //   1) add the onap_badge element
+    //   2) add the onap_rank, based on the badge percentages
+    //   3) TODO: if there is more than one repo involved, set a composite score to the lowest of the repos.
+    $(dataTable).each(function(index, element) {
+	    element.onap_badge = element.id;
+	    element.onap_rank = element.badge_percentage_0 * 1000000 + element.badge_percentage_1 * 1000 + element.badge_percentage_2;
+	    if (allOnapProjects[currentRelease].hasOwnProperty(element.onap_project_short))
+		allOnapProjects[currentRelease][element.onap_project_short].seen = "y";
 	});
 
-    var passingCount = silverCount = goldCount = 0;
-    var nonPassingCount = nonSilverCount = nonGoldCount = 0;
-    var passing80Count = silver80Count = gold80Count = 0;
-    var totalCount = releaseData[currentRelease].length;
+    for (var project in allOnapProjects[currentRelease]) {
+	var element = allOnapProjects[currentRelease][project];
+	if ((element.seen == "n") && !element.skip) {
+	    // console.log("unseen project=" + project);
+	    dataTable.push({
+		    "repo_url": goodRepoUrlPrefix + project,
+			"onap_project": project,
+			"onap_project_short": project,
+			"name": project, 
+			"id": -1,
+			"onap_badge": -1,
+			"onap_rank": 0,
+			"badge_percentage_0": 0,
+			"badge_percentage_1": 0,
+			"badge_percentage_2": 0 
+			});
 
-    $(releaseData[currentRelease]).each(function(index, element) {
+	}
+    }
+		
+
+    // now that we have a ranking, add the rank order
+    addRankOrder(dataTable);
+
+    // console.log("dataTable=",dataTable);
+    var datatableButtons = [ "pageLength" ];
+
+    $('#tr').DataTable({
+	    "data": dataTable,
+		"paging": true,
+		"pagingType": "full_numbers",
+		"pageLength": parseInt(parms.get("pagelength", "20")),
+		"info": false,
+		"dom": "Bfrtip",
+		lengthMenu: [
+			     [ 10, 20, 25, 50, 100, -1 ],
+			     [ '10 rows', '20 rows', '25 rows', '50 rows', '100 rows', 'Show all' ]
+			     ],
+		"searching": true,
+		"autoWidth": false,
+		"buttons": datatableButtons,
+		"columns": [
+			    { "data": "onap_rank_order", className: "textright" },
+			    { "data": "onap_project", "render": function ( data, type, row, meta ) { return getProject(data, type, row); } },
+			    { "data": "name", "render": function ( data, type, row, meta ) { return getAllNames(data, type, row); } },
+			    { "data": "onap_badge", "render": function ( data, type, row, meta ) { return getAllBadges(data, type, row); } },
+			    { "data": "badge_percentage_0", "render": function ( data, type, row, meta ) { return getAllPercentages(data, type, row,"0"); } },
+			    { "data": "badge_percentage_1", "render": function ( data, type, row, meta ) { return getAllPercentages(data, type, row,"1"); } },
+			    { "data": "badge_percentage_2", "render": function ( data, type, row, meta ) { return getAllPercentages(data, type, row,"2"); } },
+			    ]
+		});
+
+    $('#watermark').hide();
+
+    var passingCount = 0; var silverCount = 0; var goldCount = 0;
+    var nonPassingCount = 0; var nonSilverCount = 0; var nonGoldCount = 0;
+    var passing80Count = 0; var silver80Count = 0; var gold80Count = 0;
+    var totalCount = dataTable.length;
+
+    $(dataTable).each(function(index, element) {
 	    if (element.badge_percentage_0 == 100) passingCount++;
 	    else { nonPassingCount++; if (element.badge_percentage_0 >= 80) { passing80Count++; } }
 	    if (element.badge_percentage_1 == 100) silverCount++;
 	    else { nonSilverCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) { silver80Count++; } }
 	    if (element.badge_percentage_2 == 100) goldCount++;
 	    else { nonGoldCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) { gold80Count++; } }
-
 	});
-
-    // invert the data to generate info indexed by the short_urls
-    var releaseIndices = {};
-    // debuglog("hd=" + releaseData);
-    for (k = 0; k < releases.length; k++) {
-	var release = releases[k];
-	releaseIndices[release] = {};
-	var hdk = releaseData[release];
-	// debuglog("r[" + k + "]=" + releases[k] + ", h[" + k + "]=" + hdk);
-	for (l = 0; l < hdk.length; l++) {
-	    var u = stripurl(hdk[l].repo_url, false);
-	    // debuglog("hdk[" + l + "]=" + hdk[l] + ", release=" + release + ", u=" + u);
-	    releaseIndices[release][u] = l;
-	}
-    }
-
-    function getPreviousData(m, fieldName, prevRelease) {
-	if (prevRelease == "") return "";
-	var index = m.short_url;
-	var prevReleaseIndex = releaseIndices[prevRelease][index];
-	var curValue = m[fieldName];
-	if (typeof prevReleaseIndex == "undefined") {
-	    return 0;
-	}
-	var prevReleaseEntry = releaseData[prevRelease][prevReleaseIndex];
-	var prevValue = prevReleaseEntry[fieldName];
-	return prevValue;
-    }
-
-    function badgeFieldName(release, fieldname) {
-	if (release == currentRelease) return fieldname;
-	return release + "_" + fieldname;
-    }
-
-    // add data from previous releases to each row
-    for (k = 0; k < releases.length; k++) {
-	var release = releases[k];
-	if (release == currentRelease) break;
-	$(releaseData[currentRelease]).each(function(index, element) {
-		element[badgeFieldName(release, "badge_percentage_0")] = getPreviousData(element, "badge_percentage_0", release);
-		element[badgeFieldName(release, "badge_percentage_1")] = getPreviousData(element, "badge_percentage_1", release);
-		element[badgeFieldName(release, "badge_percentage_2")] = getPreviousData(element, "badge_percentage_2", release);
-	    });
-    }
-
-    var datatableColumns = [
-			    { "data": "rank_order", className: "textright" },
-			    { "data": "short_url", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
-			    { "data": "name", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<a href="https://bestpractices.coreinfrastructure.org/projects/'+row.id+'">'+data+'</a>') : data; } },
-			    { "data": "badge", "render": function ( data, type, row, meta ) { return type === 'display' ? ('<img src="'+data+'"/>') : data; } },
-			    ];
-
-    var badgingFieldNames = [ "badge_percentage_0", "badge_percentage_1", "badge_percentage_2" ];
-    var historicColumns = [ ];
-    var columnNumber = datatableColumns.length;
-    for (var bl in badgingLevels) {
-	for (var k in releases) {
-	    var release = releases[k];
-	    var historic = release != currentRelease;
-	    if (historic) historicColumns.push(columnNumber);
-	    columnNumber++;
-	    var columnType = historic ? "historicData" :  "currentdata";
-	    var visible = !historic;
-	    datatableColumns.push({ "data": badgeFieldName(release, badgingFieldNames[bl]),
-			"render": function ( data, type, row, meta ) {
-                        if (type != "display") return data;
-		        return ("<span width='100%' class=''>" + data + "</span>");
-		    },
-			"className": "textright " + columnType,
-			    "visible": visible
-			    });
-	}
-    }
-
-    var datatableButtonTransitionTime = 250;
-
-    var datatableButtons = [ "pageLength",
-			     {
-				 extend: 'colvisGroup',
-				 text: 'Show Historic Data',
-				 show: ':hidden',
-				 // hide: ".hideHistoricData",
-				 className: "green showHistoricData",
-				 action: function ( e, dt, button, conf ) {
-				     // definition from github
-				     dt.columns( conf.show ).visible( true, false );
-				     dt.columns( conf.hide ).visible( false, false );
-				     dt.columns.adjust();
-				     // additional action
-				     $(".hideHistoricData").show(datatableButtonTransitionTime);
-				     $(".showHistoricData").hide(datatableButtonTransitionTime);
-				 }
-			     },
-			     {
-				 extend: 'colvisGroup',
-				 text: 'Hide Historic Data',
-				 hide: historicColumns,
-				 className: "hideHistoricData",
-				 action: function ( e, dt, button, conf ) {
-				     // definition from github
-				     dt.columns( conf.show ).visible( true, false );
-				     dt.columns( conf.hide ).visible( false, false );
-				     dt.columns.adjust();
-				     // additional action
-				     $(".hideHistoricData").hide(datatableButtonTransitionTime);
-				     $(".showHistoricData").show(datatableButtonTransitionTime);
-				 }
-			     },
-			     {
-				 extend: "colvis", xtext:"foo"
-			     },
-			     ];
-
-    $('#tr').DataTable({
-	    "data": releaseData[currentRelease],
-		"paging":   true,
-		"pagingType": "full_numbers",
-		"info":     false,
-		"dom": "Bfrtip",
-		lengthMenu: [
-			     [ 10, 25, 50, 100, -1 ],
-			     [ '10 rows', '25 rows', '50 rows', '100 rows', 'Show all' ]
-			     ],
-		"searching": false,
-		"autoWidth": false,
-		"buttons": datatableButtons,
-		"columns": datatableColumns,
-		});
-
-    $(".hideHistoricData").hide();
 
     var passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
     var silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
     var gold80Percentage = (nonGoldCount > 0) ? (100 * gold80Count / nonGoldCount) : 0;
+
+    $('#non-passing-level-1').html(passing80Percentage.toFixed(2));
+    $('#non-passing-level-2').html(silver80Percentage.toFixed(2));
+    $('#non-passing-level-3').html(gold80Percentage.toFixed(2));
 
     $('#tr2').append(
 		     "<tr>" +
@@ -420,6 +473,10 @@ function whenDone() {
     var silverPercentage = (100 * silverCount / totalCount);
     var goldPercentage = (100 * goldCount / totalCount);
 
+    $('#passing-level-1').html(passingPercentage.toFixed(2));
+    $('#passing-level-2').html(silverPercentage.toFixed(2));
+    $('#passing-level-3').html(goldPercentage.toFixed(2));
+
     $('#tr2').append(
 		     "<tr>" +
 		     "<th>Projects at 100%</th>" +
@@ -429,30 +486,8 @@ function whenDone() {
 		     "</tr>"
 		     );
 
-    var colors = [
-		  /* 0-9    */ "#c4551d",
-		  /* 10-19  */ "#ba4b13",
-		  /* 20-29  */ "#c4611d",
-		  /* 30-39  */ "#c46c1d",
-		  /* 40-49  */ "#c47a1d",
-		  /* 50-59  */ "#c4881d",
-		  /* 60-69  */ "#b5890e",
-		  /* 70-79  */ "#c4a41d",
-		  /* 80-89  */ "#b7a910",
-		  /* 90-99  */ "#c4011d",
-		  /* 100    */ "#4bc51d"
-		  ];
-    var silver = "#bbbbbb";
-    var gold   = "#f2ce0d";
-    var black  = "#000000";
-    var white  = "#ffffff";
-
-    var color = colors[parseInt(passingPercentage / 10, 10)];
-    var textcolor = white;
-    if (passingPercentage == 100 && silverPercentage == 100) {
-	if (goldPercentage == 100) { color = gold; textcolor = black; }
-	else { color = silver; textcolor = black; }
-    }
+    var color = getColor(passingPercentage, silverPercentage, goldPercentage);
+    var textcolor = (color == gold) ? black : (color == silver) ? black : white;
 
     var level = "Level 0";
     if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) { level = "Level 1"; }
@@ -466,34 +501,13 @@ function whenDone() {
 		     "</tr>"
 		     );
 
-    $('#watermark').hide();
+
 }
 
-function getNextUrl(j) {
-    var lastOne = j == pagelist.length-1;
-    var p = pagelist[j];
-    URL = BASEURL;
-    debuglog("URL=" + URL);
-    $('#watermarkPage').html("page " + p);
-    debuglog("getting pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
 
-    $.ajax({
-	    type: "GET",
-		url: URL,
-		data: { "q": Q, "page": p },
-                success: function(json) {
-		if (typeof json == "string") pushData(releaseData[currentRelease], JSON.parse(json));
-		else pushData(releaseData[currentRelease], json);
-		debuglog("got pagelist[" + j + "]=" + p + ", lastOne=" + lastOne);
-		if (lastOne) whenDone();
-		else getNextUrl(j+1);
-	    },
-		error: function(request,error, thrownError) {
-		alert("Request: "+JSON.stringify(request) + "\n" + "error=" + error + "\n" + "thrownError=" + thrownError);
-	    }
-        });
-}
-
-getNextUrl(0);
-
+$(document).ready(function() {
+	var pagelist = genPageList(parms.get("page", '1-9'));
+	var datad = [];
+	getNextUrl(datad, pagelist, 0);
+	
 }); // end of document.ready()

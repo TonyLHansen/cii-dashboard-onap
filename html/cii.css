@@ -49,6 +49,13 @@ table, th, td {
     display: none;
 }
 
+.badURL {
+    background-color: pink;
+}
+.badProject {
+    background-color: red;
+}
+
 .greenButton {
     background-color: green;
     color: white;

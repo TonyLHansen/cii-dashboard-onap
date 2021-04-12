@@ -100,6 +100,12 @@ button.projectLevel {
     background-color: coral;
 }
 
+.sortby_detail_toggle {
+    font-size: 50%;
+}
+.sortby_detail_span {
+    display: none;
+}
 .bronze_detail_span {
     display: none;
 }
@@ -160,18 +166,22 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
     background-color: lightblue;
 }
 
-.alternateColor_bysection {
+.sortby_submit {
+    background-color: orange;
+}
+
+.alternateColor_by_section_name, .alternateColor_by_section_type_name {
     background-color: #cba4ff;
 }
 
-.primaryColor_bysection {
+.primaryColor_by_section_name, .primaryColor_by_section_type_name {
 }
 
-.alternateColor_bytype {
+.alternateColor_by_type_name, .alternateColor_by_type_section_name {
     background-color: #a4ffcb;
 }
 
-.primaryColor_bytype {
+.primaryColor_by_type_name, .primaryColor_by_type_section_name {
 }
 
 .bgbronze {

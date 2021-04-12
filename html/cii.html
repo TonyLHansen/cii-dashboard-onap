@@ -71,17 +71,46 @@ Loading
 <table id='trprojects' class="display compact" ></table>
 </span>
 
-<form action='#' id='sortby_form' method='get'><input type='submit' id='sortby_submit' value='Resort'/> by: Name <input type='radio' name='sortby' value='byname' class='sortby_byname'/> Section <input type='radio' name='sortby' value='bysection' class='sortby_bysection'/>
-Type <input type='radio' name='sortby' value='bytype' class='sortby_bytype'/>
+<div>
+<form style='display: inline' action='#' id='sortby_form' method='get'>
+<input type='submit' id='sortby_submit' class='sortby_submit' value='Resort'/>
+by Name: <input type='radio' name='sortby' value='by_name' class='sortby_by_name'/> 
+Section&amp;Name: <input type='radio' name='sortby' value='by_section_name' class='sortby_by_section_name'/>
+Type&amp;Name: <input type='radio' name='sortby' value='by_type_name' class='sortby_by_type_name'/>
+Section&amp;Type&amp;Name: <input type='radio' name='sortby' value='by_section_type_name' class='sortby_by_section_type_name'/>
+Type&amp;Section&amp;Name: <input type='radio' name='sortby' value='by_type_section_name' class='sortby_by_type_section_name'/>
 </form>
-<h2 class='showpermalink'><a id='passing'>Passing</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='bronze_toggle bronze_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='bronze_toggle bronze_span clickable_image' src='minus-9x9.png' id='bi2'/> <span class="permalink"> <a href="#passing" title="Permalink to this item">&#x1f517;</a></span></h2>
-<span class='bronze_span' id='b1'>
+<button style='display: inline' class='sortby_submit sortby_detail_toggle sortby_detail_span clickable_image'>[details]</button>
+<button class='sortby_submit sortby_detail_toggle sortby_detail_span clickable_image'>[fewer details]</button>
+</div>
+<div class='sortby_detail_span' style='display:none'>
+<br/>
+The CII questions are collected into these sections:
+<ul><li>Analysis</li>
+<li>Basics</li>
+<li>Change Control</li>
+<li>Quality</li>
+<li>Security</li>
+<li>Reporting</li>
+</ul>
+In addition, the CII questions have been categorized into these types:
+<ul>
+<li>Application Quality</li>
+<li>FLOSS</li>
+<li>Infrastructure</li>
+<li>People</li>
+<li>Project Quality</li>
+</ul>
+</div>
+
+<h2 class='showpermalink'><a id='passing'>Passing</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='bronze_toggle bronze_span clickable_image' src='plus-9x9.png'/><img class='bronze_toggle bronze_span clickable_image' src='minus-9x9.png'/> <span class="permalink"> <a href="#passing" title="Permalink to this item">&#x1f517;</a></span></h2>
+<span class='bronze_span'>
 Hover over an <button class='met'>item</button> to see its details, or click on an <button class='met'>item</button> to toggle it's details.
 (Some <button class='projectLevel met'>items</button> have ONAP project common responses.)<br/>
 To count toward Passing, a <span class='optional'>SUGGESTED</span> item may not be left unanswered ("?").<br/>
-Toggle All Details: <img style='display: inline' class='bronze_detail_toggle bronze_detail_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='bronze_detail_toggle bronze_detail_span clickable_image' src='minus-9x9.png'/>
-Toggle Per-Requirement Statistics: <img style='display: inline' class='bronze_show_metstats_toggle bronze_show_metstats_detail_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='bronze_show_metstats_toggle bronze_show_metstats_detail_span clickable_image' src='minus-9x9.png'/>
-<!-- Display All: <img style='display: inline' class='bronze_detail_display_all clickable_image' src='plus-9x9.png' id='bi1'/>
+Toggle All Details: <img style='display: inline' class='bronze_detail_toggle bronze_detail_span clickable_image' src='plus-9x9.png'/><img class='bronze_detail_toggle bronze_detail_span clickable_image' src='minus-9x9.png'/>
+Toggle Per-Requirement Statistics: <img style='display: inline' class='bronze_show_metstats_toggle bronze_show_metstats_detail_span clickable_image' src='plus-9x9.png'/><img class='bronze_show_metstats_toggle bronze_show_metstats_detail_span clickable_image' src='minus-9x9.png'/>
+<!-- Display All: <img style='display: inline' class='bronze_detail_display_all clickable_image' src='plus-9x9.png'/>
 Display None: <img style='display: inline' class='bronze_detail_display_none clickable_image' src='minus-9x9.png'/> -->
 <table><tr><td class='bgbronze' colspan='3'>&nbsp;</td></tr>
 <tr><td class='bgbronze'>&nbsp;</td>
@@ -94,8 +123,8 @@ Display None: <img style='display: inline' class='bronze_detail_display_none cli
 Hover over an <button class='met'>item</button> to see its details, or click on an <button class='met'>item</button> to toggle it's details.
 (Some <button class='projectLevel met'>items</button> have ONAP project common responses.)<br/>
 To count toward Silver, a <span class='optional'>SUGGESTED</span> item may not be left unanswered ("?").<br/>
-Toggle All Details: <img style='display: inline' class='silver_detail_toggle silver_detail_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='silver_detail_toggle silver_detail_span clickable_image' src='minus-9x9.png'/>
-Toggle Per-Requirement Statistics: <img style='display: inline' class='silver_show_metstats_toggle silver_show_metstats_detail_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='silver_show_metstats_toggle silver_show_metstats_detail_span clickable_image' src='minus-9x9.png'/>
+Toggle All Details: <img style='display: inline' class='silver_detail_toggle silver_detail_span clickable_image' src='plus-9x9.png'/><img class='silver_detail_toggle silver_detail_span clickable_image' src='minus-9x9.png'/>
+Toggle Per-Requirement Statistics: <img style='display: inline' class='silver_show_metstats_toggle silver_show_metstats_detail_span clickable_image' src='plus-9x9.png'/><img class='silver_show_metstats_toggle silver_show_metstats_detail_span clickable_image' src='minus-9x9.png'/>
 <table><tr><td class='bgsilver' colspan='3'>&nbsp;</td></tr>
 <tr><td class='bgsilver'>&nbsp;</td>
 <td><table id='trsilver' class="display compact" ></table></td>
@@ -107,8 +136,8 @@ Toggle Per-Requirement Statistics: <img style='display: inline' class='silver_sh
 Hover over an <button class='met'>item</button> to see its details, or click on an <button class='met'>item</button> to toggle it's details.
 (Some <button class='projectLevel met'>items</button> have ONAP project common responses.)<br/>
 To count toward Gold, a <span class='optional'>SUGGESTED</span> item may not be left unanswered ("?").<br/>
-Toggle All Details: <img style='display: inline' class='gold_detail_toggle gold_detail_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='gold_detail_toggle gold_detail_span' src='minus-9x9.png'/>
-Toggle Per-Requirement Statistics: <img style='display: inline' class='gold_show_metstats_toggle gold_show_metstats_detail_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='gold_show_metstats_toggle gold_show_metstats_detail_span clickable_image' src='minus-9x9.png'/>
+Toggle All Details: <img style='display: inline' class='gold_detail_toggle gold_detail_span clickable_image' src='plus-9x9.png'/><img class='gold_detail_toggle gold_detail_span' src='minus-9x9.png'/>
+Toggle Per-Requirement Statistics: <img style='display: inline' class='gold_show_metstats_toggle gold_show_metstats_detail_span clickable_image' src='plus-9x9.png'/><img class='gold_show_metstats_toggle gold_show_metstats_detail_span clickable_image' src='minus-9x9.png'/>
 <table><tr><td class='bggold' colspan='3'>&nbsp;</td></tr>
 <tr><td class='bggold'>&nbsp;</td>
 <td><table id='trgold' class="display compact" ></table></td>
@@ -118,7 +147,7 @@ Toggle Per-Requirement Statistics: <img style='display: inline' class='gold_show
 <!--
 <h2 class='showpermalink'><a id='editors'>Editors</a> <img style='display: none' class='editors_toggle editors_span clickable_image' src='plus-9x9.png'/><img class='editors_toggle editors_span clickable_image' src='minus-9x9.png'/> <span class="permalink"> <a href="#editors" title="Permalink to this item">&#x1f517;</a></span></h2>
 <span class='editors_span'>
-Toggle All Details: <img style='display: inline' class='editors_detail_toggle editors_detail_span clickable_image' src='plus-9x9.png' id='bi1'/><img class='editors_detail_toggle editors_detail_span' src='minus-9x9.png'/>
+Toggle All Details: <img style='display: inline' class='editors_detail_toggle editors_detail_span clickable_image' src='plus-9x9.png'/><img class='editors_detail_toggle editors_detail_span' src='minus-9x9.png'/>
 <table><tr><td style='background: editors' colspan='3'>&nbsp;</td></tr>
 <tr><td style='background: editors'>&nbsp;</td>
 <td><table id='treditors' class="display compact" ></table></td>

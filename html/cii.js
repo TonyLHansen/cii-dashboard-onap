@@ -6,7 +6,7 @@ var BASESITE = "https://bestpractices.coreinfrastructure.org/";
 var BASEURL = BASESITE + "projects.json";
 var Q = "onap";
 var repoUrlPrefixes = [
-		       "https://gerrit.onap.org/r/#/admin/projects/", 
+		       "https://gerrit.onap.org/r/#/admin/projects/",
 		       "https://gerrit.onap.org/r/p/",
 		       "https://gerrit.onap.org/r/",
 		       "https://git.onap.org/"
@@ -81,8 +81,13 @@ if (help == 'y') {
   throw 'help';
 }
 
-var sortBy = parms.get("sortby", "byname").toLowerCase();
-if (!(sortBy == "byname" || sortBy == "bysection" || sortBy == "bytype")) sortBy = "byname";
+var sortBy = parms.get("sortby", "by_name").toLowerCase();
+if (!(sortBy == "by_name" ||
+      sortBy == "by_section_name" ||
+      sortBy == "by_type_section_name" ||
+      sortBy == "by_section_type_name" ||
+      sortBy == "by_type_name"))
+    sortBy = "by_name";
 
 function flipVisibility(where) {
     // console.log("flipping display, where=" + where);
@@ -313,7 +318,7 @@ function interpolateToHex(a, b, r) {
     // console.log("interpolateToHex(" + a + "," + b + "," + r + ")=>" + ret);
     return ret;
 }
-    
+
 
 function showHistoricalInfo() {
     var html = "<table><tr><th colspan='2' rowspan='2'>Level</th>";
@@ -337,11 +342,11 @@ function showHistoricalInfo() {
     var levelBounds = [ [ 0, 20 ], [ 20, 40 ], [ 40, 60 ], [ 60, 80 ], [ 80, 100 ], [ 100, 100 ] ];
 
     var gradients = [
-		     // redToGreen 
-		     [ "ff0000", "fb0000", "df0000", "c20700", "a62900", "883b00", 
+		     // redToGreen
+		     [ "ff0000", "fb0000", "df0000", "c20700", "a62900", "883b00",
 		       "6d4a00", "4a5a00", "1a6800", "007500", "008300", "008300", "008300" ],
 		     // greenToSilver
-		     [ "008300", "008900", "008f00", "009526", "229c41", "44a256", 
+		     [ "008300", "008900", "008f00", "009526", "229c41", "44a256",
 		       "63a86e", "7bae82", "92b497", "a9baab", "c0c0c0", "c0c0c0", "c0c0c0" ],
 		     // silverToGold
 		     [ "c0c0c0", "c7c2a8", "cec492", "d5c77b", "dcc962", "e3cb46",
@@ -401,10 +406,10 @@ function showHistoricalInfo() {
 		    }
 		    // console.log("opacity=",opacity);
 		    // console.log("bg=", bg);
-		    html += 
-			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + nprojects + "</td>" + 
-			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + pprojects + "</td>" + 
-			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + ncumulative + "</td>" + 
+		    html +=
+			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + nprojects + "</td>" +
+			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + pprojects + "</td>" +
+			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + ncumulative + "</td>" +
 			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + pcumulative + "</td>";
 		}
 	    }
@@ -458,7 +463,7 @@ function determineProjectAndRepoNames(urlList) {
     /* END HACK */
     var urls = urlList.split(/[\s,]+/);
     var repos = ["UNKNOWN"];
-    
+
     for (var u in urls) {
 	var url = urls[u];
 	var urlUpper = url.toUpperCase();
@@ -729,12 +734,12 @@ function getAllPercentages(data, type, row, num) {
 }
 
 
-function genData(project, name, bp0, bp1, bp2) { 
+function genData(project, name, bp0, bp1, bp2) {
     return {
 	"repo_url": goodRepoUrlPrefix + project,
 	    "onap_project": project,
 	    "onap_project_short": project,
-	    "name": name, 
+	    "name": name,
 	    "id": 0,
 	    "onap_badge": -1,
 	    "onap_rank": 0,
@@ -790,18 +795,28 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 
     var addNameColumn = 3;
     var rf = badgeDescriptions[level];
-    
+
     var sortedNames = Object.keys(rf);
-    sortedNames.sort(function(a,b){ 
+    sortedNames.sort(function(a,b){
 	    var atype = rf[a]["type"];
 	    var btype = rf[b]["type"];
 	    var asection = rf[a]["section"];
 	    var bsection = rf[b]["section"];
-	    return (sortBy == "byname") ? cmp(a, b) :
-		(sortBy == "bysection") ? ((asection == bsection) ? cmp(a, b) : cmp(asection, bsection)) :
-		((atype == btype) ? 
-		 (asection == bsection) ? (cmp(a, b)) : cmp(asection, bsection) :
-		 cmp(atype, btype));
+	    return (sortBy == "by_name") ? cmp(a, b) :
+		(sortBy == "by_section_name") ? ((asection == bsection) ?
+					    cmp(a, b) : cmp(asection, bsection)) :
+		(sortBy == "by_type_section_name") ?
+		((atype == btype) ? (asection == bsection) ?
+		 (cmp(a, b)) : cmp(asection, bsection) :
+		 cmp(atype, btype)) :
+		(sortBy == "by_section_type_name") ?
+		((asection == bsection) ? 
+		 (atype == btype) ?
+		 cmp(a, b) :
+		 cmp(atype, btype) :
+		 cmp(asection, bsection)) :
+		/* by_type_name */
+		((atype == btype) ? cmp(a, b) : cmp(atype, btype));
 	});
 
     var allFields = [];
@@ -831,11 +846,17 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	for (var k in allFields) {
 	    var ciiName = allFields[k];
 	    var cl = optionalFields[ciiName] ? "optional" : "required";
-		
+
 	    var projectLevelClass = (ciiName in ONAPprojectCommonResponse) ? "projectLevel" : "";
-	    var sortedType = (sortBy == "byname") ? "" :
-		(sortBy == "bysection") ? badgeDescriptions[level][ciiName]["section"] :
-		(badgeDescriptions[level][ciiName]["type"] + badgeDescriptions[level][ciiName]["section"]);
+	    var sortedType = (sortBy == "by_name") ? "" :
+		(sortBy == "by_section_name") ?
+		(badgeDescriptions[level][ciiName]["section"]) :
+		(sortBy == "by_type_section_name") ?
+		(badgeDescriptions[level][ciiName]["type"] + badgeDescriptions[level][ciiName]["section"]) :
+		(sortBy == "by_section_type_name") ?
+		(badgeDescriptions[level][ciiName]["section"] + badgeDescriptions[level][ciiName]["type"]) :
+		/* sortBy == by_type_name */
+		(badgeDescriptions[level][ciiName]["type"]);
 	    if (sortedType != lastSortedType) {
 		onPrimaryColor = 1 - onPrimaryColor;
 		lastSortedType = sortedType;
@@ -849,16 +870,16 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			function(match, chr) { return match.toUpperCase(); }) +
 		"</span>";
 
-	    if (sortBy == "bytype") {
-		trdataHeaders += 
+	    if ((sortBy == "by_type_section_name") || (sortBy == "by_type_name")) {
+		trdataHeaders +=
 		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>" +
 		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>";
 	    } else {
-		trdataHeaders += 
+		trdataHeaders +=
 		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>" +
 		    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>";
 	    }
-	    trdataHeaders += 
+	    trdataHeaders +=
 		"<span class='" + cl + " " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" +
 		"[" + ciiName + "]<br/>" +
 		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
@@ -869,7 +890,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 		trdataHeaders += nameHeader;
 	}
     }
-    
+
     var addLastNameColumn = !trdataHeaders.endsWith(nameHeader);
     if (addLastNameColumn)
 	trdataHeaders += nameHeader;
@@ -883,7 +904,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
     columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
 		return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
 		    "onclick='resize(" + row['id'] + ")'" +
-		    "/></span><span class='size__" + row['id'] + 
+		    "/></span><span class='size__" + row['id'] +
 		    "'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
 		    row['id'] + "'>" + data + "</a></span>";
 	    }
@@ -1111,7 +1132,7 @@ function whenDone(datad, editorNames) {
 	datad[k].onap_rank = generateRank(datad[k].badge_percentage_0, datad[k].badge_percentage_1, datad[k].badge_percentage_2);
 	if (datad[k].onap_project == prevProject) {
 	    // We have a project the same as the previous one.
-	    // Rearrange the previous one 
+	    // Rearrange the previous one
 	    var dl1 = dataTable.length-1;
 	    if (dataTable[dl1].otherRepos.length == 0) {
 		var sv = dataTable[dl1];
@@ -1202,11 +1223,12 @@ function whenDone(datad, editorNames) {
     $(".bronze_show_metstats_toggle").click(function(){ $(".bronze_show_metstats_detail_span").each(flipThisVisibility); });
     $(".silver_show_metstats_toggle").click(function(){ $(".silver_show_metstats_detail_span").each(flipThisVisibility); });
     $(".gold_show_metstats_toggle").click(function(){ $(".gold_show_metstats_detail_span").each(flipThisVisibility); });
+    $(".sortby_detail_toggle").click(function(){ $(".sortby_detail_span").each(flipThisVisibility); });
 
     $('#watermark').hide();
 
     // TODO -- this does not work
-    // $('remove-not-started-button').click(function(){ 
+    // $('remove-not-started-button').click(function(){
     //	    window.location.search = parms.getParmListWith("skipnotstarted=1");
     //	});
     // $('add-not-started-button').href = parms.getParmListWithout("skipnotstarted");
@@ -1297,14 +1319,14 @@ function whenDone(datad, editorNames) {
 		     "</tr></thead>"
 		     );
 
-    if (showOneMinus) 
+    if (showOneMinus)
 	$('#level1minus').show();
 
-    if (showOneMinus) 
+    if (showOneMinus)
 	$('#trsummary').append(
 		     "<tr>" +
 		     "<th class='minus'>Projects &ge; 95%</th>" +
-		     "<td class='minus textright'>" + 
+		     "<td class='minus textright'>" +
 		     "<table class='noborder right'><tr><td class='noborder'>" +
 		     passingMinusCount +
 		     "&nbsp;/&nbsp;" + totalCount +
@@ -1326,12 +1348,12 @@ function whenDone(datad, editorNames) {
 		     "&nbsp;/&nbsp;" + totalCount +
 		     "&nbsp;=&nbsp;" + goldMinusPercentage.toFixed(2) + "% " +
 		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((goldMinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      (color == silver) ? ((goldMinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") :
 		      "") +
 		     "</td>" + "</tr>"
 		     );
 
-    if (showOneMinus) 
+    if (showOneMinus)
         $('#trsummary').append(
 		     "<tr>" +
 		     "<th class='minus'>Projects &ge;80%/&lt;95%</th>" +
@@ -1339,7 +1361,7 @@ function whenDone(datad, editorNames) {
 		     "<table class='noborder right'><tr><td class='noborder'>" +
 		     passing80MinusCount +
 		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
-		     "&nbsp;&ndash;&nbsp;" + passingMinusCount + 
+		     "&nbsp;&ndash;&nbsp;" + passingMinusCount +
 		     "&nbsp;)&nbsp;=&nbsp;" + passing80MinusPercentage.toFixed(2) + "% " +
  		     "<br/>" +
 		     "(" + passing80MinusNeeded + " of " + (totalCount - passingMinusCount) + " needed for 80%)" +
@@ -1356,7 +1378,7 @@ function whenDone(datad, editorNames) {
 		     "<td class='minus textright'>" + gold80MinusCount + "&nbsp;/&nbsp;" + nonGoldMinusCount +
 		     "&nbsp;=&nbsp;" + gold80MinusPercentage.toFixed(2) + "%" +
 		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((gold80MinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      (color == silver) ? ((gold80MinusPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") :
 		      "") +
 		     "</td>" +
 		     "</tr>"
@@ -1365,7 +1387,7 @@ function whenDone(datad, editorNames) {
     $('#trsummary').append(
 		     "<tr>" +
 		     "<th>Projects at 100%</th>" +
-		     "<td class='textright'>" + 
+		     "<td class='textright'>" +
 		     "<table class='noborder right'><tr><td class='noborder'>" +
 		     passingCount +
 		     "&nbsp;/&nbsp;" + totalCount +
@@ -1387,7 +1409,7 @@ function whenDone(datad, editorNames) {
 		     "&nbsp;/&nbsp;" + totalCount +
 		     "&nbsp;=&nbsp;" + goldPercentage.toFixed(2) + "% " +
 		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((goldPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      (color == silver) ? ((goldPercentage >= 80) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") :
 		      "") +
 		     "</td>" + "</tr>"
 		     );
@@ -1399,7 +1421,7 @@ function whenDone(datad, editorNames) {
 		     "<table class='noborder right'><tr><td class='noborder'>" +
 		     passing80Count +
 		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
-		     "&nbsp;&ndash;&nbsp;" + passingCount + 
+		     "&nbsp;&ndash;&nbsp;" + passingCount +
 		     "&nbsp;)&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "% " +
  		     "<br/>" +
 		     "(" + passing80Needed + " of " + (totalCount - passingCount) + " needed for 80%)" +
@@ -1416,7 +1438,7 @@ function whenDone(datad, editorNames) {
 		     "<td class='textright'>" + gold80Count + "&nbsp;/&nbsp;" + nonGoldCount +
 		     "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%" +
 		     ((color == gold) ? "<img src='checkmark.png'/>" :
-		      (color == silver) ? ((gold80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") : 
+		      (color == silver) ? ((gold80Percentage >= 70) ? "<img src='checkmark.png'/>" : "<img src='xout.png'/>") :
 		      "") +
 		     "</td>" +
 		     "</tr>"
@@ -1426,7 +1448,7 @@ function whenDone(datad, editorNames) {
 
     $('#trsummary').append(
 		     "<tr>" +
-		     "<th>Current&nbsp;Level</th>" + 
+		     "<th>Current&nbsp;Level</th>" +
 		     "<td class='center' colspan='3' style='color: " + textcolor + "; background-color: " + color + "'><br/>Level&nbsp;" + level + "<br/><br/></td>" +
 		     "</tr>"
 		     );

@@ -93,7 +93,9 @@ if (!(sortBy == "by_name" ||
       sortBy == "by_type_section_name" ||
       sortBy == "by_section_type_name" ||
       sortBy == "by_type_name" ||
-      sortBy == "by_onapmet_name")
+      sortBy == "by_onapmet_name" ||
+      sortBy == "by_onapmet_section_name" ||
+      sortBy == "by_onapmet_type_name")
     )
     sortBy = "by_name";
 
@@ -199,41 +201,8 @@ function generateRank(bp0, bp1, bp2) {
 
 var historicalProjectCount = { };
 
-// console.log("Extracting historicalReleaseData into invertedHistoricalReleaseData {}");
-// var invertedHistoricalReleaseData = { };
-// for (var release in historicalReleaseData) {
-//     // console.log("release=", release);
-//     // console.log("historicalReleaseData[" + release + "]=", historicalReleaseData[release]);
-//     var hrdi = historicalReleaseData[release];
-//     // console.log("hrdi=" + hrdi);
-//     for (var j in hrdi) {
-// 	// console.log("j=" + j);
-// 	var hrdij = hrdi[j];
-// 	var id = hrdij["id"];
-// 	var badge_percentage_0 = hrdij["badge_percentage_0"];
-// 	var badge_percentage_1 = hrdij["badge_percentage_1"];
-// 	var badge_percentage_2 = hrdij["badge_percentage_2"];
-//
-// 	if (!(id in invertedHistoricalReleaseData)) {
-// 	    invertedHistoricalReleaseData[id] = { };
-// 	}
-// 	if (!(release in invertedHistoricalReleaseData[id]))
-// 	    invertedHistoricalReleaseData[id][release] = { };
-// 	invertedHistoricalReleaseData[id][release][0] = badge_percentage_0;
-// 	invertedHistoricalReleaseData[id][release][1] = badge_percentage_1;
-// 	invertedHistoricalReleaseData[id][release][2] = badge_percentage_2;
-//     }
-// }
-
-// console.log("creating releases[] array");
-// var releases = [];
-// for (var release in historicalReleaseData) {
-//     releases.push(release);
-// }
-// releases.push("Current");
-// console.log("releases=", releases);
-
 var historicalStats = { }; // historicalStats[release][level 0/1/2][bucket 0-5]{ #-projects, cumulative-#, %-projects, cumulative-% }
+
 function createHistoricalStatsRelease(release) {
     historicalStats[release] = [];
     for (var level = 0; level < 3; level++) {
@@ -243,6 +212,7 @@ function createHistoricalStatsRelease(release) {
 	}
     }
 }
+
 function createHistoricalStats() {
     releases["current"] = { };
     for (var release in releases) {
@@ -782,6 +752,37 @@ function prEditor(data, editorDict) {
     return ret;
 }
 
+function datacheck() {
+    var ret = "";
+    var props = ["onapmet", "section", "type"];
+    for (var l = 0; l < badgingColors.length-1; l++) {
+        var level = badgingColors[l];
+	for (var ciiName in badgeDescriptions[level]) {
+	    if (("Infrastructure" == badgeDescriptions[level][ciiName]["type"]) &&
+		!badgeDescriptions[level][ciiName]["onapmet"]) {
+		ret += ciiName + ": has the type Infrastructure, but onapmet is not set.<br/>\n";
+	    }
+	    for (var l2 = l+1; l2 < badgingColors.length; l2++) {
+		var level2 = badgingColors[l2];
+		if (ciiName in badgeDescriptions[level2]) {
+		    for (var p in props) {
+			var prop = props[p];
+			if (badgeDescriptions[level][ciiName][prop] != 
+			    badgeDescriptions[level2][ciiName][prop]) {
+			    ret += ciiName + ": " + prop + " differs " +
+				"- " + level + " " + badgeDescriptions[level][ciiName][prop] +
+				"- " + level2 + " " + badgeDescriptions[level2][ciiName][prop] +
+				"<br/>\n";
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    return ret ? ("<h4 class='datacheck'>Datacheck</h4>\n<div class='datacheck'>" + ret + "</div>\n") : ret;
+}
+
 function sortColumns(level, newSortBy, anm, bnm) {
     var a = anm["name"];
     var b = bnm["name"];
@@ -810,7 +811,8 @@ function sortColumns(level, newSortBy, anm, bnm) {
     bcmpnm += "_";
     acmpnm += a;
     bcmpnm += b;
-    return cmp(acmpnm, bcmpnm)
+    console.log("newSortBy=" + newSortBy, acmpnm + " <=> " + bcmpnm);
+    return cmp(acmpnm, bcmpnm);
 }
 
 // mixin method to add (level,newSortBy) values to the sort functions on the columns
@@ -827,6 +829,8 @@ function resort(newSortBy) {
     // console.log("show watermark");
 
     sortBy = newSortBy;
+
+    var onapMetTitle = { false: "", true: "<br/><br/><sub class='alternateColor_by_onapmet_name'>ONAP-wide response</sub><br/>" };
 
     for (var l in badgingColors) {
         var level = badgingColors[l];
@@ -898,7 +902,12 @@ function resort(newSortBy) {
 		(badgeDescriptions[level][ciiName]["type"] + "_" + badgeDescriptions[level][ciiName]["section"]) :
 		(sortBy == "by_section_type_name") ?
 		(badgeDescriptions[level][ciiName]["section"] + "_" + badgeDescriptions[level][ciiName]["type"]) :
-		(sortBy == "by_onapmet_name") ? badgeDescriptions[level][ciiName]["onapmet"] :
+		(sortBy == "by_onapmet_section_name") ?
+		(badgeDescriptions[level][ciiName]["onapmet"] + "_" + badgeDescriptions[level][ciiName]["section"]) :
+		(sortBy == "by_onapmet_type_name") ?
+		(badgeDescriptions[level][ciiName]["onapmet"] + "_" + badgeDescriptions[level][ciiName]["type"]) :
+		(sortBy == "by_onapmet_name") ?
+		badgeDescriptions[level][ciiName]["onapmet"] :
 		/* sortBy == by_type_name */
 		(badgeDescriptions[level][ciiName]["type"]);
 	    if (sortedType != lastSortedType) {
@@ -921,6 +930,21 @@ function resort(newSortBy) {
 						    "<br/><sub>" + (typeItalic ? "<i>" : "") + "(" +
 						    badgeDescriptions[level][ciiName]["type"] + ")" + 
 						    (typeItalic ? "</i>" : "") +
+						    "</sub>");
+	    } else if (sortBy.startsWith("by_onapmet_section")) {
+		$("." + ciiName + "_subtitle").html(onapMetTitle[badgeDescriptions[level][ciiName]["onapmet"]] +
+						    "<br/><sub><i>(" + badgeDescriptions[level][ciiName]["section"] + ")</i></sub>" +
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")" + 
+						    "</sub>");
+	    } else if (sortBy.startsWith("by_onapmet_type")) {
+		$("." + ciiName + "_subtitle").html(onapMetTitle[badgeDescriptions[level][ciiName]["onapmet"]] +
+						    "<br/><sub><i>(" + badgeDescriptions[level][ciiName]["type"] + ")</i></sub>" +
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")" + 
+						    "</sub>");
+	    } else if (sortBy.startsWith("by_onapmet")) {
+		$("." + ciiName + "_subtitle").html(onapMetTitle[badgeDescriptions[level][ciiName]["onapmet"]] +
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")" + 
+						    "<br/><sub>(" + badgeDescriptions[level][ciiName]["type"] + ")</sub>" +
 						    "</sub>");
 	    } else {
 		$("." + ciiName + "_subtitle").html("<br/><sub>(" + badgeDescriptions[level][ciiName]["section"] + ")</sub>" +
@@ -1009,28 +1033,13 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 	    }
 
 	    var projectLevelClass = badgeDescriptions[level][ciiName]["onapmet"] ? "projectLevel" : "";
-	    //	    var sortedType = (sortBy == "by_name") ? "" :
-	    //		(sortBy == "by_section_name") ?
-	    //		(badgeDescriptions[level][ciiName]["section"]) :
-	    //		(sortBy == "by_type_section_name") ?
-	    //		(badgeDescriptions[level][ciiName]["type"] + badgeDescriptions[level][ciiName]["section"]) :
-	    //		(sortBy == "by_section_type_name") ?
-	    //		(badgeDescriptions[level][ciiName]["section"] + badgeDescriptions[level][ciiName]["type"]) :
-	    //		(sortBy == "by_onapmet_name") ? badgeDescriptions[level][ciiName]["onapmet"] :
-	    //		/* sortBy == by_type_name */
-	    //		(badgeDescriptions[level][ciiName]["type"]);
-	    //	    if (sortedType != lastSortedType) {
-	    //		onPrimaryColor = 1 - onPrimaryColor;
-	    //		lastSortedType = sortedType;
-	    //	    }
-	    // console.log("sortedType=", sortedType, "onPrimaryColor=", onPrimaryColor, "columnColors[" + onPrimaryColor + "]=", columnColors[onPrimaryColor]);
 
 	    trdataHeaders += "<th class='" + cl + " " +
-		// columnColors[onPrimaryColor] + "_" + sortBy +
 		ciiName + "_header_" + cl + "'>" +
 		"<span class='" + cl + "' title='" +
 		"[" + ciiName + "] " +
-		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + "'>" +
+		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") + 
+		"'>" +
 		ciiName.replace(/_/g," ").
 		replace(/(\W+|^)(.)/ig,
 			function(match, chr) { return match.toUpperCase(); }) +
@@ -1045,6 +1054,11 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 		"<span class='" + cl + " " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" +
 		"[" + ciiName + "]<br/>" +
 		badgeDescriptions[level][ciiName]["description"].replace(/['']/g, "&quot;") +
+		"<sub>" +
+		(badgeDescriptions[level][ciiName]["details"] ? "<br/><br/>&laquo;details&raquo;<br/>" : "") +
+		badgeDescriptions[level][ciiName]["details"].replace(/['']/g, "&quot;") + 
+		"</sub>" +
+		(badgeDescriptions[level][ciiName]["onapmet"] ? "<br/><br/><sup class='alternateColor_by_onapmet_name'>ONAP-wide response</sup>" : "") +
 		"</span>" +
 		"<span class='" + level + "_show_metstats_detail_span'><span class='metstats_" + level + "_" + ciiName + "'></span></span>" +
 		"</th>";
@@ -1647,6 +1661,7 @@ function whenDone(datad, editorNames) {
     $('#sortby_submit').prop('class', 'alternateColor_' + sortBy);
 
     resort(sortBy);
+    $('#datacheck').html(datacheck());
 }
 
 $(document).ready(function() {

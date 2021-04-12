@@ -105,6 +105,10 @@ Type:</span> <input type='radio' name='sortby' value='by_type_name' class='sortb
 Type&amp;Section:</span> <input type='radio' name='sortby' value='by_type_section_name' class='sortby_by_type_section_name' onclick='resort("by_type_section_name")'/>
 </span><span class='alternateColor_by_onapmet_name'>
 ONAP-met:</span> <input type='radio' name='sortby' value='by_onapmet_name' class='sortby_by_onapmet_name' onclick='resort("by_onapmet_name")'/>
+</span><span class='alternateColor_by_onapmet_name'>
+ONAP-met&amp;Section:</span> <input type='radio' name='sortby' value='by_onapmet_section_name' class='sortby_by_onapmet_section_name' onclick='resort("by_onapmet_section_name")'/>
+</span><span class='alternateColor_by_onapmet_name'>
+ONAP-met&amp;Type:</span> <input type='radio' name='sortby' value='by_onapmet_type_name' class='sortby_by_onapmet_type_name' onclick='resort("by_onapmet_type_name")'/>
 </form>
 <img style='display: inline' class='sortby_submit sortby_detail_toggle sortby_detail_span clickable_image' src='plus-9x9.png'/>
 <img class='sortby_submit sortby_detail_toggle sortby_detail_span clickable_image' src='minus-9x9.png'/>
@@ -185,7 +189,6 @@ Toggle All Details: <img style='display: inline' class='editors_detail_toggle ed
 <tr><td style='background: editors' colspan='3'>&nbsp;</td></tr></table>
 </span>
 -->
-<!-- <form>Sort by <input name='sortby' type='radio' onclick='sortBySection()'>Section</input> <input name='sortby' type='radio' onclick='sortByName()'>Name</input></form> -->
 <h2 class='showpermalink'><a id='releasestats'>Release Statistics</a> <img style='display: none' class='releasestats_toggle releasestats_span clickable_image' src='plus-9x9.png'/><img class='releasestats_toggle releasestats_span clickable_image' src='minus-9x9.png'/> <span class="permalink"> <a href="#releasestats" title="Permalink to this item">&#x1f517;</a></span></h2>
 <div class='releasestats_span'>
 <div id='releasestats_div'></div>
@@ -194,5 +197,6 @@ Toggle All Details: <img style='display: inline' class='editors_detail_toggle ed
 <span style='font-size: xx-small'><a href='?turnoff=requirements,summary,projects,releasestats'>Only show passing,silver,gold</a>
 <a href='?turnoff=bronze,silver,gold'>Turn off passing,silver,gold'</a>
 <a href='?turnoff=requirements,summary,projects,bronze,silver,gold'>Only show final stats</a></span>
+<div id='datacheck'></div>
 </body>
 </html>

@@ -1,8 +1,15 @@
-add all on / all off
+add all blocks on / all blocks off
 
 
 allow query parameters on #
 change # on option changes, particularly sorting
 
 
-add loading when changing sort algorithms
+add loading message when changing sort algorithms
+
+add to datacheck:
+cii-historical?
+current release?
+
+
+sort by onapmet + type

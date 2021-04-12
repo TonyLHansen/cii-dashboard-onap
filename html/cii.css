@@ -171,7 +171,8 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
 }
 
 .primaryColor_by_name, .primaryColor_by_section_name, .primaryColor_by_section_type_name,
-.primaryColor_by_type_name, .primaryColor_by_type_section_name, .primaryColor_by_onapmet_name {
+.primaryColor_by_type_name, .primaryColor_by_type_section_name,
+.primaryColor_by_onapmet_name, .primaryColor_by_onapmet_section_name, .primaryColor_by_onapmet_type_name {
 }
 
 .alternateColor_by_section_name, .alternateColor_by_section_type_name {
@@ -180,7 +181,7 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
 .alternateColor_by_type_name, .alternateColor_by_type_section_name {
     background-color: #a4ffcb;
 }
-.alternateColor_by_onapmet_name {
+.alternateColor_by_onapmet_name, .alternateColor_by_onapmet_section_name, .alternateColor_by_onapmet_type_name {
     background-color: #ffff99;
 }
 
@@ -194,4 +195,8 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
 
 .bggold {
     background-color: gold;
+}
+
+.datacheck {
+    color: red;
 }

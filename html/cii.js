@@ -279,13 +279,14 @@ function pushData(whereTo, whereFrom) {
 }
 
 function fillInEditorNames(datad, editorNames, editorList, j) {
-    // var URL = BASESITE + "en/users/";
-    var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
+    var URL = BASESITE + "en/users/";
+    // var URL = "http://tlhansen.us/cgi/cii.cgi/en/users/";
     // var URL = BETABASESITE + "en/users/";
     var URLsuffix = "";
     var editor = editorList[j];
     // $('#watermarkPage').html("editor " + editor);
-    $('#watermarkPage').html("editors " + (j % 2 ? "." : "..") );
+    var dots = [ ".", "..", "...", "...." ];
+    $('#watermarkPage').html("editors " + (dots[j % 4]));
     // console.log("j=", j);
     // console.log("url=", URL);
     // console.log("editor=", editor);
@@ -511,15 +512,22 @@ function prEditor(data, editorDict) {
     return ret;
 }
 
+function containsURL(text) {
+    if (!text) return false;
+    text = text.toLowerCase();
+    return ((text.indexOf("https://") > -1) || (text.indexOf("http://") > -1));
+}
+
 function addToMustTable(datad, tablename, level, levelcapname, percent, editorDict) {
     var trdataHeaders = "<tr>" +
 	// "<th>Project<br/>Prefix</th>" +
-	"<th>Name</th>" +
+	"<th class='name'>Name</th>" +
 	"<th>Tiered<br/>Percentage</th>" +
 	"<th>" + levelcapname + " Badge Percentage</th>";
 
     trdataHeaders += "<th>Editors</th>";
 
+    var addNameColumn = 1;
     var rf = requiredFields[level];
     var allFields = [];
     for (var k in rf) {
@@ -534,6 +542,8 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	    "<span class='" + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
 	    "</span>" +
 	    "</th>";
+	if (++addNameColumn % 10 == 0)
+	    trdataHeaders += "<th class='name'>Name</th>";
     }
     var lenRequiredFields = allFields.length;
 
@@ -552,14 +562,17 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 	    "<span class='optional " + level + "_detail_span " + projectLevelClass + "'><br/><br/>" + badgeDescriptions[level][ciiName].replace(/['']/g, "&quot;") +
 	    "</span>" +
 	    "</th>";
+	if (++addNameColumn % 10 == 0)
+	    trdataHeaders += "<th class='name'>Name</th>";
     }
 
-    trdataHeaders += "<th>Name</th>";
+    trdataHeaders += "<th class='name'>Name</th>";
     trdataHeaders += "</tr>";
     $('#' + tablename).append("<thead>" + trdataHeaders + "</thead>" +
 			      "<tfoot>" + trdataHeaders + "</tfoot>");
 
     var columns = [ ];
+    addNameColumn = 1;
     columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
 		return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
 		    "onclick='resize(" + row['id'] + ")'" +
@@ -596,9 +609,9 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			var classVal = /* optionalClass + */'na';
 			var projectLevelClass = (fieldName in ONAPprojectCommonResponse) ? "projectLevel" : "";
 			var justificationName = fieldName + "_justification";
-			console.log("row[" + justificationName + "]=" + row[justificationName]);
+			// console.log("row[" + justificationName + "]=" + row[justificationName]);
 			var urlRequired = badgeDescriptions[level][fieldName].indexOf("(URL required)") >= 0;
-			var hasUrl = (justificationName in row) && row[justificationName] && ((row[justificationName].indexOf("https://") > -1) || (row[justificationName].indexOf("http://") > -1));
+			var hasUrl = (justificationName in row) && containsURL(row[justificationName]);
 			if (data.toLowerCase() == "met") {
 			    if (urlRequired && hasUrl) classVal = 'met';
 			    else if (!urlRequired) classVal = 'met';
@@ -606,7 +619,7 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			} else if (data.toLowerCase() == "unmet") classVal = 'unmet';
 			else if (data.toLowerCase() == "?") classVal = 'question';
 			// console.log("optionalClass=" + optionalClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal);
-			console.log("fieldname=" + fieldName + ", statusname=" + statusName + ", row[id]=" + row['id'] + ", optionalClass=" + optionalClass + ", projectlevelclass=" + projectLevelClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal, ", urlRequired=" + urlRequired);
+			// console.log("fieldname=" + fieldName + ", statusname=" + statusName + ", row[id]=" + row['id'] + ", optionalClass=" + optionalClass + ", projectlevelclass=" + projectLevelClass + ", data.toLowerCase()=" + data.toLowerCase() + ", classVal=" + classVal, ", urlRequired=" + urlRequired);
 			var dataTitle = badgeDescriptions[level][statusName];
 			var justification = row[justificationName];
 			var detailIdButton = "button__" + statusName + "__" + row['id'];
@@ -634,6 +647,18 @@ function addToMustTable(datad, tablename, level, levelcapname, percent, editorDi
 			return ret;
 		    }
 	    });
+
+	if (++addNameColumn % 10 == 0)
+	    columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
+		return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +
+		    "onclick='resize(" + row['id'] + ")'" +
+		    "/></span><span class='size__" + row['id'] + 
+		    "'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
+		    row['id'] + "'>" + data + "</a></span>";
+	    }
+	});
+
+
     }
     columns.push({ "data": "name", "render": function ( data, type, row, meta ) {
 		return "<span style='float: right'><img src='updown-7x7.png' class='clickable_image' " +

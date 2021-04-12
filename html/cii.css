@@ -144,3 +144,6 @@ th.optional, td.optional, div.optional, button.optional, span.optional {
     background-color: red;
 }
 
+.name {
+    background-color: lightblue;
+}

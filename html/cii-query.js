@@ -1,20 +1,20 @@
 class Query {
     constructor() {
-	console.log("window.location=", window.location);
+	// console.log("window.location=", window.location);
         var query = window.location.search.substring(1);
         this.parms = query.split('&');
 	var hashquery = window.location.hash.match(/&.*/);
 	if (hashquery != "") {
 	//	window.location.hash += ",foo";
-	    console.log("query=", query, "hashquery=", hashquery);
+	    // console.log("query=", query, "hashquery=", hashquery);
 	    query += hashquery;
-	    console.log("query=>", query);
-	    console.log("window.location.hash was " + window.location.hash)
+	    // console.log("query=>", query);
+	    // console.log("window.location.hash was " + window.location.hash)
 	    window.location.hash = window.location.hash.replace(/&.*/, "");
-	    console.log("window.location.hash=>" + window.location.hash)
+	    // console.log("window.location.hash=>" + window.location.hash)
 	}
 
-	console.log("window.location=", window.location);
+	// console.log("window.location=", window.location);
     };
 
     // Return the value of a parameter. Only return the first such parameter's value that is found.

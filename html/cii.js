@@ -10,16 +10,29 @@ var columnNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var requiredNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var optionalNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 
-var repoUrlPrefixes = [
-		       "https://gerrit.onap.org/r/admin/repos/q/filter:",
-		       "https://gerrit.onap.org/r/#/admin/projects/",
-		       // "https://gerrit.onap.org/r/admin/repos:",
-		       "https://gerrit.onap.org/r/p/",
-		       "https://gerrit.onap.org/r/",
-		       "https://git.onap.org/"
-		       ];
-var badRepoUrlPrefix = "https://gerrit.onap.org/r/".toUpperCase();
-var gitRepoUrlPrefix = "https://gerrit.onap.org/r/p/".toUpperCase();
+//// var repoUrlPrefixes = [
+//// 		       "https://gerrit.onap.org/r/admin/repos/q/filter:",
+//// 		       "https://gerrit.onap.org/r/#/admin/projects/",
+//// 		       // "https://gerrit.onap.org/r/admin/repos:",
+//// 		       "https://gerrit.onap.org/r/p/",
+//// 		       "https://gerrit.onap.org/r/",
+//// 		       "https://git.onap.org/"
+//// 		       ];
+
+function escapeSlash(pat) {
+    return pat.replaceAll("/", "[/]").replaceAll("+", "[+]");
+}
+var repoUrlPatterns = [
+    escapeSlash("^https://gerrit.onap.org/r/admin/repos/q/filter:(.*)$"),
+    escapeSlash("^https://gerrit.onap.org/r/#/admin/projects/(.*)$"),
+    escapeSlash("^https://gerrit.onap.org/r/admin/repos/(.*)/parent$"),
+    escapeSlash("^https://gerrit.onap.org/r/p/(.*)([.]git)$"),
+    escapeSlash("^https://gerrit.onap.org/r/(.*)$"),
+    escapeSlash("^https://git.onap.org/(.*)$"),
+    escapeSlash("^https://wiki.onap.org/display/DW/(.*)+Project$")
+];
+//// var badRepoUrlPrefix = "https://gerrit.onap.org/r/".toUpperCase();
+//// var gitRepoUrlPrefix = "https://gerrit.onap.org/r/p/".toUpperCase();
 var goodRepoUrlPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 
 var badgingLevels = ["Passing", "Silver", "Gold"];
@@ -450,36 +463,22 @@ function showHistoricalInfo() {
   and the Repo names as the remaining elements.
 */
 var badUrlCount = 0;
-function determineProjectAndRepoNames(urlList) {
-    /* HACK BEGIN */
-    if (urlList == "https://wiki.onap.org/display/DW/Modeling+Project")
-	urlList = "https://gerrit.onap.org/r/#/admin/projects/modeling";
-    else if (urlList == "https://gerrit.onap.org/r/admin/repos/policy/parent")
-	urlList = "https://gerrit.onap.org/r/#/admin/projects/policy";
-    /* END HACK */
+function determineProjectAndRepoNamesPats(urlList) {
     var urls = urlList.split(/[\s,]+/);
     var repos = ["UNKNOWN"];
 
+    //// console.log("determineProjectAndRepoNamesPats(", urlList, ")");
     for (var u in urls) {
 	var url = urls[u];
 	var urlUpper = url.toUpperCase();
 	var repo = "UNKNOWN-BADURL";
-	for (var up in repoUrlPrefixes) {
-	    var urlPrefix = repoUrlPrefixes[up];
-	    var lenPrefix = urlPrefix.length;
-	    var urlPrefixUpper = urlPrefix.toUpperCase();
-	    var urlUpperStart = urlUpper.substring(0, lenPrefix);
-	    if (urlPrefixUpper == urlUpperStart) {
-		repo = url.substring(lenPrefix).toLowerCase();
-		if (urlPrefixUpper == badRepoUrlPrefix) {
-		    repo += "-BADURL";
-		} else if (urlPrefixUpper == gitRepoUrlPrefix) {
-		    if (repo.endsWith(".git")) {
-			repo = repo.substring(0, repo.length-4);
-		    } else {
-			repo += "-BADURLSUFFIX";
-		    }
-		}
+	for (var up in repoUrlPatterns) {
+	    var urlPattern = repoUrlPatterns[up];
+	    // console.log("urlPattern=", urlPattern)
+	    var ret = url.match(urlPattern);
+	    // console.log("ret=", ret);
+	    if (ret) {
+		repo = ret[1];
 		break;
 	    }
 	}
@@ -502,6 +501,59 @@ function determineProjectAndRepoNames(urlList) {
 
     return repos;
 }
+
+//// function determineProjectAndRepoNames(urlList) {
+////     /* HACK BEGIN */
+////     if (urlList == "https://wiki.onap.org/display/DW/Modeling+Project")
+//// 	urlList = "https://gerrit.onap.org/r/#/admin/projects/modeling";
+////     else if (urlList == "https://gerrit.onap.org/r/admin/repos/policy/parent")
+//// 	urlList = "https://gerrit.onap.org/r/#/admin/projects/policy";
+////     /* END HACK */
+////     var urls = urlList.split(/[\s,]+/);
+////     var repos = ["UNKNOWN"];
+//// 
+////     for (var u in urls) {
+//// 	var url = urls[u];
+//// 	var urlUpper = url.toUpperCase();
+//// 	var repo = "UNKNOWN-BADURL";
+//// 	for (var up in repoUrlPrefixes) {
+//// 	    var urlPrefix = repoUrlPrefixes[up];
+//// 	    var lenPrefix = urlPrefix.length;
+//// 	    var urlPrefixUpper = urlPrefix.toUpperCase();
+//// 	    var urlUpperStart = urlUpper.substring(0, lenPrefix);
+//// 	    if (urlPrefixUpper == urlUpperStart) {
+//// 		repo = url.substring(lenPrefix).toLowerCase();
+//// 		if (urlPrefixUpper == badRepoUrlPrefix) {
+//// 		    repo += "-BADURL";
+//// 		} else if (urlPrefixUpper == gitRepoUrlPrefix) {
+//// 		    if (repo.endsWith(".git")) {
+//// 			repo = repo.substring(0, repo.length-4);
+//// 		    } else {
+//// 			repo += "-BADURLSUFFIX";
+//// 		    }
+//// 		}
+//// 		break;
+//// 	    }
+//// 	}
+//// 	repos.push(repo);
+////     }
+//// 
+////     // Figure out the project name from the first repo in the list.
+////     // "abc/def" => "abc". "wxy" => "wxy".
+////     var n = repos[1].indexOf("/");
+////     if (n == -1) {
+//// 	repos[0] = repos[1];
+////     } else {
+//// 	repos[0] = repos[1].substring(0, n);
+////     }
+////     if (repos[0] == '#') repos[0] = "UNKNOWN-BADURL";
+////     if (repos[0].endsWith("-BADURL")) {
+//// 	repos[0] = repos[0] + badUrlCount;
+//// 	badUrlCount++;
+////     }
+//// 
+////     return repos;
+//// }
 
 // store the current data into data[]
 function pushData(whereTo, whereFrom) {
@@ -1322,7 +1374,11 @@ function whenDone(datad, editorNames) {
 
     addReleasesAndBadgingLevelsToTable();
     for (var k in datad) {
-	var projectAndRepos = determineProjectAndRepoNames(datad[k].repo_url);
+	//// var projectAndRepos = determineProjectAndRepoNames(datad[k].repo_url);
+	//// var projectAndReposPats = determineProjectAndRepoNamesPats(datad[k].repo_url);
+	//// console.log("projectAndRepos=", projectAndRepos);
+	//// console.log("projectAndReposPats=", projectAndReposPats);
+	var projectAndRepos = determineProjectAndRepoNamesPats(datad[k].repo_url);
 	// repo_url_status is not provided
 	// https://github.com/coreinfrastructure/best-practices-badge/issues/1370
 	if (!("repo_url_status" in datad[k])) {

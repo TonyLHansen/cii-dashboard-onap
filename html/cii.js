@@ -13,6 +13,7 @@ var optionalNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var repoUrlPrefixes = [
 		       "https://gerrit.onap.org/r/admin/repos/q/filter:",
 		       "https://gerrit.onap.org/r/#/admin/projects/",
+		       // "https://gerrit.onap.org/r/admin/repos:",
 		       "https://gerrit.onap.org/r/p/",
 		       "https://gerrit.onap.org/r/",
 		       "https://git.onap.org/"
@@ -453,6 +454,8 @@ function determineProjectAndRepoNames(urlList) {
     /* HACK BEGIN */
     if (urlList == "https://wiki.onap.org/display/DW/Modeling+Project")
 	urlList = "https://gerrit.onap.org/r/#/admin/projects/modeling";
+    else if (urlList == "https://gerrit.onap.org/r/admin/repos/policy/parent")
+	urlList = "https://gerrit.onap.org/r/#/admin/projects/policy";
     /* END HACK */
     var urls = urlList.split(/[\s,]+/);
     var repos = ["UNKNOWN"];
@@ -1230,11 +1233,16 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 
     var datatableButtons = [ "pageLength" ];
 
+    // Experiment with sorting the data before building the table to see if we can get the headers to immediately scroll.
+    //console.log("datad=", datad);
+    //datad.sort(function(a,b) { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()); });
+    //console.log("sorted datad=", datad);
+
     globalTables[level] =
 	$('#' + tablename).DataTable({
 	    "colReorder": true,
-	    "fixedHeader": { "footer": false, "header": true },
-	    // "fixedHeader": true,
+	    // "fixedHeader": { "footer": false, "header": true },
+	    "fixedHeader": true,
 		"data": datad,
 		"aaSorting": [[ 0, "asc" ]],
 		// fixedHeader: true,
@@ -1419,7 +1427,8 @@ function whenDone(datad, editorNames) {
     var datatableButtons = [ "pageLength" ];
 
     $('#trprojects').DataTable({
-	    "data": dataTable,
+	"data": dataTable,
+	// "fixedHeader": true,
 		// "aaSorting": [[ 0, "asc" ]],
 		"paging": true,
 		"pagingType": "full_numbers",

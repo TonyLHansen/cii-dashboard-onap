@@ -86,7 +86,6 @@
 <div class='projects_span'>
 <table id='trprojects' class="display compact" ></table>
 </div>
-
 <!-- <div id='sorting'><b>S O R T I N G  N O W</b><br/><br/></div> -->
 <div>
 <form style='display: inline' action='#' id='sortby_form' method='get' onsubmit='return false;'>
@@ -146,6 +145,18 @@ Almost ALL responses in this category should display the button <button class='p
 </div>
 </div>
 <h2 class='showpermalink'><a id='passing'>Passing</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='bronze_toggle bronze_span clickable_image' src='images/plus-9x9.png'/><img class='bronze_toggle bronze_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#passing" title="Permalink to this item">&#x1f517;</a></span></h2>
+<form action="#" onsubmit="return false;" class='right'>
+  <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">
+    <option>-- jump to --</option>
+    <option value="top">Top</option>
+    <option value="summary">Summary</option>
+    <option value="projects">Projects</option>
+    <option value="passing">Passing</option>
+    <option value="silver">Silver</option>
+    <option value="gold">Gold</option>
+    <option value="releasestats">Releases</option>
+  </select>
+</form>
 <div class='bronze_span'>
 Hover over an <button class='met'>item</button> to see its details, or click on an <button class='met'>item</button> to toggle it's details.
 (Some <button class='projectLevel met'>items</button> have ONAP project common responses.)<br/>
@@ -161,6 +172,18 @@ Toggle Per-Requirement Statistics: <img style='display: inline' class='bronze_sh
 <tr><td class='bgbronze' colspan='3'>&nbsp;</td></tr></table>
 </div>
 <h2 class='showpermalink'><a id='silver'>Silver</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='silver_toggle silver_span clickable_image' src='images/plus-9x9.png'/><img class='silver_toggle silver_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#silver" title="Permalink to this item">&#x1f517;</a></span></h2>
+<form action="#" onsubmit="return false;" class='right'>
+  <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">
+    <option>-- jump to --</option>
+    <option value="top">Top</option>
+    <option value="summary">Summary</option>
+    <option value="projects">Projects</option>
+    <option value="passing">Passing</option>
+    <option value="silver">Silver</option>
+    <option value="gold">Gold</option>
+    <option value="releasestats">Releases</option>
+  </select>
+</form>
 <div class='silver_span'>
 Hover over an <button class='met'>item</button> to see its details, or click on an <button class='met'>item</button> to toggle it's details.
 (Some <button class='projectLevel met'>items</button> have ONAP project common responses.)<br/>
@@ -174,6 +197,18 @@ Toggle Per-Requirement Statistics: <img style='display: inline' class='silver_sh
 <tr><td class='bgsilver' colspan='3'>&nbsp;</td></tr></table>
 </div>
 <h2 class='showpermalink'><a id='gold'>Gold</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='gold_toggle gold_span clickable_image' src='images/plus-9x9.png'/><img class='gold_toggle gold_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#gold" title="Permalink to this item">&#x1f517;</a></span></h2>
+<form action="#" onsubmit="return false;" class='right'>
+  <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">
+    <option>-- jump to --</option>
+    <option value="top">Top</option>
+    <option value="summary">Summary</option>
+    <option value="projects">Projects</option>
+    <option value="passing">Passing</option>
+    <option value="silver">Silver</option>
+    <option value="gold">Gold</option>
+    <option value="releasestats">Releases</option>
+  </select>
+</form>
 <div class='gold_span'>
 Hover over an <button class='met'>item</button> to see its details, or click on an <button class='met'>item</button> to toggle it's details.
 (Some <button class='projectLevel met'>items</button> have ONAP project common responses.)<br/>
@@ -204,8 +239,9 @@ Toggle All Details: <img style='display: inline' class='editors_detail_toggle ed
 <br/>
 <span style='font-size: xx-small'><a href='?turnoff=requirements,summary,projects,releasestats'>Only show passing,silver,gold</a>
 <a href='?turnoff=bronze,silver,gold'>Turn off passing,silver,gold'</a>
-<a href='?turnoff=requirements,summary,projects,bronze,silver,gold'>Only show final stats</a><br/>
+<a href='?turnoff=requirements,summary,projects,bronze,silver,gold'>Only show final stats</a>
 <!-- <a id='survey_descriptions'>Survey Descriptions</a> -->
+<a href='https://github.com/TonyLHansen/cii-dashboard-onap' target='_blank'>GitHub</a>
 </span>
 <form action="#" onsubmit="return false;" class='right'>
   <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">

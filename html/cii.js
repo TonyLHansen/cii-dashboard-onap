@@ -9,6 +9,8 @@ var globalTables = { };
 var columnNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var requiredNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var optionalNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
+var blank2 = "&nbsp;&nbsp;";
+var blank4 = blank4 + blank4;
 
 //// var repoUrlPrefixes = [
 //// 		       "https://gerrit.onap.org/r/admin/repos/q/filter:",
@@ -710,7 +712,7 @@ function getAllNames(data, type, row) {
     if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
 	for (var k in row.otherRepos) {
 	    var otherRepo = row.otherRepos[k];
-	    ret += "<tr><td class='stats noborder right'>" + urlPrefix + otherRepo.id + urlSuffix + otherRepo.name + anchorEnd + "</td></tr>";
+	    ret += "<tr><td class='stats noborder right'>" + blank4 + urlPrefix + otherRepo.id + urlSuffix + otherRepo.name + anchorEnd + "</td></tr>";
 	}
     }
     ret += "</table>";
@@ -772,7 +774,7 @@ function getAllBadges(data, type, row) {
     if (row.hasOwnProperty('otherRepos') && row.otherRepos.length > 0) {
 	for (var k in row.otherRepos) {
 	    var otherRepo = row.otherRepos[k];
-	    ret += "<tr><td class='stats noborder right'>" + urlPrefix + otherRepo.id + urlSuffix + "</td></tr>";
+	    ret += "<tr><td class='stats noborder right'>" + blank4 + urlPrefix + otherRepo.id + urlSuffix + "</td></tr>";
 	}
     }
     ret += "</table>";

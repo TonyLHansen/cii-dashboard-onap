@@ -10,7 +10,7 @@ var columnNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var requiredNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var optionalNames = { "bronze": [ ], "silver": [ ], "gold": [ ] };
 var blank2 = "&nbsp;&nbsp;";
-var blank4 = blank4 + blank4;
+var blank4 = blank2 + blank2;
 
 //// var repoUrlPrefixes = [
 //// 		       "https://gerrit.onap.org/r/admin/repos/q/filter:",

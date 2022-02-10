@@ -31,7 +31,8 @@ var repoUrlPatterns = [
     escapeSlash("^https://gerrit.onap.org/r/p/(.*)([.]git)$"),
     escapeSlash("^https://gerrit.onap.org/r/(.*)$"),
     escapeSlash("^https://git.onap.org/(.*)$"),
-    escapeSlash("^https://wiki.onap.org/display/DW/(.*)+Project$")
+    escapeSlash("^https://wiki.onap.org/display/DW/(.*)+Project$"),
+    escapeSlash("^https://gerrit.onap.org/r/admin/repos/q/filter:(.*)$")
 ];
 //// var badRepoUrlPrefix = "https://gerrit.onap.org/r/".toUpperCase();
 //// var gitRepoUrlPrefix = "https://gerrit.onap.org/r/p/".toUpperCase();
@@ -459,6 +460,7 @@ function showHistoricalInfo() {
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/sdnc",
 // "repo_url": "https://gerrit.onap.org/r/#/admin/projects/vnfsdk",
 // "repo_url": "https://git.onap.org/holmes",
+// "repo_url": "https://gerrit.onap.org/r/admin/repos/q/filter:cps"
 
 /*
   From a list of Repo URLs, generate an array with the project name as the first element

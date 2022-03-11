@@ -362,6 +362,7 @@ function showHistoricalInfo() {
 		     [ "c0c0c0", "c7c2a8", "cec492", "d5c77b", "dcc962", "e3cb46",
 		       "ebcd1e", "f1d000", "f8d200", "ffd400", "ffd700", "ffd700", "ffd700" ]
 		     ];
+
     var opacities = {
 	100: [ 0.00, 0.16, 0.33, 0.50, 0.66, 0.83, 1.00 ],
 	80: [ 0.26, 0.43, 0.60, 0.76, 0.93, 1.00, 1.00 ],
@@ -371,6 +372,7 @@ function showHistoricalInfo() {
     };
 
     var levelSep = "";
+    var dolog = false;
     // for (var level = 0; level < 3; level++) {
     for (var level = 2; level >= 0; level--) {
 	html += levelSep;
@@ -389,33 +391,75 @@ function showHistoricalInfo() {
 	    var topColor = gradients[level][bucket*2 + 2];
 	    var grad = "background: linear-gradient(to top, #" + botColor + ", #" + topColor + ")";
 	    var opacity = opacities[0][bucket];
+	    // console.log("bucket=",bucket);
 	    // console.log("base opacity=",opacity);
 	    // console.log("grad=", grad);
 
 	    html += "<td style='" + grad + "' align='right'>" + bucketStr[bucket] + "</td>";
 	    for (var release in releases) {
 		if (historicalProjectCount[release] > 0) {
+		    var showlog = false; // (release == "current");
+		    if (showlog) {
+			console.log("================================================================");
+			console.log("level=", level, " / ", levelBgColors[level]);
+			console.log("release=", release);
+		    }
 		    var nprojects = historicalStats[release][level][bucket]["#projects"];
 		    var pprojects = historicalStats[release][level][bucket]["%projects"];
 		    var ncumulative = historicalStats[release][level][bucket]["cumulative#"];
 		    var pcumulative = historicalStats[release][level][bucket]["cumulative%"];
+		    if (showlog) {
+			console.log("nprojects=", nprojects);
+			console.log("pprojects=", pprojects);
+			console.log("ncumulative=", ncumulative);
+			console.log("pcumulative=", pcumulative);
+		    }
+
 		    var bg = (ncumulative <= 0) ? gray : grad;
 		    var minBucket = historicalStats[release][level]["minBucket"];
 		    var maxBucket = historicalStats[release][level]["maxBucket"];
+		    if (showlog) {
+			console.log("minBucket=", minBucket);
+			console.log("maxBucket=", maxBucket);
+		    }
 		    if (maxBucket > 4) {
 			if (minBucket == 5) {
 			    opacity = opacities[100][bucket];
+			    if (showlog) console.log("using opacity for 100");
 			} else if (minBucket == 4) {
-			    if (historicalStats[release][level][4]["#projects"] < historicalStats[release][level][5]["#projects"])
+			    if (historicalStats[release][level][4]["#projects"] < historicalStats[release][level][5]["#projects"]) {
 				opacity = opacities[80][bucket];
-			    else if (historicalStats[release][level][5]["%projects"] > 40)
+			        if (showlog) console.log("using opacity for 80");
+			    } else if (historicalStats[release][level][5]["%projects"] > 40) {
 				opacity = opacities[50][bucket];
-			    else if (historicalStats[release][level][5]["%projects"] > 20)
+			        if (showlog) console.log("using opacity for 50");
+			    } else if (historicalStats[release][level][5]["%projects"] > 20) {
 				opacity = opacities[20][bucket];
+			        if (showlog) console.log("using opacity for 20");
+			    }
+			} else {
+			    var showlog2 = false;
+			    if (showlog2) console.log("release=", release, "level=", level, " / ", levelBgColors[level], "[4][%projects]", historicalStats[release][level][4]["%projects"], "[5][%projects]", historicalStats[release][level][5]["%projects"]);
+			    // code here goes whiter on the bottom if %projects[4+5] > 75%
+			    var hist4plus5 = +(historicalStats[release][level][4]["%projects"]) + +(historicalStats[release][level][5]["%projects"]);
+			    if (showlog2) console.log("hist 4+5=", hist4plus5);
+
+			    if (hist4plus5 > 75) {
+				if (showlog2) console.log("hist4plus5 > 75");
+				if (historicalStats[release][level][5]["%projects"] > 50) {
+				    opacity = opacities[50][bucket];
+			            if (showlog2) console.log("using opacity for 50");
+				} else if (historicalStats[release][level][5]["%projects"] > 20) {
+				    opacity = opacities[20][bucket];
+			            if (showlog2) console.log("using opacity for 20");
+				}
+			    }
 			}
 		    }
-		    // console.log("opacity=",opacity);
-		    // console.log("bg=", bg);
+		    if (showlog) {
+			console.log("opacity=",opacity);
+			console.log("bg=", bg);
+		    }
 		    html +=
 			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + nprojects + "</td>" +
 			"<td style=' opacity: " + opacity + "; " + bg + "' align='right'>" + pprojects + "</td>" +
@@ -692,7 +736,7 @@ function addRankOrder(d) {
 
 function getProject(data, type, row) {
     if (type !== 'display') return data;
-    var ret = "<a target='_blank' href='" + row.repo_url + "'>" + row.onap_project_short + "</a>";
+    var ret = "<a target='_blank' rel='noopener noreferrer' href='" + row.repo_url + "'>" + row.onap_project_short + "</a>";
     if (row.onap_project_short == "UNKNOWN")
 	ret += (row.onap_badurl ? " <span class='badURL' title='There is no project prefix word in the repo URL that will identify which project this entry belongs to.'>PROJECT NOT IN URL</span>" : "");
     else
@@ -706,7 +750,7 @@ function getProject(data, type, row) {
 function getAllNames(data, type, row) {
     if (type !== 'display') return data;
     if (row.id == -1) return data;
-    var urlPrefix = "<a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/";
+    var urlPrefix = "<a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/";
     var urlSuffix = "'>";
     var anchorEnd = '</a>';
     var ret = "<table class='noborder'>";
@@ -828,7 +872,7 @@ function prEditor(data, editorDict) {
     for (var e in editors) {
 	var editor = editors[e];
 	var nm = editorDict[editor] ? editorDict[editor] : "Unk";
-	editorsOut += sep + "<a target='_blank' href='" + BASESITE + "en/users/" + editor + "' title='" + nm.replace(/['']/g, "&quot;") + "'>" + nm + "</a>";
+	editorsOut += sep + "<a target='_blank' rel='noopener noreferrer' href='" + BASESITE + "en/users/" + editor + "' title='" + nm.replace(/['']/g, "&quot;") + "'>" + nm + "</a>";
 	sep = "<br/>";
     }
     var ret = "<span class='xxsmall " + cl + "'>" + editorsOut + "</button>";
@@ -1193,7 +1237,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 		return "<span style='float: right'><img src='images/updown-7x7.png' class='clickable_image' " +
 		    "onclick='resize(" + row['id'] + ")'" +
 		    "/></span><span class='size__" + row['id'] +
-		    "'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
+		    "'><a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/" +
 		    row['id'] + "'>" + data + "</a></span>";
 	    }
 	});
@@ -1270,7 +1314,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 			    return "<span style='float: right'><img src='images/updown-7x7.png' class='clickable_image' " +
 				"onclick='resize(" + row['id'] + ")'" +
 				"/></span><span class='size__" + row['id'] +
-				"'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
+				"'><a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/" +
 				row['id'] + "'>" + data + "</a></span>";
 			}
 		    });
@@ -1281,7 +1325,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 			return "<span style='float: right'><img src='images/updown-7x7.png' class='clickable_image' " +
 			    "onclick='resize(" + row['id'] + ")'" +
 			    "/></span><span class='size__" + row['id'] +
-			    "'><a target='_blank' href='https://bestpractices.coreinfrastructure.org/projects/" +
+			    "'><a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/" +
 			    row['id'] + "'>" + data + "</a></span>";
 		    }
 		});

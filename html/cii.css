@@ -47,6 +47,10 @@ td.stats {
     background-color: #cbcbcb;
 }
 
+.releasestats_span {
+    font-size: 75%;
+}
+
 /* https://stackoverflow.com/questions/21458162/creating-watermark-using-html-and-css */
 .watermark {
     position: fixed;

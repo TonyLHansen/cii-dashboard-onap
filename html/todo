@@ -8,12 +8,10 @@ as sections close/open, adjust # anchor
 
 
 add to datacheck:
-cii-historical?
-current release?
+    onap-release-info?
+    current release?
 
 
-DONE add loading message when changing sort algorithms
-DONE sort by onapwide + type
 
 
 

@@ -1,0 +1,32 @@
+{
+  "name": "onap-openssf-badging",
+  "version": "1.0.0",
+  "description": "ONAP OpenSSF Badging",
+  "main": "openssf.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TonyLHansen/cii-dashboard-onap.git"
+  },
+  "keywords": [
+    "ONAP",
+    "Security",
+    "Badging",
+    "OpenSSF",
+    "Badging",
+    "CII",
+    "Badging"
+  ],
+  "author": "Tony Hansen",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/TonyLHansen/cii-dashboard-onap/issues"
+  },
+  "homepage": "https://github.com/TonyLHansen/cii-dashboard-onap#readme",
+  "devDependencies": {
+    "eslint": "^8.41.0",
+    "eslint-config-google": "^0.14.0"
+  }
+}

@@ -1,0 +1,301 @@
+#!/usr/bin/env python3
+# -*- indent-tabs-mode: nil -*-
+
+"""
+Compare the descriptions and details for the badge levels between
+the best-practices-badge github site and the onap cii dashboard.
+"""
+
+# Read in ../best-practices-badge/config/locales/en.yml
+# ... en criteria [0,1,2]
+# Read in ../onap/cii-descriptions.js [bronze,silver,gold]
+# Compare the two and generate an updated cii-descriptions.js file.
+#
+# why doesn't "license" get flagged as missing? or "cpe"?
+
+import argparse
+import json
+import re
+import sys
+import yaml
+
+assert sys.version_info >= (3, 7)  # yaml ordered keys only after python 3.6
+
+GITVERSIONSTAMP = "2023-06-07-14-06"
+
+
+def collapse(rvd):
+    """
+    convert the multi-line string as used in the best-practices-badge code
+    into the one-line string used by the onap cii dashboard
+    """
+    rvd = re.sub('"', "'", rvd)
+    rvd = re.sub(r"[(]\n  ", "(", rvd)
+    rvd = re.sub(r"\n  ", " ", rvd)
+    rvd = re.sub(r"\b\n\b", " ", rvd)
+    rvd = re.sub(r"\n", "", rvd)
+    return rvd
+
+
+def checkValue(args, bpblk, ciidlk, level, k, nm):
+    """check the given value"""
+    if nm in bpblk and nm in ciidlk:
+        rvd = collapse(bpblk[nm])
+        ciidld = re.sub(" [(]URL required[)]", "", ciidlk[nm])
+        if rvd != ciidld:
+            print(f"================ diff for {level} {k}.{nm} ================")
+            print(f"{nm} new: {rvd}")
+            print(f"{nm} cur: {ciidld}")
+        else:
+            if args.verbose:
+                print(f"{level} {k}.{nm} OKAY")
+
+    elif nm in bpblk:
+        print(f"================ cii {level} {k}.{nm} is missing ================")
+        print(f"{nm} new: {bpblk[nm]}")
+
+    elif nm in ciidlk and ciidlk[nm] != "":
+        print(f"================ cii {level} {k}.{nm} has an unexpected value ================")
+        print(f"{nm} cur: {ciidlk[nm]}")
+
+
+criteriaLeafNodes = [
+    "category",
+    "future",
+    "na_allowed",
+    "na_justification_required",
+    "met_justification_required",
+    "met_url_required",
+    "description",
+    "details",
+    "met_placeholder",
+    "unmet_placeholder",
+    "na_placeholder",
+    "met_suppress",
+    "unmet_suppress",
+    "rationale",
+    "autofill",
+]
+
+
+def isleaf(criteria):
+    """
+    Check if a node is a leaf. It will be a list with name and dict elements.
+    """
+    return isinstance(criteria, (list, tuple)) and isinstance(criteria[0], str) and isinstance(criteria[1], dict)
+
+
+def extractCriteriaFields(criteria, ret):
+    """
+    Traverse the criteria data, looking for leaves.
+    When one is found, add the name to the list ret.
+    """
+    if isleaf(criteria):
+        ret.append(criteria[0])
+    elif isinstance(criteria, (list, tuple)):
+        if isinstance(criteria[0], str):
+            for c in criteria[1:]:
+                extractCriteriaFields(c, ret)
+        else:
+            for c in criteria:
+                extractCriteriaFields(c, ret)
+    elif isinstance(criteria, dict):
+        print(f"found this dictionary in a bad location:\n{criteria}")
+    else:
+        print(f"found something strange. type={type(criteria)}:\n{criteria}")
+
+
+def read_descriptions_file(args):
+    """the cii-descriptions file is javascript, so convert it to json before loading"""
+    try:
+        ciidstr = "{\n"
+        prestr = poststr = ""
+        inJson = False
+        with open(args.input_cii_descriptions_file, "r", encoding="utf-8") as fd:
+            for l in fd:
+                if args.verbose:
+                    print(f"looking at '{l}'")
+                if l.startswith(("//", "/* ", "var ", "const ", "let ", "};")) or l == "\n":
+                    if args.verbose:
+                        print("non-json")
+                    if inJson:
+                        if args.verbose:
+                            print("post non-json")
+                        poststr += l
+                    else:
+                        if args.verbose:
+                            print("pre non-json")
+                        prestr += l
+                else:
+                    l = re.sub("\t", " ", l)
+                    ciidstr += l
+                    inJson = True
+        ciidstr += "}\n"
+        ciid = yaml.safe_load(ciidstr)
+        return (ciid, prestr, poststr)
+    except:  # pylint: disable=bare-except
+        _, value, _ = sys.exc_info()
+        sys.exit(value)
+
+
+def read_badging_site(args):
+    """Read the current info from the badging site code"""
+    bpbyml = args.best_practices_path + "/config/locales/en.yml"
+    try:
+        with open(bpbyml, "r", encoding="utf-8") as fd:
+            bpbr = yaml.safe_load(fd)
+    except:  # pylint: disable=bare-except
+        _, value, _ = sys.exc_info()
+        sys.exit(value)
+
+    criteriaYml = args.best_practices_path + "/criteria/criteria.yml"
+    try:
+        with open(criteriaYml, "r", encoding="utf-8") as fd:
+            criteriaData = yaml.safe_load(fd)
+    except:  # pylint: disable=bare-except
+        _, value, _ = sys.exc_info()
+        sys.exit(value)
+
+    ciiLevels = ["bronze", "silver", "gold"]
+
+    names = {"bronze": [], "silver": [], "gold": []}
+    extractCriteriaFields(criteriaData[0], names["bronze"])
+    extractCriteriaFields(criteriaData[1], names["silver"])
+    extractCriteriaFields(criteriaData[2], names["gold"])
+    # for ciiLevel in ciiLevels:
+    #    print(f"names[{ciiLevel}]={names[ciiLevel]}")
+
+    ordinals = {"bronze": {}, "silver": {}, "gold": {}}
+    for mul, ciiLevel in enumerate(ciiLevels):
+        for n, nm in enumerate(names[ciiLevel]):
+            ordinals[ciiLevel][nm] = (mul + 1) * 1000 + n + 1
+
+    return (bpbr, ciiLevels, ordinals)
+
+
+def compare_descriptions(args, ciid, bpbr, ciiLevels, ordinals):
+    """create the data to be written out"""
+    nciid = ciid.copy()
+
+    bpb = {
+        "bronze": bpbr["en"]["criteria"]["0"],
+        "silver": bpbr["en"]["criteria"]["1"],
+        "gold": bpbr["en"]["criteria"]["2"],
+    }
+
+    prevLevel = prevPrevLevel = None
+    for level in ciiLevels:
+        ciidl = ciid[level]
+        bpbl = bpb[level]
+        if args.verbose > 1:
+            print(f"bpbl={json.dumps(bpbl,indent=4,sort_keys=True)}")
+
+        # loop through the keys found from the git description/details list
+        for k in sorted(bpbl.keys()):
+            bpblk = bpbl[k]
+            if k not in ciidl:
+                print(f"{k} not found in cii-descriptions")
+
+            else:
+                ciidlk = ciidl[k]
+
+                # if needed, copy details forward from an earlier level
+                if "details" not in bpblk:
+                    if prevLevel and prevPrevLevel and (k in bpb[prevLevel] or k in bpb[prevPrevLevel]):
+                        if k in bpb[prevLevel] and "details" in bpb[prevLevel][k]:
+                            bpblk["details"] = bpb[prevLevel][k]["details"]
+                        elif k in bpb[prevPrevLevel] and "details" in bpb[prevPrevLevel][k]:
+                            bpblk["details"] = bpb[prevPrevLevel][k]["details"]
+                    elif prevLevel:
+                        if k in bpb[prevLevel] and "details" in bpb[prevLevel][k]:
+                            bpblk["details"] = bpb[prevLevel][k]["details"]
+
+                # check the description values
+                checkValue(args, bpblk, ciidlk, level, k, "description")
+                if "description" in bpblk:
+                    needsUrlRequired = nciid[level][k]["description"].find("(URL required)") >= 0
+                    nciid[level][k]["description"] = collapse(bpblk["description"])
+                    if needsUrlRequired:
+                        nciid[level][k]["description"] += " (URL required)"
+                checkValue(args, bpblk, ciidlk, level, k, "details")
+                if "details" in bpblk:
+                    nciid[level][k]["details"] = collapse(bpblk["details"])
+
+        for k in sorted(ciidl.keys()):
+            if k not in bpbl:
+                print(f"{k} not found in BP {level}")
+            for prop in ["level", "projectwide", "section", "required", "type", "description", "details"]:
+                if prop not in ciidl[k]:
+                    print(f"cii {level} {k} is missing the property {prop}")
+
+        # reset the ordinal values
+        for k in nciid[level].keys():
+            if k in ordinals[level]:
+                nciid[level][k]["ord"] = ordinals[level][k]
+            else:
+                nciid[level][k]["ord"] = "0000"
+                print(f"{level} {k} set to 0000")
+
+        prevPrevLevel = prevLevel
+        prevLevel = level
+
+    return nciid
+
+
+def write_new_descriptions_file(args, prestr, poststr, nciid, ciiLevels):
+    """generate the new cii-descriptions.js file"""
+    with open(args.output_cii_descriptions_file, "w", encoding="utf-8") as ofp:
+        ofp.write(prestr)
+
+        levelsep = ""
+        for level in ciiLevels:
+            print(f'{levelsep}    "{level}": {{', file=ofp)
+            for k in sorted(nciid[level].keys()):
+                # print(json.dumps(nciid[level][k], indent=4, sort_keys=True)[2:-2], file=ofp)
+                print(f'\t"{k}": {{', file=ofp, end="")
+                propsep = ""
+                for prop in ["level", "projectwide", "section", "required", "type", "ord", "description", "details"]:
+                    print(f'{propsep}"{prop}": ', file=ofp, end="")
+                    print(json.dumps(nciid[level][k][prop], sort_keys=True), file=ofp, end="")
+                    propsep = ", "
+                print("},", file=ofp)
+            levelsep = "    },\n"
+        print("    },", file=ofp)
+        ofp.write(poststr)
+
+
+def main():
+    """
+    compare the cii-descriptions file with the best-practices-badge input file
+    """
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "-i", "--input-cii-descriptions-file", help="Path to current cii-descriptions.js file", type=str, required=True
+    )
+    parser.add_argument("-b", "--best-practices-path", help="Path to best-practices git clone", type=str, required=True)
+    parser.add_argument(
+        "-o",
+        "--output-cii-descriptions-file",
+        help="Path where to write updated cii-descriptions.js file",
+        type=str,
+        required=True,
+    )
+    parser.add_argument("-v", "--verbose", help="Verbose, may be specified multiple times", action="count", default=0)
+    parser.add_argument("-V", "--version", help="Print the version", action="store_true")
+    args = parser.parse_args()
+
+    if args.version:
+        print(GITVERSIONSTAMP)
+
+    (ciid, prestr, poststr) = read_descriptions_file(args)
+
+    (bpbr, ciiLevels, ordinals) = read_badging_site(args)
+    nciid = compare_descriptions(args, ciid, bpbr, ciiLevels, ordinals)
+    write_new_descriptions_file(args, prestr, poststr, nciid, ciiLevels)
+
+    print("DONE")
+
+
+if __name__ == "__main__":
+    main()

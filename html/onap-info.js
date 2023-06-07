@@ -29,20 +29,20 @@
 
 
 function escapeSlash(pat) {
-    return pat.replaceAll('/', '[/]').replaceAll('+', '[+]');
+    return pat.replaceAll("/", "[/]").replaceAll("+", "[+]");
 }
 
 const repoUrlPatterns = [
-    escapeSlash('^https://gerrit.onap.org/r/admin/repos/q/filter:(.*)$'),
-    escapeSlash('^https://gerrit.onap.org/r/#/admin/projects/(.*)$'),
-    escapeSlash('^https://gerrit.onap.org/r/admin/repos/(.*)/parent$'),
-    escapeSlash('^https://gerrit.onap.org/r/p/(.*)([.]git)$'),
-    escapeSlash('^https://gerrit.onap.org/r/(.*)$'),
-    escapeSlash('^https://git.onap.org/(.*)$'),
-    escapeSlash('^https://wiki.onap.org/display/DW/(.*)+Project$'),
-    escapeSlash('^https://gerrit.onap.org/r/admin/repos/q/filter:(.*)$'),
+    escapeSlash("^https://gerrit.onap.org/r/admin/repos/q/filter:(.*)$"),
+    escapeSlash("^https://gerrit.onap.org/r/#/admin/projects/(.*)$"),
+    escapeSlash("^https://gerrit.onap.org/r/admin/repos/(.*)/parent$"),
+    escapeSlash("^https://gerrit.onap.org/r/p/(.*)([.]git)$"),
+    escapeSlash("^https://gerrit.onap.org/r/(.*)$"),
+    escapeSlash("^https://git.onap.org/(.*)$"),
+    escapeSlash("^https://wiki.onap.org/display/DW/(.*)+Project$"),
+    escapeSlash("^https://gerrit.onap.org/r/admin/repos/q/filter:(.*)$"),
 ];
-const goodRepoUrlPrefix = 'https://gerrit.onap.org/r/#/admin/projects/';
+const goodRepoUrlPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 
-const openssfSearchQuery = 'onap';
-const projectName = 'ONAP';
+const openssfSearchQuery = "onap";
+const projectName = "ONAP";

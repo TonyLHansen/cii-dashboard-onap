@@ -11,6 +11,7 @@
 	"max-len": ["error", 200],
 	"indent": ["error", 4],
 	"no-tabs": [0],
-	"no-mixed-spaces-and-tabs": 0
+	"no-mixed-spaces-and-tabs": 0,
+	"quotes": ["error", "double"]
     }
 }

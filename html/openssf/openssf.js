@@ -632,7 +632,7 @@ async function getNextUrl(datad, editorNames, pagelist, j) {
 	    pushData(datad, js, filterOut);
 	    for (const jo in js) {
                 if (js.hasOwnProperty(jo)) {
-		    if (!filterOut(jo)) {
+		    if (!filterOut(js[jo])) {
 			historicalReleaseData["current"].push(js[jo]);
 		    }
                 }

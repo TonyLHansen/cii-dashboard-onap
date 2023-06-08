@@ -1,5 +1,8 @@
 BEST_PRACTICES_BADGE_CODE= ../../best-practices-badge
-HTML= ../html/openssf
+HTML= ../html
+JSCRIPT=$(HTML)/openssf
+PY=check-descriptions check-jquery-datatables-versions
+PROJECTHTML=$(HTML)/onap.html
 
 none:
 	@echo make run-check-descriptions -- check the descriptions
@@ -15,15 +18,18 @@ update-best-practices-badge-code:
 	cd $(BEST_PRACTICES_BADGE_CODE) && git pull origin
 
 do-check-descriptions:
-	./check-descriptions -i "$(HTML)/openssf-descriptions.js" -b "$(BEST_PRACTICES_BADGE_CODE)" -o $(HTML)/nopenssf-descriptions.js
-	@if cmp $(HTML)/openssf-descriptions.js $(HTML)/nopenssf-descriptions.js > /dev/null; then \
-		echo "No changes"; rm -f $(HTML)/nopenssf-descriptions.js; \
+	./check-descriptions -i "$(JSCRIPT)/openssf-descriptions.js" -b "$(BEST_PRACTICES_BADGE_CODE)" -o $(JSCRIPT)/nopenssf-descriptions.js
+	@if cmp $(JSCRIPT)/openssf-descriptions.js $(JSCRIPT)/nopenssf-descriptions.js > /dev/null; then \
+		echo "No changes"; rm -f $(JSCRIPT)/nopenssf-descriptions.js; \
 	else \
-		echo "Be certain to check the new $(HTML)/nopenssf-descriptions.js file"; \
+		echo "Be certain to check the new $(JSCRIPT)/nopenssf-descriptions.js file"; \
 	fi
 
 run-black:
-	black -l 120 check-descriptions
+	black -l 120 $(PY)
 
 run-pylint:
-	python3 -m pylint check-descriptions
+	python3 -m pylint $(PY)
+
+run-check-jquery-datatables-versions:
+	./check-jquery-datatables-versions $(PROJECTHTML)

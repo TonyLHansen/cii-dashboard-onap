@@ -18,6 +18,8 @@ const badgingLevels = ["Passing", "Silver", "Gold"];
 const badgingColors = ["bronze", "silver", "gold"];
 const bucketStr = ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%", "100%"];
 
+const currentReleaseName = currentRelease ? (currentRelease + " (current)") : "current";
+
 const green = "#4bc51d";
 const silver = "#bbbbbb";
 const gold = "#f2ce0d";
@@ -231,7 +233,7 @@ function createHistoricalStatsRelease(release) {
 }
 
 function createHistoricalStats() {
-    releases["current"] = { };
+    releases[currentReleaseName] = { };
     for (const release in releases) {
         if (releases.hasOwnProperty(release)) {
             createHistoricalStatsRelease(release);
@@ -386,7 +388,7 @@ function showHistoricalInfo() {
             html += "<td style='" + grad + "' align='right'>" + bucketStr[bucket] + "</td>";
             for (const release in releases) {
                 if (historicalProjectCount[release] > 0) {
-                    const showlog = false; // (release == "current");
+                    const showlog = false; // (release == currentReleaseName);
                     if (showlog) {
                         console.log("================================================================");
                         console.log("level=", level, " / ", levelBgColors[level]);
@@ -598,13 +600,13 @@ async function getNextUrl(datad, editorNames, pagelist, j) {
     watermark("Loading<br/>projects " + p);
 
     function filterOut(element) {
-	console.log("element=", element);
-	console.log("maintained_status=", element.maintained_status);
+	// console.log("element=", element);
+	// console.log("maintained_status=", element.maintained_status);
 	if ((element.maintained_status != "Met") && !showUnmaintained) {
 	    console.log("Filtering out " + element.name + " because it is not maintained");
 	    return true;
 	}
-	console.log("Keeping " + element.name + " because it is maintained or showUnmaintained is set");
+	// console.log("Keeping " + element.name + " because it is maintained or showUnmaintained is set");
 	return false;
     }
 
@@ -617,9 +619,9 @@ async function getNextUrl(datad, editorNames, pagelist, j) {
             // console.log("json=", json);
             // if (typeof json == "string") pushData(historicalReleaseData[currentRelease], JSON.parse(json));
             // else pushData(historicalReleaseData[currentRelease], json);
-            if (!("current" in historicalReleaseData)) {
-                // console.log("creating historicalReleaseData[" + "current" + "]");
-                historicalReleaseData["current"] = [];
+            if (!(currentReleaseName in historicalReleaseData)) {
+                // console.log("creating historicalReleaseData[" + currentReleaseName + "]");
+                historicalReleaseData[currentReleaseName] = [];
             }
             let js;
             if (typeof json == "string") {
@@ -628,12 +630,12 @@ async function getNextUrl(datad, editorNames, pagelist, j) {
                 js = json;
             }
 
-	    // console.log("pushing json to historicalReleaseData[" + "current" + "]<=", json);
+	    // console.log("pushing json to historicalReleaseData[" + currentReleaseName + "]<=", json);
 	    pushData(datad, js, filterOut);
 	    for (const jo in js) {
                 if (js.hasOwnProperty(jo)) {
 		    if (!filterOut(js[jo])) {
-			historicalReleaseData["current"].push(js[jo]);
+			historicalReleaseData[currentReleaseName].push(js[jo]);
 		    }
                 }
 	    }

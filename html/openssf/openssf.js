@@ -100,6 +100,9 @@ if (!(initSortBy == "by_name" ||
     initSortBy = "by_name";
 }
 
+let showUnmaintained = !parms.get("show-unmaintained", "no").toLowerCase().startsWith("n")
+console.log("showUnmaintained=", showUnmaintained);
+
 function watermark(msg) {
     if (msg != "") {
         $("#watermarkPage").html(msg);
@@ -110,7 +113,7 @@ function watermark(msg) {
 
 function flipVisibility(where, how) {
     // console.log("flipping display, where=" + where);
-    // console.dir(where);
+    // console.log(where);
     if (!how) how = "inline";
     if ( $(where).css("display") == "none" ) {
         $(where).css("display", "inline");
@@ -177,9 +180,15 @@ function addReleasesAndBadgingLevelsToTable() {
 }
 
 // store the current data into data[]
-function pushData(whereTo, whereFrom) {
+function pushData(whereTo, whereFrom, filterOut) {
     $(whereFrom).each(function(index, element) {
-        whereTo.push(element);
+	if (filterOut) {
+	    if (!filterOut(element)) {
+		whereTo.push(element);
+	    }
+	} else {
+	    whereTo.push(element);
+	}
     });
 }
 
@@ -509,13 +518,6 @@ function determineProjectAndRepoNamesPats(urlList) {
     return repos;
 }
 
-// store the current data into data[]
-function pushData(whereTo, whereFrom) {
-    $(whereFrom).each(function(index, element) {
-        whereTo.push(element);
-    });
-}
-
 async function fillInEditorNames(datad, editorNames, editorList, j) {
     if (editorList.length == 0) {
         whenDone(datad, editorNames);
@@ -534,7 +536,7 @@ async function fillInEditorNames(datad, editorNames, editorList, j) {
         url: URL + editor + ".json",
         data: {"format": "json"},
         success: function(json) {
-            console.log("ret=", json);
+            // console.log("ret=", json);
             if (typeof json == "string") pushData(editorNames, JSON.parse(json));
             else pushData(editorNames, json);
             if (json == "") whenDone(datad, editorNames);
@@ -595,6 +597,17 @@ async function getNextUrl(datad, editorNames, pagelist, j) {
     const URL = BASEURL;
     watermark("Loading<br/>projects " + p);
 
+    function filterOut(element) {
+	console.log("element=", element);
+	console.log("maintained_status=", element.maintained_status);
+	if ((element.maintained_status != "Met") && !showUnmaintained) {
+	    console.log("Filtering out " + element.name + " because it is not maintained");
+	    return true;
+	}
+	console.log("Keeping " + element.name + " because it is maintained or showUnmaintained is set");
+	return false;
+    }
+
     $.ajax({
         type: "GET",
         url: URL,
@@ -610,20 +623,21 @@ async function getNextUrl(datad, editorNames, pagelist, j) {
             }
             let js;
             if (typeof json == "string") {
-                pushData(datad, JSON.parse(json));
-                // console.log("pushing str to historicalReleaseData[" + "current" + "]<=", JSON.parse(json));
                 js = JSON.parse(json);
             } else {
-                pushData(datad, json);
-                // console.log("pushing json to historicalReleaseData[" + "current" + "]<=", json);
                 js = json;
             }
-            for (const jo in js) {
+
+	    // console.log("pushing json to historicalReleaseData[" + "current" + "]<=", json);
+	    pushData(datad, js, filterOut);
+	    for (const jo in js) {
                 if (js.hasOwnProperty(jo)) {
-                    historicalReleaseData["current"].push(js[jo]);
+		    if (!filterOut(jo)) {
+			historicalReleaseData["current"].push(js[jo]);
+		    }
                 }
-            }
-            if (lastOne || (json == "")) {
+	    }
+	    if (lastOne || (json == "")) {
                 fillInEditorNames(datad, editorNames, getEditorList(datad, editorNames), 0);
             } else {
                 /* https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep */
@@ -757,7 +771,8 @@ function getAllBadges(data, type, row) {
         if (row.project_rank == 0) {
             ret += getBadge("cii best practices", "Not started 0%", "red"); // '<img src="images/openssf-not-started.png"/>';
         } else {
-            ret += getBadge("Lowest", row.badge_percentage_0 + "%", getColor(row.badge_percentage_0, row.badge_percentage_1, row.badge_percentage_2));
+	    let color = getColor(row.badge_percentage_0, row.badge_percentage_1, row.badge_percentage_2);
+            ret += getBadge("Lowest", row.badge_percentage_0 + "%", color);
         }
         ret += "</td></tr>";
     } else {
@@ -1488,6 +1503,7 @@ function whenDone(datad, editorNames) {
     let prevProject = "";
     for (const k in datad) {
         if (datad.hasOwnProperty(k)) {
+	    // console.log("datad[" + k + "]=", datad[k]);
             datad[k].project_rank = generateRank(datad[k].badge_percentage_0, datad[k].badge_percentage_1, datad[k].badge_percentage_2);
             if (datad[k].sub_project == prevProject) {
                 // We have a project the same as the previous one.

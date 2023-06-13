@@ -7,6 +7,14 @@ const BASESITE = "https://bestpractices.coreinfrastructure.org/";
 // const BASESITE = BETABASESITE;
 const BASEURL = BASESITE + "projects.json";
 const globalTables = { };
+
+const BRONZE = "bronze";
+const BRONZE_TITLE = "Passing";
+const SILVER = "silver";
+const SILVER_TITLE = "Silver";
+const GOLD = "gold";
+const GOLD_TITLE = "Gold";
+
 const columnNames = {"bronze": [], "silver": [], "gold": []};
 const requiredNames = {"bronze": [], "silver": [], "gold": []};
 const optionalNames = {"bronze": [], "silver": [], "gold": []};
@@ -14,8 +22,8 @@ const blank2 = "&nbsp;&nbsp;";
 const blank4 = blank2 + blank2;
 const knownEditors = {};
 
-const badgingLevels = ["Passing", "Silver", "Gold"];
-const badgingColors = ["bronze", "silver", "gold"];
+const badgingLevels = [BRONZE_TITLE, SILVER_TITLE, GOLD_TITLE];
+const badgingColors = [BRONZE, SILVER, GOLD];
 const bucketStr = ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%", "100%"];
 
 const currentReleaseName = currentRelease ? (currentRelease + " (current)") : "current";
@@ -597,7 +605,7 @@ function filterOut(element) {
     // console.log("element=", element);
     // console.log("maintained_status=", element.maintained_status);
     if ((element.maintained_status != "Met") && !showUnmaintained) {
-        console.log("Filtering out " + element.name + " because it is not maintained");
+        // console.log("Filtering out " + element.name + " because it is not maintained");
         return true;
     }
     // console.log("Keeping " + element.name + " because it is maintained or showUnmaintained is set");
@@ -670,22 +678,22 @@ async function getProjectQueryUrl(datad, editorNames, pagelist, idlist, j) {
 
 async function getProjectIdUrl(datad, editorNames, idlist, j) {
     if (idlist.length == 0) {
-        console.log("getProjectIdUrl(): idlist.length==0");
+        // console.log("getProjectIdUrl(): idlist.length==0");
         fillInEditorNames(datad, editorNames, getEditorList(datad, editorNames), 0);
     } else if (j >= idlist.length) {
-        console.log("getProjectIdUrl(): " + j + " >= " + idlist.length);
+        // console.log("getProjectIdUrl(): " + j + " >= " + idlist.length);
         fillInEditorNames(datad, editorNames, getEditorList(datad, editorNames), 0);
     } else {
-        console.log("idlist[" + j + "]=", idlist[j]);
+        // console.log("idlist[" + j + "]=", idlist[j]);
         watermark("Loading<br/>project " + idlist[j]);
-        console.log("getProjectidUrl(), URL=", BASESITE + "projects/" + idlist[j] + ".json");
+        // console.log("getProjectidUrl(), URL=", BASESITE + "projects/" + idlist[j] + ".json");
 
         $.ajax({
 	    type: "GET",
 	    url: BASESITE + "projects/" + idlist[j] + ".json",
 	    data: {},
 	    success: function(json) {
-                console.log("json=", json);
+                // console.log("json=", json);
                 // if (typeof json == "string") pushData(historicalReleaseData[currentRelease], JSON.parse(json));
                 // else pushData(historicalReleaseData[currentRelease], json);
                 if (!(currentReleaseName in historicalReleaseData)) {
@@ -699,7 +707,7 @@ async function getProjectIdUrl(datad, editorNames, idlist, j) {
 		    js = [json];
                 }
 
-                console.log("js=", js);
+                // console.log("js=", js);
                 pushData(datad, js, filterOut);
                 for (const jo in js) {
 		    if (js.hasOwnProperty(jo)) {
@@ -1189,7 +1197,6 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
     trdataHeaders += nameHeader;
     columnNames[level].push("fixed");
     let columnCount = 1;
-    // trdataHeaders += "<th>Project<br/>Prefix</th>";
     trdataHeaders += "<th>Tiered<br/>Percentage</th>";
     columnNames[level].push("fixed");
     columnCount++;
@@ -1540,6 +1547,8 @@ function whenDone(datad, editorNames) {
 	    datad[k].name += allSubProjects[currentRelease].hasOwnProperty(project) ?
                 (allSubProjects[currentRelease][project].skip ? (" <span class='unmaintained'>" + allSubProjects[currentRelease][project].skip + "</span>") : "") :
                 "";
+	    datad[k].name += datad[k].maintained_justification ? (" <span class='unmaintained'>" + datad[k].maintained_justification + "</span>") : "";
+	    // console.log("datad[" + k + "]=", datad[k]);
 	    if (allSubProjects[currentRelease].hasOwnProperty(project)) {
                 // console.log("allSubProjects["+currentRelease+"].["+project+"]=", allSubProjects[currentRelease][project]);
                 if (allSubProjects[currentRelease][project].hasOwnProperty("skip")) {
@@ -1681,10 +1690,9 @@ function whenDone(datad, editorNames) {
         ],
     });
 
-
-    addToQuestionsTable(datad, "trbronze", "bronze", "Passing", "0", editorDict);
-    addToQuestionsTable(datad, "trsilver", "silver", "Silver", "1", editorDict);
-    addToQuestionsTable(datad, "trgold", "gold", "Gold", "2", editorDict);
+    addToQuestionsTable(datad, "tr" + BRONZE, BRONZE, BRONZE_TITLE, "0", editorDict);
+    addToQuestionsTable(datad, "tr" + SILVER, SILVER, SILVER_TITLE, "1", editorDict);
+    addToQuestionsTable(datad, "tr" + GOLD, GOLD, GOLD_TITLE, "2", editorDict);
 
     $(".requirements_toggle").click(function() {
         $(".requirements_span").each(flipThisVisibility);

@@ -45,4 +45,5 @@ const repoUrlPatterns = [
 const goodRepoUrlPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 
 const openssfSearchQuery = "onap";
+const openssfProjectIds = [];
 const projectName = "ONAP";

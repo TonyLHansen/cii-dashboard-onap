@@ -47,3 +47,7 @@ const goodRepoUrlPrefix = "https://gerrit.onap.org/r/#/admin/projects/";
 const openssfSearchQuery = "onap";
 const openssfProjectIds = [];
 const projectName = "ONAP";
+const openssfEditors = {
+    "3607": "required",
+    "4469": "optional"
+};

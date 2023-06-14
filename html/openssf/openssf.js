@@ -780,10 +780,12 @@ function getProject(data, type, row) {
         " <span class='badURL' title='If a git URL is specified for the repo URL, it must have a suffix of .git'>MISSING .git SUFFIX</span>" :
         "");
     if (row.sub_project_short != "UNKNOWN") {
-        ret += (row.project_invalid_sub_project ?
-	    (" <span class='badProject' title='The project prefix word (" + row.sub_project_short + ")" +
-	     " in the repo URL is not a valid project name.'>UNKNOWN PROJECT PREFIX '" + row.sub_project_short + "' FOUND IN REPO URL</span>") :
-	    "");
+	if (projectCheckProjects) {
+            ret += (row.project_invalid_sub_project ?
+		    (" <span class='badProject' title='The project prefix word (" + row.sub_project_short + ")" +
+		     " in the repo URL is not a valid project name.'>UNKNOWN PROJECT PREFIX '" + row.sub_project_short + "' FOUND IN REPO URL</span>") :
+		    "");
+	}
     }
     return ret;
 }
@@ -906,16 +908,46 @@ function genData(project, name, bp0, bp1, bp2) {
     };
 }
 
-function prEditor(data, editorDict) {
-    // console.log("data=" + data);
-    // console.log("typeof data=" + typeof data);
-    const editors = data.toString().split(",");
-    const JimBaker = "3607";
-    const DavidMcBride = "4469";
-    const hasJimBaker = editors.indexOf(JimBaker) > -1;
-    const hasDavidMcBride = editors.indexOf(DavidMcBride) > -1;
+// given a list of editors, decide how to display it
+function prEditor(editorList, editorDict) {
+    // console.log("editorList=" + editorList);
+    const editors = editorList.toString().split(",");
     const len = editors.length;
-    const cl = (hasDavidMcBride && len > 2) ? "met" : (hasJimBaker || len > 1) ? "partial" : "buzz";
+
+    let requiredCount = 0;
+    let hasRequiredCount = 0;
+    let optionalCount = 0;
+    let hasOptionalCount = 0;
+    for (const editor in openssfEditors) {
+	if (openssfEditors.hasOwnProperty(editor)) {
+	    if (openssfEditors[editor] == "required") {
+		requiredCount++;
+		if (editors.includes(editor)) {
+		    hasRequiredCount++;
+		}
+	    }
+	    if (openssfEditors[editor] == "optional") {
+		optionalCount++;
+		if (editors.includes(editor)) {
+		    hasOptionalCount++;
+		}
+	    }
+	}
+    }
+
+    let cl = "buzz";
+    if ((requiredCount > 0) && (requiredCount == hasRequiredCount)) {
+	if (len > hasRequiredCount) {
+	    cl = "met";
+	} else {
+	    cl = "partial";
+	}
+    } else if (hasOptionalCount > 0) {
+	cl = "partial";
+    } else if (requiredCount == 0) {
+	cl = "partial";
+    }
+
     let editorsOut = "";
     let sep = "";
     for (const e in editors) {

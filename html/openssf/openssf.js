@@ -1,7 +1,7 @@
 /* eslint-disable require-jsdoc */
 
 "use strict";
-console.clear();
+//console.clear();
 const BETABASESITE = "https://master.bestpractices.dev/";
 const BASESITE = "https://www.bestpractices.dev/";
 // const BASESITE = BETABASESITE;

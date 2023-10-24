@@ -2,8 +2,8 @@
 
 "use strict";
 console.clear();
-const BETABASESITE = "https://master.bestpractices.coreinfrastructure.org/";
-const BASESITE = "https://bestpractices.coreinfrastructure.org/";
+const BETABASESITE = "https://master.bestpractices.dev/";
+const BASESITE = "https://www.bestpractices.dev/";
 // const BASESITE = BETABASESITE;
 const BASEURL = BASESITE + "projects.json";
 const globalTables = { };
@@ -14,6 +14,7 @@ const SILVER = "silver";
 const SILVER_TITLE = "Silver";
 const GOLD = "gold";
 const GOLD_TITLE = "Gold";
+const BADGE_TEXT = "openssf best practices";
 
 const columnNames = {"bronze": [], "silver": [], "gold": []};
 const requiredNames = {"bronze": [], "silver": [], "gold": []};
@@ -26,7 +27,7 @@ const badgingLevels = [BRONZE_TITLE, SILVER_TITLE, GOLD_TITLE];
 const badgingColors = [BRONZE, SILVER, GOLD];
 const bucketStr = ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%", "100%"];
 
-const currentReleaseName = projectCurrentRelease ? (projectCurrentRelease + " (current)") : "current";
+// const currentReleaseName = projectCurrentRelease ? (projectCurrentRelease + " (current)") : "current";
 
 const green = "#4bc51d";
 const silver = "#bbbbbb";
@@ -81,6 +82,7 @@ const parms = new Query();
 //  }
 // }
 
+const releaseToShow = parms.get("release", projectCurrentRelease);
 const help = parms.get("help", "n");
 if (help == "y") {
     // TODO this is woefully out of date
@@ -237,7 +239,6 @@ function createHistoricalStatsRelease(historicalStats, release) {
 }
 
 function createHistoricalStats(historicalStats) {
-    projectReleases[currentReleaseName] = { };
     for (const release in projectReleases) {
         if (projectReleases.hasOwnProperty(release)) {
 	    createHistoricalStatsRelease(historicalStats, release);
@@ -541,17 +542,19 @@ function determineProjectAndRepoNamesPats(urlList) {
     return repos;
 }
 
-async function fillInEditorNames(datad, filtered, editorNames, editorList, j) {
+async function fillInEditorNames(editorNames, editorList, j, dotCounter) {
     if (editorList.length == 0) {
-        whenDone(datad, filtered, editorNames);
+        whenDone(editorNames);
         return;
     }
 
     const URL = BASESITE + "en/users/";
     const editor = editorList[j];
-    const dots = [".", "..", "...", "...."];
-    const dotcolon = [":", ".:", "..:", "...:"];
-    watermark("Loading<br/>editors " + (dots[j % 4]));
+    // const dots = [".", "..", "...", "...."];
+    // const dotcolon = [":", ".:", "..:", "...:"];
+    // const dots = [".", ":", "..", "::", "...", ":::", "....", "::::"];
+    const dots = [".", "..", "...", "....", ":", "::", ":::", "::::"];
+    watermark("Loading<br/>editors " + (dots[dotCounter % dots.length]));
     const lastOne = j >= (editorList.length-1);
 
     $.ajax({
@@ -565,41 +568,44 @@ async function fillInEditorNames(datad, filtered, editorNames, editorList, j) {
 	    // console.log("fillInEditorNames(), js=", js)
 	    pushData(editorNames, js);
 	    if ((json == "") || lastOne) {
-                whenDone(datad, filtered, editorNames);
+                whenDone(editorNames);
 	    } else {
                 /* https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep */
                 new Promise((r) => {
 		    setTimeout(r, 1000);
                 });
-                fillInEditorNames(datad, filtered, editorNames, editorList, j+1);
+                fillInEditorNames(editorNames, editorList, j+1, dotCounter+1);
 	    }
         },
         error: function(request, error, thrownError) {
 	    console.log("fillInEditorNames(): Request:", request);
 	    if (request.status == 429) {/* retry later -- rate limiting occurred */
                 /* https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep */
-                watermark("Loading<br/>editors. " + (dotcolon[j % 4]));
+                watermark("Loading<br/>editors. " + (dots[dotCounter % dots.length]));
                 new Promise((r) => {
 		    setTimeout(r, 1000);
                 });
-                fillInEditorNames(datad, filtered, editorNames, editorList, j);
+                fillInEditorNames(editorNames, editorList, j, dotCounter+1);
 	    } else {
-                whenDone(datad, filtered, editorNames);
+                whenDone(editorNames);
 	    }
         },
     });
 }
 
-function getEditorList(datad, editorNames) {
+function getEditorList(editorNames) {
     const editorDict = {};
-    for (const k in datad) {
-        if (datad.hasOwnProperty(k)) {
-	    editorDict[datad[k].user_id] = 1;
-	    for (const ar in datad[k].additional_rights) {
-                if (datad[k].additional_rights.hasOwnProperty(ar)) {
-		    editorDict[datad[k].additional_rights[ar]] = 1;
+    for (const k in projectHistoricalReleaseData[releaseToShow]) {
+        if (projectHistoricalReleaseData[releaseToShow].hasOwnProperty(k)) {
+            const datad = projectHistoricalReleaseData[releaseToShow];
+            if (datad.hasOwnProperty(k)) {
+                editorDict[datad[k].user_id] = 1;
+                for (const ar in datad[k].additional_rights) {
+                    if (datad[k].additional_rights.hasOwnProperty(ar)) {
+                        editorDict[datad[k].additional_rights[ar]] = 1;
+                    }
                 }
-	    }
+            }
         }
     }
     const keys = [];
@@ -618,7 +624,7 @@ function getEditorList(datad, editorNames) {
 function filterOut(element) {
     // console.log("element=", element);
     // console.log("maintained_status=", element.maintained_status);
-    if ((element.maintained_status != "Met") && !showUnmaintained) {
+    if ((element.maintained_status !== undefined) && (element.maintained_status != "Met") && !showUnmaintained) {
         console.log("Filtering out " + element.name + " (" + element.id + ") because it is not maintained: " + element.maintained_justification);
         return true;
     }
@@ -626,9 +632,9 @@ function filterOut(element) {
     return false;
 }
 
-async function getProjectQueryUrl(datad, filtered, editorNames, pagelist, idlist, j) {
-    if (openssfSearchQuery == null) {
-        getProjectIdUrl(datad, filtered, editorNames, idlist, 0);
+async function getProjectQueryUrl(editorNames, pagelist, idlist, j) {
+    if (openssfSearchQuery == null) { // no search criteria to use
+        getProjectIdUrl(editorNames, idlist, 0);
     } else {
         const lastOne = j == pagelist.length-1;
         const p = pagelist[j];
@@ -640,32 +646,24 @@ async function getProjectQueryUrl(datad, filtered, editorNames, pagelist, idlist
 	    url: URL,
 	    data: {"q": openssfSearchQuery, "page": p},
 	    success: function(json) {
-                // alert("json=",json);
                 // console.log("json=", json);
-                if (!(currentReleaseName in projectHistoricalReleaseData)) {
-		    // console.log("creating projectHistoricalReleaseData[" + currentReleaseName + "]");
-		    projectHistoricalReleaseData[currentReleaseName] = [];
-                }
                 let js = json;
                 if (typeof json == "string") js = JSON.parse(json);
                 // console.log("getProjectQueryUrl(), js=", js);
 
-                pushData(datad, js, filterOut, filtered);
                 for (const jo in js) {
 		    if (js.hasOwnProperty(jo)) {
-                        if (!filterOut(js[jo])) {
-			    projectHistoricalReleaseData[currentReleaseName].push(js[jo]);
-                        }
+                        projectHistoricalReleaseData[projectCurrentRelease].push(js[jo]);
 		    }
                 }
                 if (lastOne || (json == "")) {
-		    getProjectIdUrl(datad, filtered, editorNames, idlist, 0);
+		    getProjectIdUrl(editorNames, idlist, 0);
                 } else {
 		    /* https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep */
 		    new Promise((r) => {
                         setTimeout(r, 1000);
 		    });
-		    getProjectQueryUrl(datad, filtered, editorNames, pagelist, idlist, j+1);
+		    getProjectQueryUrl(editorNames, pagelist, idlist, j+1);
                 }
 	    },
 	    error: function(request, error, thrownError) {
@@ -675,26 +673,20 @@ async function getProjectQueryUrl(datad, filtered, editorNames, pagelist, idlist
 		    new Promise((r) => {
                         setTimeout(r, 1000);
 		    });
-		    getProjectQueryUrl(datad, filtered, editorNames, pagelist, idlist, j+1);
+		    getProjectQueryUrl(editorNames, pagelist, idlist, j+1);
                 } else {
-		    getProjectIdUrl(datad, filtered, editorNames, idlist, 0);
+		    getProjectIdUrl(editorNames, idlist, 0);
                 }
 	    },
         });
     }
 }
 
-async function getProjectIdUrl(datad, filtered, editorNames, idlist, j) {
-    if (idlist.length == 0) {
-        // console.log("getProjectIdUrl(): idlist.length==0");
-        fillInEditorNames(datad, filtered, editorNames, getEditorList(datad, editorNames), 0);
-    } else if (j >= idlist.length) {
-        // console.log("getProjectIdUrl(): " + j + " >= " + idlist.length);
-        fillInEditorNames(datad, filtered, editorNames, getEditorList(datad, editorNames), 0);
+async function getProjectIdUrl(editorNames, idlist, j) {
+    if (j >= idlist.length) { // hit the end of the list
+        fillInEditorNames(editorNames, getEditorList(editorNames), 0, 0);
     } else {
-        // console.log("idlist[" + j + "]=", idlist[j]);
         watermark("Loading<br/>project " + idlist[j]);
-        // console.log("getProjectidUrl(), URL=", BASESITE + "projects/" + idlist[j] + ".json");
 
         $.ajax({
 	    type: "GET",
@@ -702,32 +694,24 @@ async function getProjectIdUrl(datad, filtered, editorNames, idlist, j) {
 	    data: {},
 	    success: function(json) {
                 // console.log("json=", json);
-                if (!(currentReleaseName in projectHistoricalReleaseData)) {
-		    // console.log("creating projectHistoricalReleaseData[" + currentReleaseName + "]");
-		    projectHistoricalReleaseData[currentReleaseName] = [];
-                }
                 let js = [json];
                 if (typeof json == "string") {
 		    js = [JSON.parse(json)];
                 }
 
-                // console.log("getProjectIdUrl(), js=", js);
-                pushData(datad, js, filterOut, filtered);
                 for (const jo in js) {
 		    if (js.hasOwnProperty(jo)) {
-                        if (!filterOut(js[jo])) {
-			    projectHistoricalReleaseData[currentReleaseName].push(js[jo]);
-                        }
+                        projectHistoricalReleaseData[projectCurrentRelease].push(js[jo]);
 		    }
                 }
                 if (json == "") {
-		    fillInEditorNames(datad, filtered, editorNames, getEditorList(datad, editorNames), 0);
+		    fillInEditorNames(editorNames, getEditorList(editorNames), 0, 0);
                 } else {
 		    /* https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep */
 		    new Promise((r) => {
                         setTimeout(r, 1000);
 		    });
-		    getProjectIdUrl(datad, filtered, editorNames, idlist, j+1);
+		    getProjectIdUrl(editorNames, idlist, j+1);
                 }
 	    },
 	    error: function(request, error, thrownError) {
@@ -737,9 +721,9 @@ async function getProjectIdUrl(datad, filtered, editorNames, idlist, j) {
 		    new Promise((r) => {
                         setTimeout(r, 1000);
 		    });
-		    getProjectIdUrl(datad, filtered, editorNames, idlist, j+1);
+		    getProjectIdUrl(editorNames, idlist, j+1);
                 } else {
-		    fillInEditorNames(datad, filtered, editorNames, getEditorList(datad, editorNames), 0);
+		    fillInEditorNames(editorNames, getEditorList(editorNames), 0, 0);
                 }
 	    },
         });
@@ -780,12 +764,12 @@ function getProject(data, type, row) {
         " <span class='badURL' title='If a git URL is specified for the repo URL, it must have a suffix of .git'>MISSING .git SUFFIX</span>" :
         "");
     if (row.sub_project_short != "UNKNOWN") {
-	if (projectCheckProjects) {
+        if (projectCheckProjects) {
             ret += (row.project_invalid_sub_project ?
 		    (" <span class='badProject' title='The project prefix word (" + row.sub_project_short + ")" +
 		     " in the repo URL is not a valid project name.'>UNKNOWN PROJECT PREFIX '" + row.sub_project_short + "' FOUND IN REPO URL</span>") :
 		    "");
-	}
+        }
     }
     return ret;
 }
@@ -810,30 +794,113 @@ function getAllNames(data, type, row) {
     return ret;
 }
 
-function getBadge(txtLeft, txtRight, colorRight) {
-    // console.log("txtLeft=" + txtLeft);
-    // console.log("txtRight=" + txtRight);
-    // console.log("colorRight=" + colorRight);
-    return "<svg xmlns='http://www.w3.org/2000/svg' width='204' height='20'>" +
-	"  <linearGradient id='b' x2='0' y2='100%'>" +
-	"    <stop offset='0' stop-color='#bbb' stop-opacity='.1'/>" +
-	"    <stop offset='1' stop-opacity='.1'/>" +
-	"  </linearGradient>" +
-	"  <mask id='a'>" +
-	"    <rect width='204' height='20' rx='3' fill='#fff'/>" +
-	"  </mask>" +
-	"  <g mask='url(#a)'>" +
-	"    <path fill='#555' d='M0 0h103v20H0z'/>" +
-	"    <path fill='" + colorRight + "' d='M103 0h101v20H103z'/>" +
-	"    <path fill='url(#b)' d='M0 0h204v20H0z'/>" +
-	"  </g>" +
-	"  <g fill='#fff' text-anchor='middle' font-family='DejaVu Sans,Verdana,Geneva,sans-serif' font-size='11'>" +
-	"    <text x='51.5' y='15' fill='#010101' fill-opacity='.3'>" + txtLeft + "</text>" +
-	"    <text x='51.5' y='14'>" + txtLeft + "</text>" +
-	"    <text x='152.5' y='15' fill='" + colorRight + "' xfill='#010101' fill-opacity='.3'>" + txtRight + "</text>" +
-	"    <text x='152.5' y='14'>" + txtRight + "</text>" +
-	"  </g>" +
-	"</svg>";
+function getBadge(txtLeft, tieredPercentage) {
+    // console.log("getBadge(" + txtLeft + ", " + tieredPercentage + ")");
+    if (tieredPercentage >= 300) {
+        return getBadgeSVG(txtLeft, "gold", "#ffd700", "#ccc", "#333");
+    } else if (tieredPercentage >= 200) {
+        return getBadgeSVG(txtLeft, "silver", "#c0c0c0", "#ccc", "#333");
+    } else if (tieredPercentage >= 100) {
+        return getBadgeSVG(txtLeft, "passing", "#4c1", "#010101", "#fff");
+    } else if (tieredPercentage > 0) {
+        const color = getColor(tieredPercentage, 0, 0);
+        return getBadgeSVG(txtLeft, "in progress " + tieredPercentage + "%", color, "#ccc", "#333");
+    } else {
+        return getBadgeSVG(txtLeft, "Not started 0%", "red", "#010101", "#fff");
+    }
+}
+
+// Return the width that some text would use given a particular font size and font family.
+function getTextWidth(text, fontSize, fontFamily) {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    context.font = `${fontSize}px ${fontFamily}`;
+    return context.measureText(text).width;
+}
+
+// Generate a badge with the given text and colors.
+// This is based directly on the badges from OpenSSF Best Practices.
+function getBadgeSVGstring(bgColor1, bgColor2, text1, text2, fontColor1, fontColor2, fontColor2b) {
+    const padding = 10;
+    const fontFamily = "Verdana,Geneva,DejaVu Sans,sans-serif";
+    const fontSize = 110;
+    const ftext1Width = getTextWidth(text1, fontSize, fontFamily) * 0.1;
+    const ftext2Width = getTextWidth(text2, fontSize, fontFamily) * 0.1;
+    const fsvgWidth = ftext1Width + ftext2Width;
+    const text1Width = Math.round(ftext1Width);
+    const text2Width = Math.round(ftext2Width);
+    const svgWidth = Math.round(fsvgWidth);
+    const text1WidthWithPadding = text1Width + padding;
+    const text2WidthWithPadding = text2Width + padding;
+    const svgWidthWithPadding = svgWidth + 2 * padding;
+    const text1WidthWithPaddingCenter = text1WidthWithPadding / 2;
+    const text1WidthWithPaddingCenterScaled = (text1WidthWithPaddingCenter+1) * 10;
+    const text2WidthCenter = text1WidthWithPadding + (text2WidthWithPadding-2) / 2;
+    const text1WidthScaled = text1Width * 10;
+    const text2WidthScaled = text2Width * 10;
+    const text2WidthCenterScaled = text2WidthCenter * 10;
+
+    const svg = [
+        `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${svgWidthWithPadding}" height="20" role="img" aria-label="${text1}: ${text2}">`,
+        `  <title>${text1}: ${text2}</title>`,
+        "  <linearGradient id=\"s\" x2=\"0\" y2=\"100%\">",
+        "    <stop offset=\"0\" stop-color=\"#bbb\" stop-opacity=\".1\"/>",
+        "    <stop offset=\"1\" stop-opacity=\".1\"/>",
+        "  </linearGradient>",
+        "  <clipPath id=\"r\">",
+        `    <rect width="${svgWidthWithPadding}" height="20" rx="3" fill="${fontColor1}"/>`,
+        "  </clipPath>",
+        "  <g clip-path=\"url(#r)\">",
+        `    <rect width="${text1WidthWithPadding}" height="20" fill="${bgColor1}"/>`,
+        `    <rect x="${text1WidthWithPadding}" width="${text2WidthWithPadding}" height="20" fill="${bgColor2}"/>`,
+        `    <rect width="${svgWidthWithPadding}" height="20" fill="url(#s)"/>`,
+        "  </g>",
+        `  <g fill="#fff" text-anchor="middle" font-family="${fontFamily}" text-rendering="geometricPrecision" font-size="110">`,
+        `    <text aria-hidden="true" x="${text1WidthWithPaddingCenterScaled}" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="${text1WidthScaled}">${text1}</text>`,
+        `    <text x="${text1WidthWithPaddingCenterScaled}" y="140" transform="scale(.1)" fill="#fff" textLength="${text1WidthScaled}">${text1}</text>`,
+        `    <text aria-hidden="true" x="${text2WidthCenterScaled}" y="150" fill="${fontColor2}" fill-opacity=".3" transform="scale(.1)" textLength="${text2WidthScaled}">${text2}</text>`,
+        `    <text x="${text2WidthCenterScaled}" y="140" transform="scale(.1)" fill="${fontColor2b}" textLength="${text2WidthScaled}">${text2}</text>`,
+        "  </g>",
+        "</svg>",
+    ];
+    return svg.join();
+}
+
+function getBadgeSVG(leftText, rightText, rightBgColor, rightFontColor, rightFontColor2) {
+    // console.log("getBadgeSVG(" + leftText + ", " + rightText + ")");
+    return getBadgeSVGstring("#555", rightBgColor, leftText, rightText, "#fff", rightFontColor, rightFontColor2);
+}
+
+function getAllBadges(data, type, row) {
+    if (type !== "display") return data;
+    // const urlPrefix = "<img src=\"https://bestpractices.coreinfrastructure.org/projects/";
+    // const urlSuffix = "/badge\"/>";
+    let ret = "<table class='noborder'>";
+    if (row.id == 0) {
+        ret += "<tr><td class='stats noborder'>";
+        if (row.project_rank == 0) {
+	    ret += getBadge(BADGE_TEXT, 0); // (BADGE_TEXT, "Not started 0%", "red", "#010101", "#fff");
+        } else {
+	    const color = getColor(row.badge_percentage_0, row.badge_percentage_1, row.badge_percentage_2);
+	    ret += getBadgeSVG("Lowest", row.badge_percentage_0 + "%", color, "#ccc", "#333");
+        }
+        ret += "</td></tr>";
+    } else {
+        ret += "<tr><td class='stats noborder'>";
+        ret += getBadge(BADGE_TEXT, row.tiered_percentage);
+        ret += "</td></tr>";
+    }
+    if (row.hasOwnProperty("otherRepos") && row.otherRepos.length > 0) {
+        for (const k in row.otherRepos) {
+	    if (row.otherRepos.hasOwnProperty(k)) {
+                const otherRepo = row.otherRepos[k];
+                // ret += "<tr><td class='stats noborder right'>" + blank4 + urlPrefix + otherRepo.id + urlSuffix + "</td></tr>";
+                ret += "<tr><td class='stats noborder right'>" + blank4 + getBadge(BADGE_TEXT, otherRepo.tiered_percentage) + "</td></tr>";
+	    }
+        }
+    }
+    ret += "</table>";
+    return ret;
 }
 
 /* cycle the row's font size to 24px, 8px and back to normal */
@@ -845,35 +912,6 @@ function resize(id) { // used by onclick()
     } else {
         $(".size__" + id).css("font-size", "24px");
     }
-}
-
-function getAllBadges(data, type, row) {
-    if (type !== "display") return data;
-    const urlPrefix = "<img src=\"https://bestpractices.coreinfrastructure.org/projects/";
-    const urlSuffix = "/badge\"/>";
-    let ret = "<table class='noborder'>";
-    if (row.id == 0) {
-        ret += "<tr><td class='stats noborder'>";
-        if (row.project_rank == 0) {
-	    ret += getBadge("cii best practices", "Not started 0%", "red"); // '<img src="images/openssf-not-started.png"/>';
-        } else {
-	    const color = getColor(row.badge_percentage_0, row.badge_percentage_1, row.badge_percentage_2);
-	    ret += getBadge("Lowest", row.badge_percentage_0 + "%", color);
-        }
-        ret += "</td></tr>";
-    } else {
-        ret += "<tr><td class='stats noborder'>" + (urlPrefix + row.id + urlSuffix) + "</td></tr>";
-    }
-    if (row.hasOwnProperty("otherRepos") && row.otherRepos.length > 0) {
-        for (const k in row.otherRepos) {
-	    if (row.otherRepos.hasOwnProperty(k)) {
-                const otherRepo = row.otherRepos[k];
-                ret += "<tr><td class='stats noborder right'>" + blank4 + urlPrefix + otherRepo.id + urlSuffix + "</td></tr>";
-	    }
-        }
-    }
-    ret += "</table>";
-    return ret;
 }
 
 function getAllPercentages(data, type, row, num) {
@@ -916,36 +954,36 @@ function prEditor(editorList, editorDict) {
 
     let requiredCount = 0;
     let hasRequiredCount = 0;
-    let optionalCount = 0;
+    // let optionalCount = 0;
     let hasOptionalCount = 0;
     for (const editor in openssfEditors) {
-	if (openssfEditors.hasOwnProperty(editor)) {
+        if (openssfEditors.hasOwnProperty(editor)) {
 	    if (openssfEditors[editor] == "required") {
-		requiredCount++;
-		if (editors.includes(editor)) {
+                requiredCount++;
+                if (editors.includes(editor)) {
 		    hasRequiredCount++;
-		}
+                }
 	    }
 	    if (openssfEditors[editor] == "optional") {
-		optionalCount++;
-		if (editors.includes(editor)) {
+                // optionalCount++;
+                if (editors.includes(editor)) {
 		    hasOptionalCount++;
-		}
+                }
 	    }
-	}
+        }
     }
 
     let cl = "buzz";
     if ((requiredCount > 0) && (requiredCount == hasRequiredCount)) {
-	if (len > hasRequiredCount) {
+        if (len > hasRequiredCount) {
 	    cl = "met";
-	} else {
+        } else {
 	    cl = "partial";
-	}
+        }
     } else if (hasOptionalCount > 0) {
-	cl = "partial";
+        cl = "partial";
     } else if (requiredCount == 0) {
-	cl = "partial";
+        cl = "partial";
     }
 
     let editorsOut = "";
@@ -1091,7 +1129,7 @@ function resort(newSortBy) {
                 requiredNames[level].length = 0;
                 const olevel = "orig_" + level;
                 for (const i in requiredNames[olevel]) {
-		    if (requiredNames[olevel].haOwnProperty(i)) {
+		    if (requiredNames[olevel].hasOwnProperty(i)) {
                         requiredNames[level].push({name: requiredNames[olevel][i]["name"], orig: requiredNames[olevel][i]["orig"]});
 		    }
                 }
@@ -1392,7 +1430,9 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 			    const justificationName = fieldName + "_justification";
 			    const urlRequired = badgeDescriptions[level][fieldName]["description"].indexOf("(URL required)") >= 0;
 			    const hasUrl = (justificationName in row) && containsURL(row[justificationName]);
-			    if (data.toLowerCase() == "met") {
+			    if (data === undefined) {
+			        classVal = "undefined";
+			    } else if (data.toLowerCase() == "met") {
 			        if (urlRequired && hasUrl) classVal = "met";
 			        else if (!urlRequired) classVal = "met";
 			        else classVal = "needsUrl";
@@ -1505,6 +1545,9 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
 		    const status = row[ciiName+"_status"].toLowerCase();
 		    const justificationName = ciiName + "_justification";
 		    const hasUrl = (justificationName in row) && containsURL(row[justificationName]);
+		    if (row["maintained_status"] === undefined) { // older data did not have this field. Maintained was assumed.
+                        row["maintained_status"] = "met";
+		    }
 		    unmaintained = row["maintained_status"].toLowerCase() == "met";
 		    if (status == "met") {
                         if (urlRequired && hasUrl) met += 1;
@@ -1533,6 +1576,273 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
     }
 }
 
+// create the summary table
+function createSummaryTable(dataTable) {
+    let passingCount = 0; let silverCount = 0; let goldCount = 0;
+    let nonPassingCount = 0; let nonSilverCount = 0; let nonGoldCount = 0;
+    let passing80Count = 0; let silver80Count = 0; let gold80Count = 0;
+
+    let passingMinusCount = 0; let silverMinusCount = 0; let goldMinusCount = 0;
+    let nonPassingMinusCount = 0; let nonSilverMinusCount = 0; let nonGoldMinusCount = 0;
+    let passing80MinusCount = 0; let silver80MinusCount = 0; let gold80MinusCount = 0;
+    const totalCount = dataTable.length;
+
+    $(dataTable).each(function(index, element) {
+        if (element.badge_percentage_0 == 100) passingCount++;
+        else {
+	    nonPassingCount++; if (element.badge_percentage_0 >= 80) {
+                passing80Count++;
+	    }
+        }
+        if (element.badge_percentage_1 == 100) silverCount++;
+        else {
+	    nonSilverCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) {
+                silver80Count++;
+	    }
+        }
+        if (element.badge_percentage_2 == 100) goldCount++;
+        else {
+	    nonGoldCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) {
+                gold80Count++;
+	    }
+        }
+        // level 1-, 2-, 3-
+        if (element.badge_percentage_0 >= 95) passingMinusCount++;
+        else {
+	    nonPassingMinusCount++; if (element.badge_percentage_0 >= 80) {
+                passing80MinusCount++;
+	    }
+        }
+        if (element.badge_percentage_1 >= 95) silverMinusCount++;
+        else {
+	    nonSilverMinusCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) {
+                silver80MinusCount++;
+	    }
+        }
+        if (element.badge_percentage_2 >= 95) goldMinusCount++;
+        else {
+	    nonGoldMinusCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) {
+                gold80MinusCount++;
+	    }
+        }
+    });
+
+    const passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
+    const passing80Needed = (nonPassingCount > 0) ? Math.ceil(0.80 * nonPassingCount) : 0;
+    const silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
+    const gold80Percentage = (nonGoldCount > 0) ? (100 * gold80Count / nonGoldCount) : 0;
+
+    const passing80MinusPercentage = (nonPassingMinusCount > 0) ? (100 * passing80MinusCount / nonPassingMinusCount) : 0;
+    const passing80MinusNeeded = (nonPassingMinusCount > 0) ? Math.ceil(0.80 * nonPassingMinusCount) : 0;
+    const silver80MinusPercentage = (nonSilverMinusCount > 0) ? (100 * silver80MinusCount / nonSilverMinusCount) : 0;
+    const gold80MinusPercentage = (nonGoldMinusCount > 0) ? (100 * gold80MinusCount / nonGoldMinusCount) : 0;
+
+    $("#non-passing-level-1").html(passing80Percentage.toFixed(2));
+    $("#non-passing-level-2").html(silver80Percentage.toFixed(2));
+    $("#non-passing-level-3").html(gold80Percentage.toFixed(2));
+
+    $("#non-passing-level-minus-1").html(passing80MinusPercentage.toFixed(2));
+    $("#non-passing-level-minus-2").html(silver80MinusPercentage.toFixed(2));
+    $("#non-passing-level-minus-3").html(gold80MinusPercentage.toFixed(2));
+
+    const passingPercentage = (100 * passingCount / totalCount);
+    const passingNeeded = Math.ceil(0.70 * totalCount);
+    const silverPercentage = (100 * silverCount / totalCount);
+    const goldPercentage = (100 * goldCount / totalCount);
+
+    const passingMinusPercentage = (100 * passingMinusCount / totalCount);
+    const passingMinusNeeded = Math.ceil(0.70 * totalCount);
+    const silverMinusPercentage = (100 * silverMinusCount / totalCount);
+    const goldMinusPercentage = (100 * goldMinusCount / totalCount);
+
+    const color = getColor(passingPercentage, silverPercentage, goldPercentage);
+
+    $("#passing-level-1").html(passingPercentage.toFixed(2));
+    $("#passing-level-2").html(silverPercentage.toFixed(2));
+    $("#passing-level-3").html(goldPercentage.toFixed(2));
+
+    $("#passing-level-minus-1").html(passingMinusPercentage.toFixed(2));
+    $("#passing-level-minus-2").html(silverMinusPercentage.toFixed(2));
+    $("#passing-level-minus-3").html(goldMinusPercentage.toFixed(2));
+
+    const showOneMinus = 1; // parms.get("showminus", false);
+
+    let level = "0";
+    if (showOneMinus) {
+        if ((passingMinusPercentage >= 70) && ((nonPassingMinusCount == 0) || (passing80MinusPercentage >= 80))) {
+	    level = "1-minus";
+        }
+    }
+    if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) {
+        level = "1";
+    }
+    if (showOneMinus) {
+        if ((silverMinusPercentage >= 70) && ((nonSilverMinusCount == 0) || (silver80MinusPercentage >= 80))) {
+	    level = "2-minus";
+        }
+    }
+    if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) {
+        level = "2";
+    }
+    if (showOneMinus) {
+        if ((goldMinusPercentage >= 70) && ((nonGoldMinusCount == 0) || (gold80MinusPercentage >= 80))) {
+	    level = "3-minus";
+        }
+    }
+    if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) {
+        level = "3";
+    }
+    if (goldPercentage == 100) {
+        level = 4;
+    }
+
+    $("#trsummary").append(
+        "<thead><tr>" +
+	    "<th>&nbsp;</th>" +
+	    "<th>Passing</th>" +
+	    "<th>Silver</th>" +
+	    "<th>Gold</th>" +
+	    "</tr></thead>",
+    );
+
+    if (showOneMinus) {
+        $("#level1minus").show();
+    }
+
+    if (showOneMinus) {
+        $("#trsummary").append(
+	    "<tr>" +
+		"<th class='minus'>Projects &ge; 95%</th>" +
+		"<td class='minus textright'>" +
+		"<table class='noborder right'><tr><td class='noborder'>" +
+		passingMinusCount +
+		"&nbsp;/&nbsp;" + totalCount +
+		"&nbsp;=&nbsp;" + passingMinusPercentage.toFixed(2) + "% " +
+		"<br/>" +
+		"(" + passingMinusNeeded + " needed for 70%)" +
+		"</td><td class='noborder'>" +
+		(((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
+		 ((passingMinusPercentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
+		"</td></tr></table>" +
+		"</td>" +
+		"<td class='minus textright'>" + silverMinusCount +
+		"&nbsp;/&nbsp;" + totalCount +
+		"&nbsp;=&nbsp;" + silverMinusPercentage.toFixed(2) + "% " +
+		((color == silver) ? "<img src='images/checkmark.png'/>" :
+		 (color == green) ? ((silverMinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
+		"</td>" +
+		"<td class='minus textright'>" + goldMinusCount +
+		"&nbsp;/&nbsp;" + totalCount +
+		"&nbsp;=&nbsp;" + goldMinusPercentage.toFixed(2) + "% " +
+		((color == gold) ? "<img src='images/checkmark.png'/>" :
+		 (color == silver) ? ((goldMinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
+		 "") +
+		"</td>" + "</tr>",
+        );
+    }
+
+    if (showOneMinus) {
+        $("#trsummary").append(
+	    "<tr>" +
+		"<th class='minus'>Projects &ge;80%/&lt;95%</th>" +
+		"<td class='minus textright'>" +
+		"<table class='noborder right'><tr><td class='noborder'>" +
+		passing80MinusCount +
+		"&nbsp;/&nbsp;(&nbsp;" + totalCount +
+		"&nbsp;&ndash;&nbsp;" + passingMinusCount +
+		"&nbsp;)&nbsp;=&nbsp;" + passing80MinusPercentage.toFixed(2) + "% " +
+		"<br/>" +
+		"(" + passing80MinusNeeded + " of " + (totalCount - passingMinusCount) + " needed for 80%)" +
+		"</td><td class='noborder'>" +
+		(((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
+		 ((passing80MinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
+		"</td></tr></table>" +
+		"</td>" +
+		"<td class='minus textright'>" + silver80MinusCount + "&nbsp;/&nbsp;" + nonSilverMinusCount +
+		"&nbsp;=&nbsp;" + silver80MinusPercentage.toFixed(2) + "%" +
+		((color == silver) ? "<img src='images/checkmark.png'/>" :
+		 (color == green) ? ((silver80MinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
+		"</td>" +
+		"<td class='minus textright'>" + gold80MinusCount + "&nbsp;/&nbsp;" + nonGoldMinusCount +
+		"&nbsp;=&nbsp;" + gold80MinusPercentage.toFixed(2) + "%" +
+		((color == gold) ? "<img src='images/checkmark.png'/>" :
+		 (color == silver) ? ((gold80MinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
+		 "") +
+		"</td>" +
+		"</tr>",
+        );
+    }
+
+    $("#trsummary").append(
+        "<tr>" +
+	    "<th>Projects at 100%</th>" +
+	    "<td class='textright'>" +
+	    "<table class='noborder right'><tr><td class='noborder'>" +
+	    passingCount +
+	    "&nbsp;/&nbsp;" + totalCount +
+	    "&nbsp;=&nbsp;" + passingPercentage.toFixed(2) + "% " +
+	    "<br/>" +
+	    "(" + passingNeeded + " needed for 70%)" +
+	    "</td><td class='noborder'>" +
+	    (((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
+	     ((passingPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
+	    "</td></tr></table>" +
+	    "</td>" +
+	    "<td class='textright'>" + silverCount +
+	    "&nbsp;/&nbsp;" + totalCount +
+	    "&nbsp;=&nbsp;" + silverPercentage.toFixed(2) + "% " +
+	    ((color == silver) ? "<img src='images/checkmark.png'/>" :
+	     (color == green) ? ((silverPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
+	    "</td>" +
+	    "<td class='textright'>" + goldCount +
+	    "&nbsp;/&nbsp;" + totalCount +
+	    "&nbsp;=&nbsp;" + goldPercentage.toFixed(2) + "% " +
+	    ((color == gold) ? "<img src='images/checkmark.png'/>" :
+	     (color == silver) ? ((goldPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
+	     "") +
+	    "</td>" + "</tr>",
+    );
+
+    $("#trsummary").append(
+        "<tr>" +
+	    "<th>Projects &ge;80%/&lt;100%</th>" +
+	    "<td class='textright'>" +
+	    "<table class='noborder right'><tr><td class='noborder'>" +
+	    passing80Count +
+	    "&nbsp;/&nbsp;(&nbsp;" + totalCount +
+	    "&nbsp;&ndash;&nbsp;" + passingCount +
+	    "&nbsp;)&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "% " +
+	    "<br/>" +
+	    "(" + passing80Needed + " of " + (totalCount - passingCount) + " needed for 80%)" +
+	    "</td><td class='noborder'>" +
+	    (((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
+	     ((passing80Percentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
+	    "</td></tr></table>" +
+	    "</td>" +
+	    "<td class='textright'>" + silver80Count + "&nbsp;/&nbsp;" + nonSilverCount +
+	    "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%" +
+	    ((color == silver) ? "<img src='images/checkmark.png'/>" :
+	     (color == green) ? ((silver80Percentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
+	    "</td>" +
+	    "<td class='textright'>" + gold80Count + "&nbsp;/&nbsp;" + nonGoldCount +
+	    "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%" +
+	    ((color == gold) ? "<img src='images/checkmark.png'/>" :
+	     (color == silver) ? ((gold80Percentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
+	     "") +
+	    "</td>" +
+	    "</tr>",
+    );
+
+    const textcolor = (color == gold) ? black : (color == silver) ? black : white;
+
+    $("#trsummary").append(
+        "<tr>" +
+	    "<th>Current&nbsp;Level</th>" +
+	    "<td class='center' colspan='3' style='color: " + textcolor + "; background-color: " + color + "'><br/>Level&nbsp;" + level + "<br/><br/></td>" +
+	    "</tr>",
+    );
+}
+
 // Create the Release Statistics
 function doReleaseStatisticsTable() {
     const historicalProjectCount = { };
@@ -1547,10 +1857,8 @@ function doReleaseStatisticsTable() {
     showHistoricalInfo(historicalProjectCount, historicalStats);
 }
 
-function whenDone(datad, filtered, editorNames) {
+function whenDone(editorNames) {
     watermark("Processing");
-    // console.log("whenDone(), datad=", datad);
-    // console.log("whenDone(), filtered=", filtered);
 
     // create a table mapping editor IDs to names and/or nicknames
     const editorDict = { };
@@ -1563,6 +1871,12 @@ function whenDone(datad, filtered, editorNames) {
 	    editorDict[editorNames[k].id] = "unknown";
         }
     }
+
+    const datad = [];
+    const filtered = [];
+    console.log("Showing " + releaseToShow);
+    pushData(datad, projectHistoricalReleaseData[releaseToShow], filterOut, filtered);
+    console.log("datad=", datad);
 
     const invertedFiltered = {};
     for (const j in filtered) {
@@ -1606,18 +1920,18 @@ function whenDone(datad, filtered, editorNames) {
 	    datad[k].project_badurl = (n != -1);
 	    datad[k].project_badurlsuffix = (datad[k].sub_project.indexOf("-BADURLSUFFIX") != -1);
 	    datad[k].sub_project_repos = projectAndRepos.shift();
-	    datad[k].project_invalid_sub_project = !projectAllSubProjects[projectCurrentRelease].hasOwnProperty(project);
+	    datad[k].project_invalid_sub_project = !projectAllSubProjects[releaseToShow].hasOwnProperty(project);
 
 	    // augment the name with info about being unmaintained
-	    datad[k].name += projectAllSubProjects[projectCurrentRelease].hasOwnProperty(project) ?
-                (projectAllSubProjects[projectCurrentRelease][project].skip ? (" <span class='unmaintained'>" + projectAllSubProjects[projectCurrentRelease][project].skip + "</span>") : "") :
+	    datad[k].name += projectAllSubProjects[releaseToShow].hasOwnProperty(project) ?
+                (projectAllSubProjects[releaseToShow][project].skip ? (" <span class='unmaintained'>" + projectAllSubProjects[releaseToShow][project].skip + "</span>") : "") :
                 "";
 	    datad[k].name += datad[k].maintained_justification ? (" <span class='unmaintained'>" + datad[k].maintained_justification + "</span>") : "";
 	    // console.log("datad[" + k + "]=", datad[k]);
-	    if (projectAllSubProjects[projectCurrentRelease].hasOwnProperty(project)) {
-                // console.log("projectAllSubProjects["+projectCurrentRelease+"]["+project+"]=", projectAllSubProjects[projectCurrentRelease][project]);
-                if (projectAllSubProjects[projectCurrentRelease][project].hasOwnProperty("skip")) {
-		    datad[k].skip = projectAllSubProjects[projectCurrentRelease][project]["skip"];
+	    if (projectAllSubProjects[releaseToShow].hasOwnProperty(project)) {
+                // console.log("projectAllSubProjects["+releaseToShow+"]["+project+"]=", projectAllSubProjects[releaseToShow][project]);
+                if (projectAllSubProjects[releaseToShow][project].hasOwnProperty("skip")) {
+		    datad[k].skip = projectAllSubProjects[releaseToShow][project]["skip"];
                 } else {
 		    datad[k].skip = "";
                 }
@@ -1694,14 +2008,14 @@ function whenDone(datad, filtered, editorNames) {
     $(dataTable).each(function(index, element) {
         element.sub_project_badge = element.id;
         // console.log("dataTable.each, element.id=" + element.id + ", element.sub_project_short=" + element.sub_project_short);
-        if (projectAllSubProjects[projectCurrentRelease].hasOwnProperty(element.sub_project_short)) {
-	    projectAllSubProjects[projectCurrentRelease][element.sub_project_short].seen = "y";
+        if (projectAllSubProjects[releaseToShow].hasOwnProperty(element.sub_project_short)) {
+	    projectAllSubProjects[releaseToShow][element.sub_project_short].seen = "y";
         }
     });
 
-    for (const project in projectAllSubProjects[projectCurrentRelease]) {
-        if (projectAllSubProjects[projectCurrentRelease].hasOwnProperty(project)) {
-	    const element = projectAllSubProjects[projectCurrentRelease][project];
+    for (const project in projectAllSubProjects[releaseToShow]) {
+        if (projectAllSubProjects[releaseToShow].hasOwnProperty(project)) {
+	    const element = projectAllSubProjects[releaseToShow][project];
 	    // console.log("project=" + project + ", element=", element);
 	    if ((element.seen == "n") && (!element.skip && !parms.get("skipnotstarted", false)) && !(project in invertedFiltered)) {
                 dataTable.push(genData(project, project, 0, 0, 0));
@@ -1885,270 +2199,7 @@ function whenDone(datad, filtered, editorNames) {
     // if (parms.get("skipnotstarted", false)) $('#keepnotstarted').show();
     // else $('#skipnotstarted').show();
 
-    let passingCount = 0; let silverCount = 0; let goldCount = 0;
-    let nonPassingCount = 0; let nonSilverCount = 0; let nonGoldCount = 0;
-    let passing80Count = 0; let silver80Count = 0; let gold80Count = 0;
-
-    let passingMinusCount = 0; let silverMinusCount = 0; let goldMinusCount = 0;
-    let nonPassingMinusCount = 0; let nonSilverMinusCount = 0; let nonGoldMinusCount = 0;
-    let passing80MinusCount = 0; let silver80MinusCount = 0; let gold80MinusCount = 0;
-    const totalCount = dataTable.length;
-
-    $(dataTable).each(function(index, element) {
-        if (element.badge_percentage_0 == 100) passingCount++;
-        else {
-	    nonPassingCount++; if (element.badge_percentage_0 >= 80) {
-                passing80Count++;
-	    }
-        }
-        if (element.badge_percentage_1 == 100) silverCount++;
-        else {
-	    nonSilverCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) {
-                silver80Count++;
-	    }
-        }
-        if (element.badge_percentage_2 == 100) goldCount++;
-        else {
-	    nonGoldCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) {
-                gold80Count++;
-	    }
-        }
-        // level 1-, 2-, 3-
-        if (element.badge_percentage_0 >= 95) passingMinusCount++;
-        else {
-	    nonPassingMinusCount++; if (element.badge_percentage_0 >= 80) {
-                passing80MinusCount++;
-	    }
-        }
-        if (element.badge_percentage_1 >= 95) silverMinusCount++;
-        else {
-	    nonSilverMinusCount++; if ((element.badge_percentage_0 == 100) && (element.badge_percentage_1 >= 80)) {
-                silver80MinusCount++;
-	    }
-        }
-        if (element.badge_percentage_2 >= 95) goldMinusCount++;
-        else {
-	    nonGoldMinusCount++; if ((element.badge_percentage_1 == 100) && (element.badge_percentage_2 >= 80)) {
-                gold80MinusCount++;
-	    }
-        }
-    });
-
-    const passing80Percentage = (nonPassingCount > 0) ? (100 * passing80Count / nonPassingCount) : 0;
-    const passing80Needed = (nonPassingCount > 0) ? Math.ceil(0.80 * nonPassingCount) : 0;
-    const silver80Percentage = (nonSilverCount > 0) ? (100 * silver80Count / nonSilverCount) : 0;
-    const gold80Percentage = (nonGoldCount > 0) ? (100 * gold80Count / nonGoldCount) : 0;
-
-    const passing80MinusPercentage = (nonPassingMinusCount > 0) ? (100 * passing80MinusCount / nonPassingMinusCount) : 0;
-    const passing80MinusNeeded = (nonPassingMinusCount > 0) ? Math.ceil(0.80 * nonPassingMinusCount) : 0;
-    const silver80MinusPercentage = (nonSilverMinusCount > 0) ? (100 * silver80MinusCount / nonSilverMinusCount) : 0;
-    const gold80MinusPercentage = (nonGoldMinusCount > 0) ? (100 * gold80MinusCount / nonGoldMinusCount) : 0;
-
-    $("#non-passing-level-1").html(passing80Percentage.toFixed(2));
-    $("#non-passing-level-2").html(silver80Percentage.toFixed(2));
-    $("#non-passing-level-3").html(gold80Percentage.toFixed(2));
-
-    $("#non-passing-level-minus-1").html(passing80MinusPercentage.toFixed(2));
-    $("#non-passing-level-minus-2").html(silver80MinusPercentage.toFixed(2));
-    $("#non-passing-level-minus-3").html(gold80MinusPercentage.toFixed(2));
-
-    const passingPercentage = (100 * passingCount / totalCount);
-    const passingNeeded = Math.ceil(0.70 * totalCount);
-    const silverPercentage = (100 * silverCount / totalCount);
-    const goldPercentage = (100 * goldCount / totalCount);
-
-    const passingMinusPercentage = (100 * passingMinusCount / totalCount);
-    const passingMinusNeeded = Math.ceil(0.70 * totalCount);
-    const silverMinusPercentage = (100 * silverMinusCount / totalCount);
-    const goldMinusPercentage = (100 * goldMinusCount / totalCount);
-
-    const color = getColor(passingPercentage, silverPercentage, goldPercentage);
-
-    $("#passing-level-1").html(passingPercentage.toFixed(2));
-    $("#passing-level-2").html(silverPercentage.toFixed(2));
-    $("#passing-level-3").html(goldPercentage.toFixed(2));
-
-    $("#passing-level-minus-1").html(passingMinusPercentage.toFixed(2));
-    $("#passing-level-minus-2").html(silverMinusPercentage.toFixed(2));
-    $("#passing-level-minus-3").html(goldMinusPercentage.toFixed(2));
-
-    const showOneMinus = 1; // parms.get("showminus", false);
-
-    let level = "0";
-    if (showOneMinus) {
-        if ((passingMinusPercentage >= 70) && ((nonPassingMinusCount == 0) || (passing80MinusPercentage >= 80))) {
-	    level = "1-minus";
-        }
-    }
-    if ((passingPercentage >= 70) && ((nonPassingCount == 0) || (passing80Percentage >= 80))) {
-        level = "1";
-    }
-    if (showOneMinus) {
-        if ((silverMinusPercentage >= 70) && ((nonSilverMinusCount == 0) || (silver80MinusPercentage >= 80))) {
-	    level = "2-minus";
-        }
-    }
-    if ((silverPercentage >= 70) && ((nonSilverCount == 0) || (silver80Percentage >= 80))) {
-        level = "2";
-    }
-    if (showOneMinus) {
-        if ((goldMinusPercentage >= 70) && ((nonGoldMinusCount == 0) || (gold80MinusPercentage >= 80))) {
-	    level = "3-minus";
-        }
-    }
-    if ((goldPercentage >= 70) && ((nonGoldCount == 0) || (gold80Percentage >= 80))) {
-        level = "3";
-    }
-    if (goldPercentage == 100) {
-        level = 4;
-    }
-
-    $("#trsummary").append(
-        "<thead><tr>" +
-		     "<th>&nbsp;</th>" +
-		     "<th>Passing</th>" +
-		     "<th>Silver</th>" +
-		     "<th>Gold</th>" +
-		     "</tr></thead>",
-    );
-
-    if (showOneMinus) {
-        $("#level1minus").show();
-    }
-
-    if (showOneMinus) {
-        $("#trsummary").append(
-	    "<tr>" +
-		     "<th class='minus'>Projects &ge; 95%</th>" +
-		     "<td class='minus textright'>" +
-		     "<table class='noborder right'><tr><td class='noborder'>" +
-		     passingMinusCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + passingMinusPercentage.toFixed(2) + "% " +
-		      "<br/>" +
-		     "(" + passingMinusNeeded + " needed for 70%)" +
-		     "</td><td class='noborder'>" +
-		     (((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
-		     	((passingMinusPercentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
-		     "</td></tr></table>" +
-		     "</td>" +
-		     "<td class='minus textright'>" + silverMinusCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + silverMinusPercentage.toFixed(2) + "% " +
-		     ((color == silver) ? "<img src='images/checkmark.png'/>" :
-		     	(color == green) ? ((silverMinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
-		     "</td>" +
-		     "<td class='minus textright'>" + goldMinusCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + goldMinusPercentage.toFixed(2) + "% " +
-		     ((color == gold) ? "<img src='images/checkmark.png'/>" :
-		     	(color == silver) ? ((goldMinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
-		     		"") +
-		     "</td>" + "</tr>",
-        );
-    }
-
-    if (showOneMinus) {
-        $("#trsummary").append(
-	    "<tr>" +
-		     "<th class='minus'>Projects &ge;80%/&lt;95%</th>" +
-		     "<td class='minus textright'>" +
-		     "<table class='noborder right'><tr><td class='noborder'>" +
-		     passing80MinusCount +
-		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
-		     "&nbsp;&ndash;&nbsp;" + passingMinusCount +
-		     "&nbsp;)&nbsp;=&nbsp;" + passing80MinusPercentage.toFixed(2) + "% " +
-		      "<br/>" +
-		     "(" + passing80MinusNeeded + " of " + (totalCount - passingMinusCount) + " needed for 80%)" +
-		     "</td><td class='noborder'>" +
-		     (((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
-		     	((passing80MinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
-		     "</td></tr></table>" +
-		     "</td>" +
-		     "<td class='minus textright'>" + silver80MinusCount + "&nbsp;/&nbsp;" + nonSilverMinusCount +
-		     "&nbsp;=&nbsp;" + silver80MinusPercentage.toFixed(2) + "%" +
-		     ((color == silver) ? "<img src='images/checkmark.png'/>" :
-		     	(color == green) ? ((silver80MinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
-		     "</td>" +
-		     "<td class='minus textright'>" + gold80MinusCount + "&nbsp;/&nbsp;" + nonGoldMinusCount +
-		     "&nbsp;=&nbsp;" + gold80MinusPercentage.toFixed(2) + "%" +
-		     ((color == gold) ? "<img src='images/checkmark.png'/>" :
-		     	(color == silver) ? ((gold80MinusPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
-		     		"") +
-		     "</td>" +
-		     "</tr>",
-        );
-    }
-
-    $("#trsummary").append(
-        "<tr>" +
-		     "<th>Projects at 100%</th>" +
-		     "<td class='textright'>" +
-		     "<table class='noborder right'><tr><td class='noborder'>" +
-		     passingCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + passingPercentage.toFixed(2) + "% " +
-		      "<br/>" +
-		     "(" + passingNeeded + " needed for 70%)" +
-		     "</td><td class='noborder'>" +
-		     (((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
-		     	((passingPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
-		     "</td></tr></table>" +
-		     "</td>" +
-		     "<td class='textright'>" + silverCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + silverPercentage.toFixed(2) + "% " +
-		     ((color == silver) ? "<img src='images/checkmark.png'/>" :
-		     	(color == green) ? ((silverPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
-		     "</td>" +
-		     "<td class='textright'>" + goldCount +
-		     "&nbsp;/&nbsp;" + totalCount +
-		     "&nbsp;=&nbsp;" + goldPercentage.toFixed(2) + "% " +
-		     ((color == gold) ? "<img src='images/checkmark.png'/>" :
-		     	(color == silver) ? ((goldPercentage >= 80) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
-		     		"") +
-		     "</td>" + "</tr>",
-    );
-
-    $("#trsummary").append(
-        "<tr>" +
-		     "<th>Projects &ge;80%/&lt;100%</th>" +
-		     "<td class='textright'>" +
-		     "<table class='noborder right'><tr><td class='noborder'>" +
-		     passing80Count +
-		     "&nbsp;/&nbsp;(&nbsp;" + totalCount +
-		     "&nbsp;&ndash;&nbsp;" + passingCount +
-		     "&nbsp;)&nbsp;=&nbsp;" + passing80Percentage.toFixed(2) + "% " +
-		      "<br/>" +
-		     "(" + passing80Needed + " of " + (totalCount - passingCount) + " needed for 80%)" +
-		     "</td><td class='noborder'>" +
-		     (((color == silver) || (color == gold)) ? "<img src='images/checkmark.png'/>" :
-		     	((passing80Percentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>")) +
-		     "</td></tr></table>" +
-		     "</td>" +
-		     "<td class='textright'>" + silver80Count + "&nbsp;/&nbsp;" + nonSilverCount +
-		     "&nbsp;=&nbsp;" + silver80Percentage.toFixed(2) + "%" +
-		     ((color == silver) ? "<img src='images/checkmark.png'/>" :
-		     	(color == green) ? ((silver80Percentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") : "") +
-		     "</td>" +
-		     "<td class='textright'>" + gold80Count + "&nbsp;/&nbsp;" + nonGoldCount +
-		     "&nbsp;=&nbsp;" + gold80Percentage.toFixed(2) + "%" +
-		     ((color == gold) ? "<img src='images/checkmark.png'/>" :
-		     	(color == silver) ? ((gold80Percentage >= 70) ? "<img src='images/checkmark.png'/>" : "<img src='images/xout.png'/>") :
-		     		"") +
-		     "</td>" +
-		     "</tr>",
-    );
-
-    const textcolor = (color == gold) ? black : (color == silver) ? black : white;
-
-    $("#trsummary").append(
-        "<tr>" +
-		     "<th>Current&nbsp;Level</th>" +
-		     "<td class='center' colspan='3' style='color: " + textcolor + "; background-color: " + color + "'><br/>Level&nbsp;" + level + "<br/><br/></td>" +
-		     "</tr>",
-    );
-
+    createSummaryTable(dataTable);
 
     const turnoff = parms.get("turnoff", "");
     if (turnoff != "") {
@@ -2159,6 +2210,11 @@ function whenDone(datad, filtered, editorNames) {
     }
 
     doReleaseStatisticsTable();
+
+    // Add the release name to all of the spans that should show it
+    $(".release_name").each(function(i, obj) {
+        $(this).html(releaseToShow);
+    });
 
     $(".sortby_" + sortBy).prop("checked", true);
     // $('#sortby_form').prop('action',window.location);
@@ -2176,10 +2232,24 @@ function whenDone(datad, filtered, editorNames) {
 }
 
 {
-    const pagelist = genPageList(parms.get("page", "1-99"));
-    const datad = [];
-    const filtered = [];
+    const el = $("#release_selection");
+    for (const nm in projectReleases) {
+        if (projectReleases.hasOwnProperty(nm)) {
+	    let opt = "<option value='" + nm + "'>" + nm + "</option>";
+	    if (nm == releaseToShow) {
+                opt = "<option selected='selected' value='" + nm + "'>" + nm + "</option>";
+	    }
+	    el.append(opt);
+        }
+    }
+
+    const pagelist = genPageList(parms.get("page", "1-999"));
     const editorNames = [];
-    getProjectQueryUrl(datad, filtered, editorNames, pagelist, openssfProjectIds, 0);
+    projectHistoricalReleaseData[projectCurrentRelease] = [];
+    if (!projectReleases.hasOwnProperty(projectCurrentRelease)) {
+        projectReleases[projectCurrentRelease] = { };
+    }
+
+    getProjectQueryUrl(editorNames, pagelist, openssfProjectIds, 0);
     // if any thing needs to be done, add it to whenDone()
 }

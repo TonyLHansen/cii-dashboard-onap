@@ -77,12 +77,12 @@
 -->
 </div>
 
-<h2 class='showpermalink'><a id='summary'>Summary</a> <img style='display: none' class='summary_toggle summary_span' src='images/plus-9x9.png'/><img class='summary_toggle summary_span' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#summary" title="Permalink to this item">&#x1f517;</a></span></h2>
+<h2 class='showpermalink'><a id='summary'>Summary</a> as of <span class='release_name'></span> <img style='display: none' class='summary_toggle summary_span' src='images/plus-9x9.png'/><img class='summary_toggle summary_span' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#summary" title="Permalink to this item">&#x1f517;</a></span></h2>
 <div class='summary_span'>
 <table id='trsummary' class='display compact'></table>
 </div>
 
-<h2 class='showpermalink'><a id='projects'>Sub-Projects</a> <img style='display: none' class='projects_toggle projects_span' src='images/plus-9x9.png'/><img class='projects_toggle projects_span' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#projects" title="Permalink to this item">&#x1f517;</a></span></h2>
+<h2 class='showpermalink'><a id='projects'>Sub-Projects</a> in <span class='release_name'></span> <img style='display: none' class='projects_toggle projects_span' src='images/plus-9x9.png'/><img class='projects_toggle projects_span' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#projects" title="Permalink to this item">&#x1f517;</a></span></h2>
 <div class='projects_span'>
 <table id='trprojects' class="display compact" ></table>
 </div>
@@ -144,7 +144,7 @@ These responses can all be found on our ONAP Badge Program <a href='https://wiki
 Almost ALL responses in this category should display the button <button class='projectLevel met'>Met</button>.
 </div>
 </div>
-<h2 class='showpermalink'><a id='passing'>Passing</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='bronze_toggle bronze_span clickable_image' src='images/plus-9x9.png'/><img class='bronze_toggle bronze_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#passing" title="Permalink to this item">&#x1f517;</a></span></h2>
+<h2 class='showpermalink'><a id='passing'>Passing</a> MUST and <span class='optional'>SUGGESTED</span> Requirements in <span class='release_name'></span> <img style='display: none' class='bronze_toggle bronze_span clickable_image' src='images/plus-9x9.png'/><img class='bronze_toggle bronze_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#passing" title="Permalink to this item">&#x1f517;</a></span></h2>
 <form action="#" onsubmit="return false;" class='right'>
   <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">
     <option>-- jump to --</option>
@@ -171,7 +171,7 @@ Toggle Per-Requirement Statistics: <img style='display: inline' class='bronze_sh
 <td class='bgbronze'>&nbsp;</td></tr>
 <tr><td class='bgbronze' colspan='3'>&nbsp;</td></tr></table>
 </div>
-<h2 class='showpermalink'><a id='silver'>Silver</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='silver_toggle silver_span clickable_image' src='images/plus-9x9.png'/><img class='silver_toggle silver_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#silver" title="Permalink to this item">&#x1f517;</a></span></h2>
+<h2 class='showpermalink'><a id='silver'>Silver</a> MUST and <span class='optional'>SUGGESTED</span> Requirements in <span class='release_name'></span> <img style='display: none' class='silver_toggle silver_span clickable_image' src='images/plus-9x9.png'/><img class='silver_toggle silver_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#silver" title="Permalink to this item">&#x1f517;</a></span></h2>
 <form action="#" onsubmit="return false;" class='right'>
   <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">
     <option>-- jump to --</option>
@@ -196,7 +196,7 @@ Toggle Per-Requirement Statistics: <img style='display: inline' class='silver_sh
 <td class='bgsilver'>&nbsp;</td></tr>
 <tr><td class='bgsilver' colspan='3'>&nbsp;</td></tr></table>
 </div>
-<h2 class='showpermalink'><a id='gold'>Gold</a> MUST and <span class='optional'>SUGGESTED</span> Requirements <img style='display: none' class='gold_toggle gold_span clickable_image' src='images/plus-9x9.png'/><img class='gold_toggle gold_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#gold" title="Permalink to this item">&#x1f517;</a></span></h2>
+<h2 class='showpermalink'><a id='gold'>Gold</a> MUST and <span class='optional'>SUGGESTED</span> Requirements in <span class='release_name'></span> <img style='display: none' class='gold_toggle gold_span clickable_image' src='images/plus-9x9.png'/><img class='gold_toggle gold_span clickable_image' src='images/minus-9x9.png'/> <span class="permalink"> <a href="#gold" title="Permalink to this item">&#x1f517;</a></span></h2>
 <form action="#" onsubmit="return false;" class='right'>
   <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">
     <option>-- jump to --</option>
@@ -243,6 +243,10 @@ Toggle All Details: <img style='display: inline' class='editors_detail_toggle ed
 &bull; <a href='?show-unmaintained=y'>Include unmaintained sub-projects</a>
 <!-- &bull; <a id='survey_descriptions'>Survey Descriptions</a> -->
 &bull; <a href='https://github.com/TonyLHansen/cii-dashboard-onap' target='_blank' rel='noopener noreferrer'>GitHub</a>
+&bull; <form>
+    <input type="submit" value="Pick a release to display as:"/>
+    <select id="release_selection" name="release" onchange='this.form.submit()'></select>
+    </form>
 </span>
 <form action="#" onsubmit="return false;" class='right'>
   <select onchange="document.getElementById(options[selectedIndex].value).scrollIntoView(true);">

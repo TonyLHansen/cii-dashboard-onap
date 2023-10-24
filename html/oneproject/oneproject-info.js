@@ -1,5 +1,7 @@
 /* eslint-disable require-jsdoc,no-unused-vars */
 
+console.clear();
+
 function escapeSlash(pat) {
     return pat.replaceAll("/", "[/]").replaceAll("+", "[+]");
 }
@@ -20,7 +22,8 @@ const goodRepoUrlPrefix = "https://github.com/";
 
 const projectReleases = {};
 const projectHistoricalReleaseData = {};
-const openssfSearchQuery = null;
+const projectParms = new Query();
+var openssfSearchQuery = projectParms.get("SEARCH", null);
 
 const projectCurrentRelease = "1.0";
 const projectAllSubProjects = {
@@ -28,10 +31,22 @@ const projectAllSubProjects = {
 };
 const projectCheckProjects = false;
 
-const projectParms = new Query();
-const openssfProjectIds = projectParms.get("ID", "").concat(",", projectParms.get("IDs", "")).replace(/^,*/, "").replace(/,*$/, "").replace(/^$/, "1").split(/, */);
-// console.log("openssfProjectIds=" + openssfProjectIds);
+var openssfProjectIds = projectParms.get("ID", "").concat(",", projectParms.get("IDs", "")).replace(" ", "").replace(/^,*/, "").replace(/,*$/, "").replace(/^$/, "").split(/, */);
 
 const projectName = "Your";
 const openssfEditors = [
 ];
+console.log("openssfSearchQuery=", openssfSearchQuery);
+console.log("openssfProjectIds=", openssfProjectIds);
+
+if (openssfSearchQuery == "") {
+    openssfSearchQuery = null;
+}
+if ((openssfProjectIds.length == 1) &&
+    (openssfProjectIds[0] == "")) {
+    openssfProjectIds = [ ];
+    console.log("openssfSearchQuery now=", openssfSearchQuery);
+}
+
+//console.log("openssfSearchQuery now=", openssfSearchQuery);
+//console.log("openssfProjectIds now=", openssfProjectIds);

@@ -1,7 +1,5 @@
 /* eslint-disable require-jsdoc,no-unused-vars */
 
-console.clear();
-
 function escapeSlash(pat) {
     return pat.replaceAll("/", "[/]").replaceAll("+", "[+]");
 }
@@ -36,8 +34,6 @@ var openssfProjectIds = projectParms.get("ID", "").concat(",", projectParms.get(
 const projectName = "Your";
 const openssfEditors = [
 ];
-console.log("openssfSearchQuery=", openssfSearchQuery);
-console.log("openssfProjectIds=", openssfProjectIds);
 
 if (openssfSearchQuery == "") {
     openssfSearchQuery = null;
@@ -47,6 +43,3 @@ if ((openssfProjectIds.length == 1) &&
     openssfProjectIds = [ ];
     console.log("openssfSearchQuery now=", openssfSearchQuery);
 }
-
-//console.log("openssfSearchQuery now=", openssfSearchQuery);
-//console.log("openssfProjectIds now=", openssfProjectIds);

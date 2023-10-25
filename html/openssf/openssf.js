@@ -777,7 +777,7 @@ function getProject(data, type, row) {
 function getAllNames(data, type, row) {
     if (type !== "display") return data;
     if (row.id == -1) return data;
-    const urlPrefix = "<a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/";
+    const urlPrefix = "<a target='_blank' rel='noopener noreferrer' href='https://www.bestpractices.dev/projects/";
     const urlSuffix = "'>";
     const anchorEnd = "</a>";
     let ret = "<table class='noborder'>";
@@ -873,7 +873,7 @@ function getBadgeSVG(leftText, rightText, rightBgColor, rightFontColor, rightFon
 
 function getAllBadges(data, type, row) {
     if (type !== "display") return data;
-    // const urlPrefix = "<img src=\"https://bestpractices.coreinfrastructure.org/projects/";
+    // const urlPrefix = "<img src=\"https://www.bestpractices.dev/projects/";
     // const urlSuffix = "/badge\"/>";
     let ret = "<table class='noborder'>";
     if (row.id == 0) {
@@ -1388,7 +1388,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
         return "<span style='float: right'><img src='images/updown-7x7.png' class='clickable_image' " +
 		    "onclick='resize(" + row["id"] + ")'" +
 		    "/></span><span class='size__" + row["id"] +
-		    "'><a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/" +
+		    "'><a target='_blank' rel='noopener noreferrer' href='https://www.bestpractices.dev/projects/" +
 		    row["id"] + "'>" + data + "</a></span>";
     },
     });
@@ -1471,7 +1471,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
                         return "<span style='float: right'><img src='images/updown-7x7.png' class='clickable_image' " +
 				"onclick='resize(" + row["id"] + ")'" +
 				"/></span><span class='size__" + row["id"] +
-				"'><a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/" +
+				"'><a target='_blank' rel='noopener noreferrer' href='https://www.bestpractices.dev/projects/" +
 				row["id"] + "'>" + data + "</a></span>";
 		    },
 		    });
@@ -1484,7 +1484,7 @@ function addToQuestionsTable(datad, tablename, level, levelcapname, percent, edi
                 return "<span style='float: right'><img src='images/updown-7x7.png' class='clickable_image' " +
 			    "onclick='resize(" + row["id"] + ")'" +
 			    "/></span><span class='size__" + row["id"] +
-			    "'><a target='_blank' rel='noopener noreferrer' href='https://bestpractices.coreinfrastructure.org/projects/" +
+			    "'><a target='_blank' rel='noopener noreferrer' href='https://www.bestpractices.dev/projects/" +
 			    row["id"] + "'>" + data + "</a></span>";
 	    },
 	    });

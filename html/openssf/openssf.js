@@ -96,6 +96,19 @@ if (help == "y") {
     throw new Error("help");
 }
 
+// For oneproject.html
+function tweakInputValue(nm) {
+    var fld = $("#" + nm);
+    if (fld) {
+	var val = parms.get(nm);
+	if (val) {
+	    fld.val(val);
+	}
+    }
+}
+tweakInputValue("SEARCH");
+tweakInputValue("ID");
+
 let sortBy = "";
 const initSortBy = parms.get("sortby", "by_name").toLowerCase();
 if (!(initSortBy == "by_name" ||

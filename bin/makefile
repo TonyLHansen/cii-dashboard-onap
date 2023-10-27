@@ -2,7 +2,7 @@ BEST_PRACTICES_BADGE_CODE= ../../best-practices-badge
 HTML= ../html
 JSCRIPT=$(HTML)/openssf
 PY=check-descriptions check-jquery-datatables-versions
-PROJECTHTML=$(HTML)/onap.html
+PROJECTHTML=$(HTML)/onap.html $(HTML)/oneproject.html
 
 none:
 	@echo make run-check-descriptions -- check the descriptions

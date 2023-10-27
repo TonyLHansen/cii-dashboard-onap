@@ -11,19 +11,106 @@ import requests
 URL_JQUERY = "https://jquery.com/download/"
 URL_DATATABLES = "https://datatables.net/download/"
 
-GITVERSIONSTAMP = "2023-06-08-12-54"
+GITVERSIONSTAMP = "2023-10-27-17-55"
+
+
+def search_line_for_versions_suffix(args, l, n, k, v, suffix, typ):
+    """Search a line for the item's version with the specified suffix in the given table"""
+    exactd = '"' + v["prefix"] + v["version"] + suffix + '"'
+    exacts = "'" + v["prefix"] + v["version"] + suffix + "'"
+    # print(l)
+    # print(f"exactd=|{exactd}|")
+    # print(f"exacts=|{exacts}|")
+                    
+    if exactd in l or exacts in l:
+        if args.verbose: # > 1:
+            print(f"found {typ} {k} {v['version']} in\n    {l}")
+        v[typ]["found"] += 1
+
+    elif m := re.match("(.*" + re.escape(v["prefix"]) + ")([0-9.]*)" + re.escape(suffix), l):
+        if args.verbose:# > 1:
+            print(f"FOUND {k} {typ} version {m.group(2)} on line {n}, column {len(m.group(1))}")
+        v[typ]["version"] = m.group(2)
+        v[typ]["line"] = n
+        v[typ]["column"] = len(m.group(1))+1
+
+def print_stats(args, fn, k, v, suffix, typ, err):
+    """Print the info about a given version/type"""
+    if v[typ]["found"] == 0:
+        print(f"{fn}:{v[typ]['line']}:{v[typ]['column']}: Did not find {v['prefix']}{v['version']}{suffix}")
+        if v[typ]['version']:
+            print(f"    found {v[typ]['version']} instead")
+        err += 1
+
+    elif v[typ]["found"] > 1:
+        print(
+            f"{fn}:{v[typ]['line']}:{v[typ]['column']}:Found too many instances ({v[typ]['found']}) of {v['prefix']}{v['version']}{suffix}"
+        )
+        if v[typ]['version'] and v[typ]['version'] != v['version']:
+            print(f"    ALSO found version {v[typ]['version']} on line {v[typ]['line']}")
+        err += 1
+
+    else:
+        if args.verbose:
+            print(f"{fn}: Found {v['prefix']}{v['version']}{suffix}")
+        if v[typ]['version'] and v[typ]['version'] != v['version']:
+            print(f"{fn}:{v[typ]['line']}:{v[typ]['column']}:    ALSO found version {v[typ]['version']} on line {v[typ]['line']}")
+
+    return err
+
+def search_for_versions(args, tables):
+    """Search for all of the version in th given table"""
+    err = 0
+    for fn in args.files:
+        for k, v in tables.items():
+            v["js"] = {"found": 0, "version": None, "line": 1, "column": 1}
+            v["css"] = {"found": 0, "version": None, "line": 1, "column": 1}
+
+        with open(fn, encoding="UTF-8") as fp:
+            for n,l in enumerate(fp,1):
+                # print(f"n={n}")
+                for k, v in tables.items():
+                    search_line_for_versions_suffix(args, l, n, k, v, v["js-suffix"], "js")
+
+                    if v["css-suffix"]:
+                        search_line_for_versions_suffix(args, l, n, k, v, v["css-suffix"], "css")
+
+        for k, v in tables.items():
+            err = print_stats(args, fn, k, v, v["js-suffix"], "js", err)
+
+            if v["css-suffix"]:
+                err = print_stats(args, fn, k, v, v["css-suffix"], "css", err)
+
+    return err
 
 
 def search_jquery(args):
     """Search for jquery"""
     jq = requests.get(URL_JQUERY, timeout=90)
-    # print(jq.text)
-    m = re.search("(https://code[.]jquery[.]com/jquery-[0-9.]*[.]min[.]js)", jq.text)
+    if args.verbose > 1:
+        print(jq.text)
+    jquerys = {
+        "jquery": {
+            "prefix": "https://code.jquery.com/jquery-",
+            "js-suffix": ".min.js",
+            "css-suffix": None
+            }
+        }
+
+    m = re.search("(https://code[.]jquery[.]com/jquery-([0-9.]*)[.]min[.]js)", jq.text)
     if not m:
         sys.exit(f"Cannot find jquery version in {URL_JQUERY}")
 
     jquery_string = m.group(1)
-    # print(f"jquery_string={jquery_string}")
+    if args.verbose:
+        print(f"jquery_string={jquery_string}")
+
+    version = m.group(2)
+    if args.verbose:
+        print(f"version={version}")
+    jquerys["jquery"]["version"] = version
+
+    return search_for_versions(args, jquerys)
 
     err = 0
     for fn in args.files:
@@ -44,117 +131,69 @@ def search_jquery(args):
 def search_datatables(args):
     """Search for datatables"""
     dt = requests.get(URL_DATATABLES, timeout=90)
-    # print(dt.text)
+    if args.verbose > 1:
+        print(dt.text)
     datatables = {
         "DataTables": {
             "prefix": "https://cdn.datatables.net/",
             "js-suffix": "/js/jquery.dataTables.min.js",
-            "css-suffix": "/css/jquery.dataTables.min.css",
-            "js-found": 0,
-            "css-found": 0,
+            "css-suffix": "/css/jquery.dataTables.min.css"
         },
         "Buttons": {
             "prefix": "https://cdn.datatables.net/buttons/",
             "js-suffix": "/js/dataTables.buttons.min.js",
-            "css-suffix": "/css/buttons.dataTables.min.css",
-            "js-found": 0,
-            "css-found": 0,
+            "css-suffix": "/css/buttons.dataTables.min.css"
         },
         "Column visibility": {
             "prefix": "https://cdn.datatables.net/buttons/",
             "js-suffix": "/js/buttons.colVis.min.js",
-            "css-suffix": None,
-            "js-found": 0,
-            "css-found": 0,
+            "css-suffix": None
         },
         "Print view": {
             "prefix": "https://cdn.datatables.net/buttons/",
             "js-suffix": "/js/buttons.print.min.js",
-            "css-suffix": None,
-            "js-found": 0,
-            "css-found": 0,
+            "css-suffix": None
         },
         "ColReorder": {
             "prefix": "https://cdn.datatables.net/colreorder/",
             "js-suffix": "/js/dataTables.colReorder.min.js",
-            "css-suffix": "/css/colReorder.dataTables.min.css",
-            "js-found": 0,
-            "css-found": 0,
+            "css-suffix": "/css/colReorder.dataTables.min.css"
         },
         "FixedHeader": {
             "prefix": "https://cdn.datatables.net/fixedheader/",
             "js-suffix": "/js/dataTables.fixedHeader.min.js",
-            "css-suffix": "/css/fixedHeader.dataTables.min.css",
-            "js-found": 0,
-            "css-found": 0,
+            "css-suffix": "/css/fixedHeader.dataTables.min.css"
         },
         "Responsive": {
             "prefix": "https://cdn.datatables.net/responsive/",
             "js-suffix": "/js/dataTables.responsive.min.js",
-            "css-suffix": "/css/responsive.dataTables.min.css",
-            "js-found": 0,
-            "css-found": 0,
+            "css-suffix": "/css/responsive.dataTables.min.css"
         },
     }
 
     for k, v in datatables.items():
-        # print(f"k={k}")
+        if args.verbose:
+            print(f"k={k}")
         m = re.search(f'(<input .*value="([^"]*)" data-shortname="([^"]*)" data-longname="{k}")', dt.text)
         if not m:
             print(f"Did not find data-longname={k}")
             continue
-        # print("1", m.group(1))
+        if args.verbose:
+            print("1", m.group(1))
         value = m.group(2)
-        # print(f"value={value}")
+        if args.verbose:
+            print(f"value={value}")
         shortname = m.group(3)
-        # print(f"shortname={shortname}")
+        if args.verbose:
+            print(f"shortname={shortname}")
         v["value"] = value
         v["shortname"] = shortname
         version = value[len(shortname) + 1 :]
-        # print(f"version={version}")
+        if args.verbose:
+            print(f"version={version}")
         v["version"] = version
 
-    err = 0
-    for fn in args.files:
-        for k, v in datatables.items():
-            v["js-found"] = 0
-            v["css-found"] = 0
-
-        with open(fn, encoding="UTF-8") as fp:
-            for l in fp:
-                for k, v in datatables.items():
-                    if '"' + v["prefix"] + v["version"] + v["js-suffix"] + '"' in l:
-                        # print(f"found js {k} {v['version']} in\n    {l}")
-                        v["js-found"] += 1
-                    if v["css-suffix"] and ('"' + v["prefix"] + v["version"] + v["css-suffix"] + '"') in l:
-                        # print(f"found css {k} {v['version']} in\n    {l}")
-                        v["css-found"] += 1
-
-        for k, v in datatables.items():
-            if v["js-found"] == 0:
-                print(f"Did not find {v['prefix']}{v['version']}{v['js-suffix']}")
-                err += 1
-            elif v["js-found"] > 1:
-                print(
-                    f"Found too many instances ({v['js-found']}) of {v['prefix']}{v['version']}{v['js-suffix']} in {fn}"
-                )
-                err += 1
-            else:
-                print(f"Found {v['prefix']}{v['version']}{v['js-suffix']} in {fn} in {fn}")
-
-            if v["css-suffix"]:
-                if v["css-found"] == 0:
-                    err += 1
-                    print(f"Did not find {v['prefix']}{v['version']}{v['css-suffix']} in {fn}")
-                elif v["css-found"] > 1:
-                    err += 1
-                    print(
-                        f"Found too many instances ({v['css-found']}) of {v['prefix']}{v['version']}{v['css-suffix']} in {fn}"
-                    )
-                else:
-                    print(f"Found {v['prefix']}{v['version']}{v['css-suffix']} in {fn}")
-
-    return err
+    return search_for_versions(args, datatables)
 
 
 def main():
@@ -162,15 +201,23 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-v", "--verbose", help="Verbose, may be specified multiple times", action="count", default=0)
     parser.add_argument("-V", "--version", help="Print the version", action="store_true")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-J", "--jquery-only", help="Only look at jquery", action="store_true")
+    group.add_argument("-D", "--datatables-only", help="Only look at datatables", action="store_true")
     parser.add_argument("files", nargs="+")
     args = parser.parse_args()
 
     if args.version:
         print(GITVERSIONSTAMP)
 
+    # if neither -J/-D is specified, do both
+    if not args.jquery_only and not args.datatables_only:
+        args.jquery_only = args.datatables_only = True
     err = 0
-    err += search_jquery(args)
-    err += search_datatables(args)
+    if args.jquery_only:
+        err += search_jquery(args)
+    if args.datatables_only:
+        err += search_datatables(args)
     if err:
         print("ERROR")
     else:

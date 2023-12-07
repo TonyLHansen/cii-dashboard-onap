@@ -32,6 +32,8 @@ const projectCheckProjects = false;
 var openssfProjectIds = projectParms.get("ID", "").concat(",", projectParms.get("IDs", "")).replace(" ", "").replace(/^,*/, "").replace(/,*$/, "").replace(/^$/, "").split(/, */);
 
 const projectName = "Your";
+const showProjectPrefix = false;
+
 const openssfEditors = [
 ];
 

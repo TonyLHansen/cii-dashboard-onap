@@ -108,6 +108,11 @@ function tweakInputValue(nm) {
 }
 tweakInputValue("SEARCH");
 tweakInputValue("ID");
+tweakInputValue("PROJECT");
+let projectNameOverride = parms.get("PROJECT", "");
+if (projectNameOverride != "") {
+    $("#projectname").html(projectNameOverride);
+}
 
 let sortBy = "";
 const initSortBy = parms.get("sortby", "by_name").toLowerCase();
@@ -2064,8 +2069,8 @@ function whenDone(editorNames) {
                 },
 	    },
 	    {"data": "sub_project", "render": function( data, type, row, meta ) {
-                return getProject(data, type, row);
-	    }},
+                return  getProject(data, type, row);
+	    }, "visible": showProjectPrefix},
 	    {"data": "name", "render": function( data, type, row, meta ) {
                 return getAllNames(data, type, row);
 	    }},

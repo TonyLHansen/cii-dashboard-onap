@@ -49,6 +49,5 @@ const openssfProjectIds = [];
 const projectName = "ONAP";
 const showProjectPrefix = true;
 const openssfEditors = {
-    "3607": "required",
-    "4469": "optional",
+    "32875": "required"
 };

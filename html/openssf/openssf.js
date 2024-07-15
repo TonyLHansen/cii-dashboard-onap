@@ -560,11 +560,18 @@ function determineProjectAndRepoNamesPats(urlList) {
     return repos;
 }
 
+const skipEditors = parms.get("skip-editors", "n") == "y";
+console.log("skipEditors=", skipEditors);
+
 async function fillInEditorNames(editorNames, editorList, j, dotCounter) {
     if (editorList.length == 0) {
         whenDone(editorNames);
         return;
     }
+    if (skipEditors) {
+        whenDone(editorNames);
+        return;
+    }	
 
     const URL = BASESITE + "en/users/";
     const editor = editorList[j];
@@ -1009,7 +1016,7 @@ function prEditor(editorList, editorDict) {
     for (const e in editors) {
         if (editors.hasOwnProperty(e)) {
 	    const editor = editors[e];
-	    const nm = editorDict[editor] ? editorDict[editor] : "Unk";
+	    const nm = editorDict[editor] ? editorDict[editor] : skipEditors ? editor : ("Unk_" + editor);
 	    editorsOut += sep + "<a target='_blank' rel='noopener noreferrer' href='" + BASESITE + "en/users/" + editor + "' title='" + nm.replace(/['']/g, "&quot;") + "'>" + nm + "</a>";
 	    sep = "<br/>";
         }
